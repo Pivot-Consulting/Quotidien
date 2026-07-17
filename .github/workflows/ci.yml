@@ -3,7 +3,7 @@ name: Vérification
 on:
   pull_request:
   push:
-    branches: [main, v6-app]
+    branches: [main, v6-ultra]
 
 permissions:
   contents: read
@@ -13,9 +13,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npm run verify
+      - name: Installer les dépendances
+        run: npm ci --silent
+      - name: Vérifier TypeScript
+        run: npx tsc --noEmit -p tsconfig.json --pretty false
+      - name: Tester
+        run: npm test
+      - name: Compiler
+        run: npm run build
