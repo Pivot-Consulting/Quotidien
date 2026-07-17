@@ -1,22 +1,78 @@
-# Quotidien V6
+# Quotidien V6.1
 
-Application personnelle **local-first** pour gérer les tâches, l’agenda, les notes, les habitudes, les routines, le sport et le suivi quotidien.
+Application personnelle **local-first** pour organiser les tâches, l’agenda, les notes, les objectifs, les habitudes, les routines, le sport et le suivi quotidien.
 
-La V6 remplace entièrement l’ancienne application. Elle reprend automatiquement les données enregistrées sous la clé historique `mon-quotidien-v1` lorsqu’elle est ouverte sur la même adresse web et dans le même navigateur.
+Quotidien fonctionne hors connexion et conserve les données sur l’appareil. Les anciennes données V5 et V6 sont normalisées automatiquement lorsqu’elles sont ouvertes sur la même adresse web et dans le même navigateur.
 
-## Fonctions principales
+## Outils principaux
 
-- tableau de bord Aujourd’hui, trois priorités et charge estimée ;
-- tâches, sous-tâches, listes, récurrences, matrice urgent/important et mode Focus ;
-- agenda mois/semaine, rappels, récurrences et import/export Apple Calendar `.ics` ;
-- notes Markdown, liens `[[Note]]`, rétroliens, journal, graphe et export Obsidian ;
-- habitudes hebdomadaires et routines multi-étapes ;
-- programmes sportifs, minuteur d’intervalles, séances et progression par exercice ;
+### Aujourd’hui
+
+- chronologie réunissant événements et blocs de temps ;
+- trois priorités quotidiennes ;
+- charge estimée et temps disponible ;
+- humeur, énergie et stress ;
+- habitudes du jour ;
+- objectifs actifs ;
+- capture rapide vers la boîte de réception.
+
+### Tâches
+
+- listes et projets ;
+- description, tags, contexte et niveau d’énergie ;
+- statuts `Inbox`, prochaine action, en attente et un jour ;
+- échéance, heure, date de démarrage et rappels ;
+- temps estimé et temps réellement consacré ;
+- sous-tâches, récurrence, priorités et matrice urgent/important ;
+- liaison à un objectif ;
+- duplication, report et mode Focus.
+
+### Agenda
+
+- événements récurrents et rappels ;
+- navigation quotidienne ;
+- blocs de temps avec type, début, fin et tâches liées ;
+- lieux, liens, notes, couleurs et compte à rebours ;
+- import/export Apple Calendar `.ics`.
+
+### Objectifs
+
+- domaines personnel, professionnel, santé, finances et apprentissage ;
+- statut, date cible, progression et notes ;
+- tâches rattachées et calcul de progression ;
+- mise en pause, clôture et abandon.
+
+### Notes
+
+- Markdown et liens `[[Note]]` ;
+- dossiers, tags, favorites, épingles, archives et sources ;
+- journal quotidien ;
+- recherche universelle ;
+- graphe des connaissances et export Obsidian.
+
+### Habitudes et routines
+
+- jours programmés, cible quotidienne et objectif hebdomadaire ;
+- icône, couleur, rappel et unité personnalisée ;
+- séries, historique hebdomadaire et jours neutralisés ;
+- routines multi-étapes avec durée et horaire.
+
+### Sport et santé
+
+- programmes sportifs personnalisés ;
+- séances, durée, effort perçu, calories et exercices ;
 - poids, sommeil, hydratation, repas et mensurations ;
-- corbeille 30 jours, verrou PIN, thème sombre et sauvegarde JSON ;
-- PWA installable et utilisable hors connexion ;
-- IndexedDB avec secours `localStorage` ;
-- socle Cloudflare Worker/D1 pour la synchronisation et les notifications distantes.
+- humeur, énergie et stress ;
+- analyses sur 28 jours et recommandations automatiques.
+
+### Productivité avancée
+
+- capture universelle ;
+- recherche globale avec `Ctrl/Cmd + K` ;
+- nouvelle capture avec `Ctrl/Cmd + N` ;
+- mode Focus lié aux tâches ;
+- sauvegarde et restauration JSON ;
+- PWA installable et utilisable hors connexion.
 
 ## Développement
 
@@ -42,27 +98,19 @@ Le workflow `.github/workflows/pages.yml` compile puis publie automatiquement `d
 
 Dans GitHub, sélectionner une fois : **Settings → Pages → Source → GitHub Actions**.
 
-## Migration de la V5
+## Migration et sécurité des données
 
-La migration couvre :
+La migration couvre les tâches, projets, événements, notes, habitudes, routines, programmes, séances, sessions de concentration, poids, sommeil, repas, eau, mensurations, préférences et corbeille.
 
-- tâches, projets et sous-tâches ;
-- événements et rappels ;
-- notes, tags, épingles et archives ;
-- habitudes et routines ;
-- programmes, séances et sessions de concentration ;
-- poids, sommeil, repas, eau et mensurations ;
-- préférences, PIN, priorités journalières et corbeille.
-
-Avant la première mise en production, conserver malgré tout un export JSON de l’ancienne application. L’historique Git permet également de retrouver le code V5.
+La normalisation V6.1 ajoute les nouveaux champs et tableaux sans supprimer les données déjà enregistrées. Avant une évolution importante, conserver malgré tout un export JSON.
 
 ## Données et confidentialité
 
-Par défaut, aucune donnée personnelle n’est envoyée à un serveur. Le PIN est un verrou visuel et non un chiffrement de la base. Pour des informations sensibles, activer ultérieurement le chiffrement côté client avant la synchronisation.
+Par défaut, aucune donnée personnelle n’est envoyée à un serveur. IndexedDB est le stockage principal et `localStorage` sert de secours. Le PIN est un verrou visuel et non un chiffrement de la base.
 
 ## Backend optionnel
 
-Le dossier `worker/` contient le schéma D1 et le point de départ Cloudflare Worker pour :
+Le dossier `worker/` contient le point de départ Cloudflare Worker/D1 pour :
 
 - compte facultatif ;
 - synchronisation entre appareils ;
