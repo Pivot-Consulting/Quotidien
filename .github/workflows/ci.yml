@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   verify:
@@ -16,7 +17,25 @@ jobs:
       - name: Installer les dépendances
         run: npm ci --silent
       - name: Vérifier TypeScript
-        run: npx tsc --noEmit -p tsconfig.json --pretty false
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set +e
+          npx tsc --noEmit -p tsconfig.json --pretty false > tsc-errors.txt 2>&1
+          status=$?
+          cat tsc-errors.txt
+          if [ "$status" -ne 0 ] && [ "${{ github.event_name }}" = "pull_request" ]; then
+            {
+              echo '### Erreurs TypeScript'
+              echo '```text'
+              head -c 50000 tsc-errors.txt
+              echo
+              echo '```'
+            } > pr-comment.md
+            gh pr comment "${{ github.event.pull_request.number }}" --body-file pr-comment.md
+          fi
+          exit "$status"
       - name: Tester
         run: npm test
       - name: Compiler
