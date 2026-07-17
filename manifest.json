@@ -1,0 +1,16 @@
+{
+  "name": "Mon Quotidien",
+  "short_name": "Quotidien",
+  "description": "Calendrier, tâches, notes, sport — tout mon quotidien, hors connexion.",
+  "lang": "fr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#12233B",
+  "theme_color": "#12233B",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

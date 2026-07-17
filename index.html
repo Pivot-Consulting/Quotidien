@@ -6,23 +6,35 @@
 <meta name="theme-color" content="#12233B">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
 <title>Mon Quotidien</title>
 <style>
 /* ============ Système de design — inspiration plan de métro ============ */
 :root{
-  --encre:#12233B;        /* bleu encre profond */
-  --papier:#F4F6F8;       /* gris-bleu papier */
+  --encre:#12233B;
+  --papier:#F4F6F8;
   --carte:#FFFFFF;
-  --ligne1:#F2B705;       /* jaune ligne 1 — Aujourd'hui */
-  --ligne2:#2E6FE0;       /* bleu — Tâches */
-  --ligne3:#0FA36B;       /* vert — Agenda */
-  --ligne4:#B04BD9;       /* violet — Notes */
-  --ligne5:#E85D3A;       /* orange — Sport */
+  --ligne1:#F2B705;   /* Aujourd'hui */
+  --ligne2:#2E6FE0;   /* Tâches */
+  --ligne3:#0FA36B;   /* Agenda */
+  --ligne4:#B04BD9;   /* Notes */
+  --ligne5:#E85D3A;   /* Sport */
   --texte:#1D2733;
   --texte2:#5A6B7E;
   --trait:#DDE4EB;
   --danger:#D63B3B;
   --rayon:14px;
+}
+html[data-theme="sombre"]{
+  --encre:#0B1220;
+  --papier:#0F1622;
+  --carte:#182130;
+  --texte:#E8EDF4;
+  --texte2:#95A5B8;
+  --trait:#2A3547;
+  color-scheme:dark;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
@@ -30,8 +42,9 @@ body{
   font-family:"Avenir Next","Avenir",Futura,-apple-system,"Segoe UI",Roboto,sans-serif;
   background:var(--papier);color:var(--texte);
   padding-bottom:calc(74px + env(safe-area-inset-bottom));
+  transition:background .2s;
 }
-button{font-family:inherit;cursor:pointer;border:none;background:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
 input,textarea,select{font-family:inherit;font-size:16px;color:var(--texte)}
 
 /* ---- En-tête ---- */
@@ -43,7 +56,9 @@ header{
 }
 header h1{font-size:17px;font-weight:600;letter-spacing:.3px}
 header .date{font-size:12.5px;opacity:.75;margin-top:2px;text-transform:capitalize}
+.tete-actions{display:flex;gap:8px;align-items:center}
 .btn-menu{color:#fff;font-size:13px;border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:6px 12px}
+.btn-theme{color:#fff;font-size:17px;border:1px solid rgba(255,255,255,.35);border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center}
 
 /* ---- Pastilles de ligne (signature) ---- */
 .pastille{
@@ -76,11 +91,13 @@ input[type=text],input[type=date],input[type=time],input[type=number],textarea,s
 input:focus,textarea:focus,select:focus{border-color:var(--ligne2);box-shadow:0 0 0 3px rgba(46,111,224,.12)}
 textarea{resize:vertical;min-height:80px}
 .btn{background:var(--encre);color:#fff;border-radius:10px;padding:10px 16px;font-weight:600;font-size:15px;flex:none}
-.btn.secondaire{background:#E9EEF3;color:var(--texte)}
+html[data-theme="sombre"] .btn{background:var(--ligne2)}
+.btn.secondaire{background:var(--trait);color:var(--texte)}
 .btn.petit{padding:6px 12px;font-size:13px;border-radius:8px}
 .champ{margin-bottom:10px}
 .champ label{display:block;font-size:12.5px;font-weight:600;color:var(--texte2);margin-bottom:4px}
 .deux-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.trois-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 
 /* ---- Tâches ---- */
 .item{display:flex;align-items:flex-start;gap:10px;padding:11px 2px;border-bottom:1px solid var(--trait)}
@@ -94,29 +111,33 @@ textarea{resize:vertical;min-height:80px}
 .item .contenu{flex:1;min-width:0}
 .item .libelle{font-size:15px;line-height:1.35;word-wrap:break-word}
 .item.fait .libelle{text-decoration:line-through;color:var(--texte2)}
-.item .meta{font-size:12px;color:var(--texte2);margin-top:2px;display:flex;gap:8px;flex-wrap:wrap}
+.item .meta{font-size:12px;color:var(--texte2);margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .badge{font-size:11px;font-weight:700;border-radius:6px;padding:2px 6px}
-.badge.haute{background:#FCE3E3;color:var(--danger)}
-.badge.moyenne{background:#FFF1D6;color:#9A6B00}
-.badge.basse{background:#E3EDFB;color:var(--ligne2)}
+.badge.haute{background:rgba(214,59,59,.14);color:var(--danger)}
+.badge.moyenne{background:rgba(242,183,5,.18);color:#9A6B00}
+html[data-theme="sombre"] .badge.moyenne{color:#F2C94C}
+.badge.basse{background:rgba(46,111,224,.14);color:var(--ligne2)}
 .badge.retard{background:var(--danger);color:#fff}
+.badge.repete{background:rgba(15,163,107,.14);color:var(--ligne3)}
 .btn-suppr{color:var(--texte2);font-size:17px;padding:2px 6px;flex:none}
 .filtres{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
 .filtres button{border:1px solid var(--trait);background:var(--carte);border-radius:20px;padding:6px 12px;font-size:13px;color:var(--texte2)}
 .filtres button.actif{background:var(--encre);color:#fff;border-color:var(--encre)}
+html[data-theme="sombre"] .filtres button.actif{background:var(--ligne2);border-color:var(--ligne2)}
 
 /* ---- Agenda ---- */
 .cal-tete{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .cal-tete .mois{font-weight:700;font-size:15px;text-transform:capitalize}
-.cal-tete button{font-size:18px;padding:4px 12px;color:var(--encre)}
+.cal-tete button{font-size:18px;padding:4px 12px;color:var(--texte)}
 .cal-grille{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
 .cal-grille .jour-nom{font-size:11px;font-weight:700;color:var(--texte2);padding:4px 0}
 .cal-case{
   aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
   border-radius:8px;font-size:13px;position:relative;color:var(--texte);
 }
-.cal-case:not(:empty):hover{background:#EDF1F5}
+.cal-case:not(:empty):hover{background:var(--trait)}
 .cal-case.aujourdhui{background:var(--encre);color:#fff;font-weight:700}
+html[data-theme="sombre"] .cal-case.aujourdhui{background:var(--ligne2)}
 .cal-case.choisi{outline:2px solid var(--ligne3)}
 .cal-case .point{width:5px;height:5px;border-radius:50%;background:var(--ligne3);position:absolute;bottom:5px}
 .cal-case.aujourdhui .point{background:var(--ligne1)}
@@ -126,15 +147,20 @@ textarea{resize:vertical;min-height:80px}
 .evenement .contenu{flex:1;min-width:0}
 .evenement .titre{font-size:15px}
 .evenement .lieu{font-size:12.5px;color:var(--texte2)}
+.evenement .rappel-info{font-size:11.5px;color:var(--texte2)}
 
 /* ---- Notes ---- */
 .note{background:var(--carte);border:1px solid var(--trait);border-radius:var(--rayon);padding:13px;margin-bottom:10px}
+.note.surbrillance{outline:2px solid var(--ligne4)}
 .note .titre{font-weight:700;font-size:15px;margin-bottom:4px;display:flex;justify-content:space-between;gap:8px}
 .note .corps{font-size:14px;color:var(--texte);white-space:pre-wrap;line-height:1.45;word-wrap:break-word}
 .note .corps.replie{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .note .tags{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}
-.tag{background:#F1E6F8;color:var(--ligne4);font-size:11.5px;font-weight:600;border-radius:6px;padding:2px 8px}
+.tag{background:rgba(176,75,217,.14);color:var(--ligne4);font-size:11.5px;font-weight:600;border-radius:6px;padding:2px 8px}
 .note .pied{font-size:11.5px;color:var(--texte2);margin-top:6px}
+.lien-note{color:var(--ligne4);font-weight:600;text-decoration:underline;cursor:pointer}
+.retroliens{margin-top:8px;font-size:12px;color:var(--texte2)}
+.retroliens .lien-note{font-size:12px}
 
 /* ---- Sport ---- */
 .habitude{display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid var(--trait)}
@@ -148,9 +174,15 @@ textarea{resize:vertical;min-height:80px}
 .seance .type{font-weight:700;font-size:14px}
 .seance .details{font-size:12.5px;color:var(--texte2);margin-top:2px}
 .stat-ligne{display:flex;gap:10px}
-.stat{flex:1;background:#FBEFE9;border-radius:10px;padding:10px;text-align:center}
+.stat{flex:1;background:rgba(232,93,58,.12);border-radius:10px;padding:10px;text-align:center}
 .stat .valeur{font-size:20px;font-weight:800;color:var(--ligne5)}
 .stat .libelle{font-size:11.5px;color:var(--texte2);margin-top:2px}
+.programme{padding:10px 2px;border-bottom:1px solid var(--trait)}
+.programme:last-child{border-bottom:none}
+.programme .entete{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.programme .nom{font-weight:700;font-size:14px}
+.programme .infos{font-size:12px;color:var(--texte2)}
+.programme .detail{font-size:13px;color:var(--texte2);margin-top:4px;line-height:1.4}
 
 /* ---- Barre d'onglets (plan de ligne) ---- */
 nav{
@@ -159,7 +191,7 @@ nav{
   padding:6px 4px calc(6px + env(safe-area-inset-bottom));
 }
 .nav-int{max-width:640px;margin:0 auto;display:flex;position:relative}
-.nav-int::before{ /* la "ligne" qui relie les stations */
+.nav-int::before{
   content:"";position:absolute;top:17px;left:10%;right:10%;height:3px;
   background:var(--trait);border-radius:2px;
 }
@@ -179,16 +211,21 @@ nav button[data-ecran=notes].actif .station{border-color:var(--ligne4);transform
 nav button[data-ecran=sport].actif .station{border-color:var(--ligne5);transform:scale(1.15)}
 
 /* ---- Divers ---- */
-.bandeau{background:#FFF6DD;border:1px solid #F0DFA8;color:#7A5E00;font-size:13px;border-radius:10px;padding:10px 12px;margin-bottom:12px;display:none}
-.dialogue-fond{position:fixed;inset:0;background:rgba(18,35,59,.45);z-index:40;display:none;align-items:flex-end;justify-content:center}
+.bandeau{background:rgba(242,183,5,.15);border:1px solid rgba(242,183,5,.4);color:#7A5E00;font-size:13px;border-radius:10px;padding:10px 12px;margin-bottom:12px;display:none}
+html[data-theme="sombre"] .bandeau{color:#F2C94C}
+.dialogue-fond{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:40;display:none;align-items:flex-end;justify-content:center}
 .dialogue-fond.ouvert{display:flex}
 .dialogue{background:var(--carte);border-radius:16px 16px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));width:100%;max-width:640px;max-height:85vh;overflow:auto}
 .dialogue h3{font-size:17px;margin-bottom:12px}
+.dialogue p{font-size:13.5px;color:var(--texte2);line-height:1.5;margin-bottom:8px}
 .actions{display:flex;gap:8px;margin-top:12px}
 .actions .btn{flex:1}
 details.formulaire{margin-bottom:12px}
 details.formulaire summary{list-style:none;cursor:pointer}
 details.formulaire summary::-webkit-details-marker{display:none}
+.etat-notif{font-size:12.5px;font-weight:600;margin-top:6px}
+.etat-notif.ok{color:var(--ligne3)}
+.etat-notif.ko{color:var(--danger)}
 :focus-visible{outline:2px solid var(--ligne2);outline-offset:2px}
 </style>
 </head>
@@ -199,7 +236,10 @@ details.formulaire summary::-webkit-details-marker{display:none}
     <h1>Mon Quotidien</h1>
     <div class="date" id="date-tete"></div>
   </div>
-  <button class="btn-menu" id="btn-donnees">Données</button>
+  <div class="tete-actions">
+    <button class="btn-theme" id="btn-theme" aria-label="Basculer le mode sombre">🌙</button>
+    <button class="btn-menu" id="btn-donnees">Réglages</button>
+  </div>
 </header>
 
 <main>
@@ -245,13 +285,21 @@ details.formulaire summary::-webkit-details-marker{display:none}
         <input type="text" id="tache-libelle" placeholder="Nouvelle tâche…">
         <button class="btn" onclick="ajouterTache()">＋</button>
       </div>
-      <div class="deux-cols">
-        <div class="champ"><label for="tache-date">Échéance (optionnel)</label><input type="date" id="tache-date"></div>
+      <div class="trois-cols">
+        <div class="champ"><label for="tache-date">Échéance</label><input type="date" id="tache-date"></div>
         <div class="champ"><label for="tache-prio">Priorité</label>
           <select id="tache-prio">
             <option value="moyenne">Moyenne</option>
             <option value="haute">Haute</option>
             <option value="basse">Basse</option>
+          </select>
+        </div>
+        <div class="champ"><label for="tache-repete">Répéter</label>
+          <select id="tache-repete">
+            <option value="">Jamais</option>
+            <option value="quotidien">Chaque jour</option>
+            <option value="hebdo">Chaque semaine</option>
+            <option value="mensuel">Chaque mois</option>
           </select>
         </div>
       </div>
@@ -291,7 +339,19 @@ details.formulaire summary::-webkit-details-marker{display:none}
             <div class="champ"><label for="evt-date">Date</label><input type="date" id="evt-date"></div>
             <div class="champ"><label for="evt-heure">Heure</label><input type="time" id="evt-heure"></div>
           </div>
-          <div class="champ"><label for="evt-lieu">Lieu (optionnel)</label><input type="text" id="evt-lieu"></div>
+          <div class="deux-cols">
+            <div class="champ"><label for="evt-lieu">Lieu</label><input type="text" id="evt-lieu"></div>
+            <div class="champ"><label for="evt-rappel">Rappel</label>
+              <select id="evt-rappel">
+                <option value="-1">Aucun</option>
+                <option value="0">À l'heure pile</option>
+                <option value="10">10 min avant</option>
+                <option value="30">30 min avant</option>
+                <option value="60">1 h avant</option>
+                <option value="1440">1 jour avant</option>
+              </select>
+            </div>
+          </div>
           <button class="btn" onclick="ajouterEvenement()">Ajouter à l'agenda</button>
         </div>
       </details>
@@ -309,7 +369,7 @@ details.formulaire summary::-webkit-details-marker{display:none}
 
     <div class="carte">
       <div class="champ"><input type="text" id="note-titre" placeholder="Titre de la note"></div>
-      <div class="champ"><textarea id="note-corps" placeholder="Écris librement : idées, apprentissages, réflexions…"></textarea></div>
+      <div class="champ"><textarea id="note-corps" placeholder="Écris librement… Astuce : tape [[Titre d'une autre note]] pour créer un lien entre tes notes."></textarea></div>
       <div class="champ"><input type="text" id="note-tags" placeholder="Tags séparés par des virgules (ex : idées, travail, lecture)"></div>
       <button class="btn" onclick="ajouterNote()">Enregistrer la note</button>
     </div>
@@ -336,18 +396,23 @@ details.formulaire summary::-webkit-details-marker{display:none}
       <h3>Habitudes quotidiennes</h3>
       <div id="liste-habitudes"></div>
       <div class="ligne-ajout" style="margin-top:10px;margin-bottom:0">
-        <input type="text" id="habitude-nom" placeholder="Nouvelle habitude (ex : étirements, 10 min de marche)">
+        <input type="text" id="habitude-nom" placeholder="Nouvelle habitude (ex : étirements)">
         <button class="btn" onclick="ajouterHabitude()">＋</button>
       </div>
     </div>
 
     <div class="carte">
+      <h3>Programmes prêts à l'emploi</h3>
+      <div id="liste-programmes"></div>
+    </div>
+
+    <div class="carte" id="carte-seance">
       <h3>Enregistrer une séance</h3>
       <div class="deux-cols">
         <div class="champ"><label for="seance-type">Type</label>
           <select id="seance-type">
             <option>Musculation</option><option>Course</option><option>Vélo</option>
-            <option>Natation</option><option>Yoga</option><option>Marche</option><option>Autre</option>
+            <option>Natation</option><option>Yoga</option><option>Marche</option><option>HIIT</option><option>Autre</option>
           </select>
         </div>
         <div class="champ"><label for="seance-duree">Durée (min)</label><input type="number" id="seance-duree" min="1" placeholder="45"></div>
@@ -374,14 +439,18 @@ details.formulaire summary::-webkit-details-marker{display:none}
   </div>
 </nav>
 
-<!-- ---- Dialogue données ---- -->
+<!-- ---- Dialogue réglages ---- -->
 <div class="dialogue-fond" id="dlg-donnees">
   <div class="dialogue">
-    <h3>Mes données</h3>
-    <p style="font-size:13.5px;color:var(--texte2);line-height:1.5">
-      Tout est stocké uniquement sur cet appareil. Pense à exporter une sauvegarde de temps en temps
-      (le fichier peut être réimporté ici ou sur un autre appareil).
-    </p>
+    <h3>Réglages</h3>
+
+    <h3 style="font-size:13px;text-transform:uppercase;letter-spacing:.8px;color:var(--texte2);margin-bottom:6px">Rappels</h3>
+    <p>Reçois une notification avant tes événements. Les rappels fonctionnent quand l'app est ouverte (même en arrière-plan sur la plupart des téléphones Android).</p>
+    <button class="btn" id="btn-notif" onclick="activerNotifications()">Activer les rappels</button>
+    <div class="etat-notif" id="etat-notif"></div>
+
+    <h3 style="font-size:13px;text-transform:uppercase;letter-spacing:.8px;color:var(--texte2);margin:16px 0 6px">Mes données</h3>
+    <p>Tout est stocké uniquement sur cet appareil. Pense à exporter une sauvegarde de temps en temps (réimportable ici ou sur un autre appareil).</p>
     <div class="actions">
       <button class="btn" onclick="exporterDonnees()">Exporter</button>
       <button class="btn secondaire" onclick="document.getElementById('import-fichier').click()">Importer</button>
@@ -395,8 +464,9 @@ details.formulaire summary::-webkit-details-marker{display:none}
 
 <script>
 /* =====================================================
-   Mon Quotidien — app hors-ligne de gestion du quotidien
-   Données : localStorage (avec repli mémoire)
+   Mon Quotidien v2 — hors-ligne, données 100 % locales
+   Nouveautés : mode sombre, tâches récurrentes, rappels,
+   programmes d'entraînement, liens [[entre notes]]
 ===================================================== */
 
 // ---------- Stockage ----------
@@ -405,7 +475,7 @@ let memoireSeule = false;
 let etat = chargerEtat();
 
 function etatVide(){
-  return { taches:[], evenements:[], notes:[], habitudes:[], seances:[] };
+  return { taches:[], evenements:[], notes:[], habitudes:[], seances:[], notifie:{}, prefs:{theme:"clair", notif:false} };
 }
 function chargerEtat(){
   try{
@@ -424,8 +494,7 @@ function sauver(){
 
 // ---------- Utilitaires ----------
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
-const auj = () => { const d=new Date(); return d.toISOString().slice(0,10); };
-function cleDate(d){ // date locale -> "AAAA-MM-JJ"
+function cleDate(d){
   return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 }
 const AUJ = cleDate(new Date());
@@ -434,6 +503,18 @@ function dateLisible(iso){
   return new Date(a,m-1,j).toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"});
 }
 function echap(s){ return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function attr(s){ return String(s).replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/"/g,"&quot;"); }
+
+// ---------- Thème ----------
+function appliquerTheme(){
+  document.documentElement.dataset.theme = etat.prefs.theme;
+  document.getElementById("btn-theme").textContent = etat.prefs.theme==="sombre" ? "☀️" : "🌙";
+  document.querySelector('meta[name="theme-color"]').content = etat.prefs.theme==="sombre" ? "#0B1220" : "#12233B";
+}
+document.getElementById("btn-theme").addEventListener("click", ()=>{
+  etat.prefs.theme = etat.prefs.theme==="sombre" ? "clair" : "sombre";
+  sauver(); appliquerTheme();
+});
 
 // ---------- Navigation ----------
 document.querySelectorAll("nav button").forEach(b=>{
@@ -456,19 +537,16 @@ function captureRapide(){
   sauver(); toutAfficher();
 }
 function afficherAujourdhui(){
-  // Tâches du jour : échues aujourd'hui ou en retard, non faites
   const zone = document.getElementById("auj-taches");
   const dj = etat.taches.filter(t => !t.fait && t.echeance && t.echeance <= AUJ);
   zone.innerHTML = dj.length ? dj.map(ligneTacheHTML).join("")
     : '<div class="vide">Rien d\'urgent aujourd\'hui ✨ Ajoute des tâches avec une échéance pour les voir ici.</div>';
 
-  // Agenda du jour
   const za = document.getElementById("auj-agenda");
   const evts = etat.evenements.filter(e => e.date===AUJ).sort((a,b)=>(a.heure||"").localeCompare(b.heure||""));
   za.innerHTML = evts.length ? evts.map(evenementHTML).join("")
     : '<div class="vide">Aucun événement prévu aujourd\'hui.</div>';
 
-  // Habitudes
   const zh = document.getElementById("auj-habitudes");
   zh.innerHTML = etat.habitudes.length ? etat.habitudes.map(habitudeHTML).join("")
     : '<div class="vide">Crée tes habitudes dans l\'onglet Sport pour les cocher chaque jour ici.</div>';
@@ -487,23 +565,47 @@ function ajouterTache(){
   const champ = document.getElementById("tache-libelle");
   const libelle = champ.value.trim();
   if(!libelle) return;
+  const repete = document.getElementById("tache-repete").value;
+  let echeance = document.getElementById("tache-date").value || null;
+  if(repete && !echeance) echeance = AUJ; // une tâche récurrente a besoin d'une date de départ
   etat.taches.unshift({
-    id:uid(), libelle,
-    echeance: document.getElementById("tache-date").value || null,
+    id:uid(), libelle, echeance,
     priorite: document.getElementById("tache-prio").value,
-    fait:false
+    repete, fait:false
   });
   champ.value=""; document.getElementById("tache-date").value="";
+  document.getElementById("tache-repete").value="";
   sauver(); toutAfficher();
+}
+function prochaineEcheance(iso, repete){
+  const base = iso > AUJ ? iso : AUJ; // si la tâche était en retard, on repart d'aujourd'hui
+  const [a,m,j] = base.split("-").map(Number);
+  const d = new Date(a,m-1,j);
+  if(repete==="quotidien") d.setDate(d.getDate()+1);
+  if(repete==="hebdo")     d.setDate(d.getDate()+7);
+  if(repete==="mensuel")   d.setMonth(d.getMonth()+1);
+  return cleDate(d);
 }
 function basculerTache(id){
   const t = etat.taches.find(t=>t.id===id);
-  if(t){ t.fait = !t.fait; sauver(); toutAfficher(); }
+  if(!t) return;
+  t.fait = !t.fait;
+  // Récurrence : quand on termine, la prochaine occurrence est créée automatiquement
+  if(t.fait && t.repete){
+    etat.taches.unshift({
+      id:uid(), libelle:t.libelle, priorite:t.priorite,
+      repete:t.repete, echeance:prochaineEcheance(t.echeance||AUJ, t.repete),
+      fait:false
+    });
+    t.repete = ""; // l'occurrence terminée devient une simple tâche archivée
+  }
+  sauver(); toutAfficher();
 }
 function supprimerTache(id){
   etat.taches = etat.taches.filter(t=>t.id!==id);
   sauver(); toutAfficher();
 }
+const LIB_REPETE = {quotidien:"↻ quotidien", hebdo:"↻ hebdo", mensuel:"↻ mensuel"};
 function ligneTacheHTML(t){
   const retard = !t.fait && t.echeance && t.echeance < AUJ;
   return `<div class="item ${t.fait?"fait":""}">
@@ -512,6 +614,7 @@ function ligneTacheHTML(t){
       <div class="libelle">${echap(t.libelle)}</div>
       <div class="meta">
         <span class="badge ${t.priorite}">${t.priorite}</span>
+        ${t.repete?`<span class="badge repete">${LIB_REPETE[t.repete]}</span>`:""}
         ${t.echeance ? (retard ? `<span class="badge retard">en retard · ${dateLisible(t.echeance)}</span>` : `<span>📅 ${dateLisible(t.echeance)}</span>`) : ""}
       </div>
     </div>
@@ -523,7 +626,6 @@ function afficherTaches(){
   if(filtreTaches==="actives") liste = liste.filter(t=>!t.fait);
   if(filtreTaches==="faites")  liste = liste.filter(t=>t.fait);
   if(filtreTaches==="auj")     liste = liste.filter(t=>!t.fait && t.echeance && t.echeance<=AUJ);
-  // tri : en retard puis échéance puis priorité
   const poids = {haute:0, moyenne:1, basse:2};
   liste = [...liste].sort((a,b)=>{
     const ea = a.echeance||"9999", eb = b.echeance||"9999";
@@ -553,7 +655,7 @@ function afficherCalendrier(){
   const noms = ["L","M","M","J","V","S","D"];
   let html = noms.map(n=>`<div class="jour-nom">${n}</div>`).join("");
   const premier = new Date(moisAffiche);
-  let decalage = (premier.getDay()+6)%7; // lundi = 0
+  let decalage = (premier.getDay()+6)%7;
   for(let i=0;i<decalage;i++) html += `<div class="cal-case"></div>`;
   const nbJours = new Date(moisAffiche.getFullYear(), moisAffiche.getMonth()+1, 0).getDate();
   for(let j=1;j<=nbJours;j++){
@@ -564,6 +666,7 @@ function afficherCalendrier(){
   }
   g.innerHTML = html;
 }
+const LIB_RAPPEL = {0:"à l'heure", 10:"10 min avant", 30:"30 min avant", 60:"1 h avant", 1440:"1 j avant"};
 function ajouterEvenement(){
   const titre = document.getElementById("evt-titre").value.trim();
   const date = document.getElementById("evt-date").value;
@@ -571,11 +674,13 @@ function ajouterEvenement(){
   etat.evenements.push({
     id:uid(), titre, date,
     heure: document.getElementById("evt-heure").value || "",
-    lieu: document.getElementById("evt-lieu").value.trim()
+    lieu: document.getElementById("evt-lieu").value.trim(),
+    rappel: parseInt(document.getElementById("evt-rappel").value,10)
   });
   document.getElementById("evt-titre").value="";
   document.getElementById("evt-heure").value="";
   document.getElementById("evt-lieu").value="";
+  document.getElementById("evt-rappel").value="-1";
   document.getElementById("form-evt").open = false;
   jourChoisi = date;
   sauver(); toutAfficher();
@@ -590,6 +695,7 @@ function evenementHTML(e){
     <div class="contenu">
       <div class="titre">${echap(e.titre)}</div>
       ${e.lieu?`<div class="lieu">📍 ${echap(e.lieu)}</div>`:""}
+      ${e.rappel>=0?`<div class="rappel-info">🔔 ${LIB_RAPPEL[e.rappel]||""}</div>`:""}
     </div>
     <button class="btn-suppr" onclick="supprimerEvenement('${e.id}')" aria-label="Supprimer">×</button>
   </div>`;
@@ -615,7 +721,56 @@ function afficherAVenir(){
     : '<div class="vide">Semaine calme pour l\'instant.</div>';
 }
 
-// ---------- Notes ----------
+// ---------- Rappels / notifications ----------
+function majEtatNotif(){
+  const zone = document.getElementById("etat-notif");
+  const btn = document.getElementById("btn-notif");
+  if(!("Notification" in window)){
+    zone.textContent = "Les notifications ne sont pas disponibles dans ce navigateur.";
+    zone.className = "etat-notif ko"; btn.style.display="none"; return;
+  }
+  if(Notification.permission==="granted" && etat.prefs.notif){
+    zone.textContent = "✓ Rappels activés"; zone.className = "etat-notif ok";
+    btn.textContent = "Désactiver les rappels";
+  }else if(Notification.permission==="denied"){
+    zone.textContent = "Notifications refusées : autorise-les dans les réglages de ton navigateur.";
+    zone.className = "etat-notif ko"; btn.style.display="none";
+  }else{
+    zone.textContent = ""; btn.textContent = "Activer les rappels";
+  }
+}
+async function activerNotifications(){
+  if(etat.prefs.notif && Notification.permission==="granted"){
+    etat.prefs.notif = false; sauver(); majEtatNotif(); return;
+  }
+  const perm = await Notification.requestPermission();
+  if(perm==="granted"){
+    etat.prefs.notif = true; sauver();
+    new Notification("Mon Quotidien", {body:"Les rappels sont activés 🎉"});
+  }
+  majEtatNotif();
+}
+function verifierRappels(){
+  if(!("Notification" in window) || Notification.permission!=="granted" || !etat.prefs.notif) return;
+  const maintenant = new Date();
+  let modif = false;
+  etat.evenements.forEach(e=>{
+    if(e.rappel==null || e.rappel<0 || etat.notifie[e.id]) return;
+    const [a,m,j] = e.date.split("-").map(Number);
+    const [h,mn] = (e.heure||"08:00").split(":").map(Number);
+    const debut = new Date(a,m-1,j,h,mn);
+    const declenchement = new Date(debut.getTime() - e.rappel*60000);
+    if(maintenant >= declenchement && maintenant <= debut){
+      const quand = e.rappel===0 ? "C'est maintenant" : "Dans "+(LIB_RAPPEL[e.rappel]||"").replace(" avant","");
+      new Notification("📅 "+e.titre, {body: quand + (e.heure?" · "+e.heure:"") + (e.lieu?" · "+e.lieu:"")});
+      etat.notifie[e.id] = true; modif = true;
+    }
+  });
+  if(modif) sauver();
+}
+setInterval(verifierRappels, 30000);
+
+// ---------- Notes (avec liens [[façon Obsidian]]) ----------
 let tagFiltre = null;
 function ajouterNote(){
   const titre = document.getElementById("note-titre").value.trim();
@@ -637,28 +792,95 @@ function filtrerTag(tag){
   tagFiltre = (tagFiltre===tag) ? null : tag;
   afficherNotes();
 }
+function rendreCorps(txt){
+  // échappe le HTML puis transforme [[Titre]] en lien cliquable
+  return echap(txt).replace(/\[\[([^\[\]]+)\]\]/g, (m,titre)=>
+    `<a class="lien-note" onclick="event.stopPropagation();ouvrirNote('${attr(titre)}')">${titre}</a>`
+  );
+}
+function trouverNoteParTitre(titre){
+  const t = titre.trim().toLowerCase();
+  return etat.notes.find(n=>n.titre.toLowerCase()===t)
+      || etat.notes.find(n=>n.titre.toLowerCase().includes(t));
+}
+function ouvrirNote(titre){
+  const n = trouverNoteParTitre(titre);
+  montrerEcran("notes");
+  if(n){
+    tagFiltre = null;
+    document.getElementById("recherche-notes").value = "";
+    afficherNotes();
+    const el = document.getElementById("note-"+n.id);
+    if(el){
+      el.querySelector(".corps")?.classList.remove("replie");
+      el.classList.add("surbrillance");
+      el.scrollIntoView({behavior:"smooth", block:"center"});
+      setTimeout(()=>el.classList.remove("surbrillance"), 1600);
+    }
+  }else{
+    // la note n'existe pas encore : on pré-remplit le formulaire pour la créer
+    document.getElementById("note-titre").value = titre;
+    document.getElementById("note-corps").focus();
+    window.scrollTo({top:0, behavior:"smooth"});
+  }
+}
+function retroliens(note){
+  const motif = "[["+note.titre.toLowerCase();
+  return etat.notes.filter(n => n.id!==note.id && (n.corps||"").toLowerCase().includes(motif));
+}
 function afficherNotes(){
   const q = document.getElementById("recherche-notes").value.trim().toLowerCase();
-  // nuage de tags
   const tousTags = [...new Set(etat.notes.flatMap(n=>n.tags))];
   document.getElementById("filtres-tags").innerHTML = tousTags.map(t=>
-    `<button class="${tagFiltre===t?"actif":""}" onclick="filtrerTag('${echap(t).replace(/'/g,"\\'")}')">#${echap(t)}</button>`
+    `<button class="${tagFiltre===t?"actif":""}" onclick="filtrerTag('${attr(t)}')">#${echap(t)}</button>`
   ).join("");
   let liste = etat.notes;
   if(tagFiltre) liste = liste.filter(n=>n.tags.includes(tagFiltre));
   if(q) liste = liste.filter(n=> (n.titre+" "+n.corps+" "+n.tags.join(" ")).toLowerCase().includes(q));
-  document.getElementById("liste-notes").innerHTML = liste.length ? liste.map(n=>`
-    <div class="note" id="note-${n.id}">
+  document.getElementById("liste-notes").innerHTML = liste.length ? liste.map(n=>{
+    const liens = retroliens(n);
+    return `<div class="note" id="note-${n.id}">
       <div class="titre"><span>${echap(n.titre)}</span>
         <button class="btn-suppr" onclick="supprimerNote('${n.id}')" aria-label="Supprimer">×</button></div>
-      ${n.corps?`<div class="corps replie" onclick="basculerNote('${n.id}')">${echap(n.corps)}</div>`:""}
+      ${n.corps?`<div class="corps replie" onclick="basculerNote('${n.id}')">${rendreCorps(n.corps)}</div>`:""}
       ${n.tags.length?`<div class="tags">${n.tags.map(t=>`<span class="tag">#${echap(t)}</span>`).join("")}</div>`:""}
+      ${liens.length?`<div class="retroliens">↩ Mentionnée dans : ${liens.map(l=>`<a class="lien-note" onclick="ouvrirNote('${attr(l.titre)}')">${echap(l.titre)}</a>`).join(", ")}</div>`:""}
       <div class="pied">${dateLisible(n.date)}</div>
-    </div>`).join("")
-    : '<div class="vide" style="padding:10px 4px">Aucune note. Ton second cerveau attend sa première idée 🧠</div>';
+    </div>`;
+  }).join("")
+  : '<div class="vide" style="padding:10px 4px">Aucune note. Ton second cerveau attend sa première idée 🧠</div>';
 }
 
 // ---------- Sport ----------
+const PROGRAMMES = [
+  {nom:"Full body débutant", type:"Musculation", duree:35,
+   detail:"3 tours : 12 squats · 10 pompes (genoux ok) · 12 rowings élastique · 30 s gainage · 15 fentes alternées. 1 min de repos entre les tours."},
+  {nom:"HIIT express", type:"HIIT", duree:20,
+   detail:"8 tours de 30 s effort / 30 s repos : jumping jacks · squats · mountain climbers · burpees (répéter le cycle 2 fois)."},
+  {nom:"Course débutant", type:"Course", duree:30,
+   detail:"5 min de marche rapide · 8 × (1 min de course / 2 min de marche) · 4 min de retour au calme."},
+  {nom:"Haut du corps", type:"Musculation", duree:40,
+   detail:"4 tours : 10 pompes · 10 dips sur chaise · 12 élévations latérales · 10 curls · 45 s gainage. 90 s de repos entre les tours."},
+  {nom:"Mobilité & étirements", type:"Yoga", duree:15,
+   detail:"Nuque et épaules · 10 chat-vache · pigeon 1 min/côté · ischios 1 min/côté · 2 min de respiration profonde."}
+];
+function afficherProgrammes(){
+  document.getElementById("liste-programmes").innerHTML = PROGRAMMES.map((p,i)=>`
+    <div class="programme">
+      <div class="entete">
+        <div><div class="nom">${p.nom}</div><div class="infos">${p.type} · ${p.duree} min</div></div>
+        <button class="btn secondaire petit" onclick="utiliserProgramme(${i})">Utiliser</button>
+      </div>
+      <div class="detail">${p.detail}</div>
+    </div>`).join("");
+}
+function utiliserProgramme(i){
+  const p = PROGRAMMES[i];
+  document.getElementById("seance-type").value = p.type;
+  document.getElementById("seance-duree").value = p.duree;
+  document.getElementById("seance-notes").value = p.nom + " — " + p.detail;
+  document.getElementById("carte-seance").scrollIntoView({behavior:"smooth", block:"start"});
+}
 function ajouterHabitude(){
   const champ = document.getElementById("habitude-nom");
   const nom = champ.value.trim();
@@ -679,7 +901,7 @@ function basculerHabitude(id){
 }
 function serieHabitude(h){
   let n = 0; const d = new Date();
-  if(!h.jours[cleDate(d)]) d.setDate(d.getDate()-1); // la série tient si hier est coché
+  if(!h.jours[cleDate(d)]) d.setDate(d.getDate()-1);
   while(h.jours[cleDate(d)]){ n++; d.setDate(d.getDate()-1); }
   return n;
 }
@@ -712,11 +934,9 @@ function supprimerSeance(id){
   sauver(); toutAfficher();
 }
 function afficherSport(){
-  // habitudes
   document.getElementById("liste-habitudes").innerHTML =
     etat.habitudes.length ? etat.habitudes.map(habitudeHTML).join("")
     : '<div class="vide">Ajoute une première habitude ci-dessous.</div>';
-  // historique
   document.getElementById("liste-seances").innerHTML = etat.seances.length
     ? etat.seances.slice(0,30).map(s=>`<div class="seance">
         <div class="contenu" style="flex:1">
@@ -726,7 +946,6 @@ function afficherSport(){
         <button class="btn-suppr" onclick="supprimerSeance('${s.id}')" aria-label="Supprimer">×</button>
       </div>`).join("")
     : '<div class="vide">Aucune séance enregistrée pour l\'instant.</div>';
-  // stats semaine (lundi -> aujourd'hui)
   const d = new Date(); const lundi = new Date(d); lundi.setDate(d.getDate()-((d.getDay()+6)%7));
   const debut = cleDate(lundi);
   const seancesSem = etat.seances.filter(s=>s.date>=debut);
@@ -746,6 +965,7 @@ function afficherSport(){
 // ---------- Export / import ----------
 document.getElementById("btn-donnees").addEventListener("click", ()=>{
   document.getElementById("dlg-donnees").classList.add("ouvert");
+  majEtatNotif();
 });
 function fermerDialogue(){ document.getElementById("dlg-donnees").classList.remove("ouvert"); }
 document.getElementById("dlg-donnees").addEventListener("click", e=>{
@@ -767,7 +987,7 @@ function importerDonnees(ev){
     try{
       const donnees = JSON.parse(lecteur.result);
       etat = Object.assign(etatVide(), donnees);
-      sauver(); toutAfficher(); fermerDialogue();
+      sauver(); appliquerTheme(); toutAfficher(); fermerDialogue();
     }catch(e){ alert("Fichier invalide : impossible de lire cette sauvegarde."); }
   };
   lecteur.readAsText(fichier);
@@ -783,16 +1003,23 @@ function toutAfficher(){
   afficherAVenir();
   afficherNotes();
   afficherSport();
+  afficherProgrammes();
 }
 document.getElementById("date-tete").textContent =
   new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
 document.getElementById("evt-date").value = AUJ;
 if(memoireSeule) document.getElementById("bandeau-memoire").style.display="block";
-// Entrée = ajout rapide
 document.getElementById("capture-rapide").addEventListener("keydown",e=>{ if(e.key==="Enter") captureRapide(); });
 document.getElementById("tache-libelle").addEventListener("keydown",e=>{ if(e.key==="Enter") ajouterTache(); });
 document.getElementById("habitude-nom").addEventListener("keydown",e=>{ if(e.key==="Enter") ajouterHabitude(); });
+appliquerTheme();
 toutAfficher();
+verifierRappels();
+
+// ---------- Service worker (mode hors connexion) ----------
+if ("serviceWorker" in navigator && location.protocol === "https:") {
+  navigator.serviceWorker.register("./sw.js").catch(()=>{ /* pas bloquant */ });
+}
 </script>
 </body>
 </html>
