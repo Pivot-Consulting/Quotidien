@@ -13,17 +13,23 @@ test('le catalogue V7 lance exactement les 20 thématiques', async () => {
   assert.equal(new Set(EXPECTED_IDS).size, 20);
 });
 
-test('le point d’entrée charge le hub Life OS', async () => {
+test('le point d’entrée charge le hub et la vague A', async () => {
   const main = await readFile('src/main.ts', 'utf8');
   assert.match(main, /life-os\/hub\.js/);
+  assert.match(main, /wave-a\/app\.js/);
 });
 
-test('la PWA précharge les modules Life OS', async () => {
+test('la PWA précharge Life OS et la vague A', async () => {
   const worker = await readFile('public/sw.js', 'utf8');
-  assert.match(worker, /v7\.0\.0-alpha\.1/);
-  assert.match(worker, /life-os\/catalog\.js/);
-  assert.match(worker, /life-os\/store\.js/);
-  assert.match(worker, /life-os\/hub\.js/);
+  assert.match(worker, /v7\.1\.0/);
+  for (const path of ['life-os/catalog.js','life-os/store.js','life-os/hub.js','wave-a/app.js','wave-a/store.js']) assert.ok(worker.includes(path));
+});
+
+test('la vague A couvre les cinq outils métier', async () => {
+  const store = await readFile('src/wave-a/store.ts', 'utf8');
+  const app = await readFile('src/wave-a/app.ts', 'utf8');
+  for (const type of ['project','transaction','document','asset','automation']) assert.ok(store.includes(`'${type}'`));
+  for (const label of ['Projets de vie','Finances','Documents','Maison','Automatisations']) assert.ok(app.includes(label) || store.includes(label));
 });
 
 test('le manifeste expose le raccourci vers les 20 espaces', async () => {
