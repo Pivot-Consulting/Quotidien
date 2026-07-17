@@ -1,0 +1,1 @@
+Les fichiers temporaires `.migration` seront supprimés dans le commit final atomique.
