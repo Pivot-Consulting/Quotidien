@@ -33,7 +33,7 @@ jobs:
           cat .payload/part-*.bin > /tmp/quotidien-v6.tar.gz
           mkdir -p /tmp/quotidien-v6
           tar -xzf /tmp/quotidien-v6.tar.gz -C /tmp/quotidien-v6
-          rsync -a --delete --exclude='.git' /tmp/quotidien-v6/ ./
+          rsync -a --delete --exclude='.git' --exclude='.github' /tmp/quotidien-v6/ ./
 
       - name: Commit complete V6
         shell: bash
