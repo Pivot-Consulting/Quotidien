@@ -1,19 +1,14 @@
 # Historique
 
-## 5.0.0
+## 6.0.0
 
-- ajout du tableau de bord Aujourd'hui ;
-- capture universelle ;
-- planification des trois priorités ;
-- mode concentration ;
-- routines ;
-- édition des principaux objets ;
-- corbeille et restauration ;
-- habitudes hebdomadaires ;
-- partage ICS Apple ;
-- rappels enrichis ;
-- stockage IndexedDB en complément de localStorage ;
-- détection du changement de jour ;
-- navigation mobile à cinq entrées ;
-- gestion visible des mises à jour PWA ;
-- découpage du code en fichiers dédiés.
+- remplacement complet de la V5 par une application TypeScript local-first ;
+- migration automatique de toutes les données historiques et de la corbeille ;
+- stockage IndexedDB et sauvegarde JSON ;
+- tableau de bord, planification et mode concentration ;
+- agenda mois/semaine et intégration `.ics` Apple ;
+- second cerveau avec journal, liens, graphe et export Obsidian ;
+- habitudes, routines, sport et suivi santé ;
+- PWA hors connexion, notifications locales et rappels matin/soir ;
+- tests et déploiement automatique GitHub Pages ;
+- socle Cloudflare Worker/D1 pour la future synchronisation.
