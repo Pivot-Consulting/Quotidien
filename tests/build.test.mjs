@@ -2,20 +2,22 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-test('le manifeste identifie Quotidien comme PWA installable', async () => {
+test('le manifeste identifie Quotidien Life OS comme PWA installable', async () => {
   const manifest = JSON.parse(await readFile('public/manifest.webmanifest', 'utf8'));
-  assert.equal(manifest.name, 'Quotidien');
+  assert.equal(manifest.name, 'Quotidien Life OS');
   assert.equal(manifest.display, 'standalone');
   assert.ok(manifest.icons.length >= 2);
   assert.ok(manifest.shortcuts.some(shortcut => shortcut.url.includes('capture=goal')));
+  assert.ok(manifest.shortcuts.some(shortcut => shortcut.url.includes('lifeos=1')));
 });
 
-test('le service worker précharge le shell V6.1', async () => {
+test('le service worker précharge le shell V7 Life OS', async () => {
   const worker = await readFile('public/sw.js', 'utf8');
-  assert.match(worker, /v6\.1\.0/);
+  assert.match(worker, /v7\.0\.0-alpha\.1/);
   assert.match(worker, /assets\/main\.js/);
   assert.match(worker, /assets\/app-v61\.js/);
   assert.match(worker, /assets\/normalization\.js/);
+  assert.match(worker, /assets\/life-os\/hub\.js/);
   assert.match(worker, /showNotification/);
 });
 
@@ -26,7 +28,7 @@ test('la migration couvre les domaines historiques', async () => {
   }
 });
 
-test('le modèle V6.1 contient les nouveaux outils', async () => {
+test('le modèle V6.1 reste présent sous le hub V7', async () => {
   const types = await readFile('src/types.ts', 'utf8');
   const store = await readFile('src/store.ts', 'utf8');
   const app = await readFile('src/app-v61.ts', 'utf8');
