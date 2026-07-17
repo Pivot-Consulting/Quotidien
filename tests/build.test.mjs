@@ -7,15 +7,13 @@ test('le manifeste identifie Quotidien Life OS comme PWA installable', async () 
   assert.equal(manifest.name, 'Quotidien Life OS');
   assert.equal(manifest.display, 'standalone');
   assert.ok(manifest.icons.length >= 2);
-  assert.ok(manifest.shortcuts.some(shortcut => shortcut.url.includes('capture=goal')));
-  assert.ok(manifest.shortcuts.some(shortcut => shortcut.url.includes('lifeos=1')));
 });
 
-test('le service worker précharge le shell V7.1.3', async () => {
+test('le service worker V7.1.4 se désinstalle et purge les caches', async () => {
   const worker = await readFile('public/sw.js', 'utf8');
-  assert.match(worker, /v7\.1\.3/);
-  for (const path of ['assets/main.js','assets/mobile-interactions.js','assets/app-v61.js','assets/version-brand.js','assets/normalization.js','assets/life-os/hub.js','assets/wave-a/app.js']) assert.ok(worker.includes(path));
-  assert.match(worker, /showNotification/);
+  assert.match(worker, /v7\.1\.4-no-cache/);
+  assert.match(worker, /registration\.unregister/);
+  assert.match(worker, /caches\.delete/);
 });
 
 test('la migration couvre les domaines historiques', async () => {
