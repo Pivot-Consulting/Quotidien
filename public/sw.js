@@ -1,9 +1,12 @@
-const VERSION='v7.1.3';
-const CACHE=`quotidien-${VERSION}`;
-const SHELL=['./','./index.html','./assets/main.js','./assets/mobile-interactions.js','./assets/app-v61.js','./assets/version-brand.js','./assets/store.js','./assets/storage.js','./assets/normalization.js','./assets/migration.js','./assets/types.js','./assets/utils.js','./assets/life-os/hub.js','./assets/life-os/catalog.js','./assets/life-os/store.js','./assets/wave-a/app.js','./assets/wave-a/store.js','./assets/styles.css','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png'];
-self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting())));
-self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
-self.addEventListener('message',event=>{if(event.data?.type==='SKIP_WAITING')self.skipWaiting();});
-self.addEventListener('fetch',event=>{if(event.request.method!=='GET')return;const request=event.request;if(request.mode==='navigate'){event.respondWith(fetch(request,{cache:'no-store'}).then(response=>{const copy=response.clone();caches.open(CACHE).then(cache=>cache.put('./index.html',copy));return response;}).catch(()=>caches.match('./index.html')));return;}event.respondWith(fetch(request,{cache:'no-store'}).then(response=>{if(response.ok&&new URL(request.url).origin===self.location.origin)caches.open(CACHE).then(cache=>cache.put(request,response.clone()));return response;}).catch(()=>caches.match(request)));});
-self.addEventListener('push',event=>{let data={};try{data=event.data?.json()||{};}catch{data={body:event.data?.text()||'Tu as un rappel.'};}event.waitUntil(self.registration.showNotification(data.title||'Quotidien',{body:data.body||'Tu as un rappel.',icon:'./icon-192.png',badge:'./icon-192.png',tag:data.tag||'quotidien',data:{url:data.url||'./'},actions:data.actions||[{action:'open',title:'Ouvrir'}]}));});
-self.addEventListener('notificationclick',event=>{event.notification.close();const target=new URL(event.notification.data?.url||'./',self.location.href).href;event.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(list=>{const existing=list.find(client=>new URL(client.url).origin===new URL(target).origin);return existing?(existing.navigate(target),existing.focus()):clients.openWindow(target);}));});
+const VERSION='v7.1.4-no-cache';
+
+self.addEventListener('install',event=>event.waitUntil(self.skipWaiting()));
+self.addEventListener('activate',event=>event.waitUntil((async()=>{
+  const names=await caches.keys();
+  await Promise.all(names.map(name=>caches.delete(name)));
+  await self.registration.unregister();
+  const windows=await self.clients.matchAll({type:'window',includeUncontrolled:true});
+  for(const client of windows) client.navigate(client.url);
+})()));
+
+self.addEventListener('fetch',()=>{});
