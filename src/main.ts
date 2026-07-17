@@ -1,3 +1,5 @@
+export {};
+
 const root = document.querySelector<HTMLElement>('#app');
 
 function showRecovery(message: string): void {
