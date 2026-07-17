@@ -33,9 +33,12 @@ jobs:
 
       - name: Préparer le site statique
         run: |
-          touch dist/.nojekyll
-          cp dist/index.html dist/404.html
-          echo "${GITHUB_SHA}" > dist/version.txt
+          rm -rf /tmp/quotidien-pages
+          mkdir -p /tmp/quotidien-pages
+          cp -R dist/. /tmp/quotidien-pages/
+          touch /tmp/quotidien-pages/.nojekyll
+          cp /tmp/quotidien-pages/index.html /tmp/quotidien-pages/404.html
+          echo "${GITHUB_SHA}" > /tmp/quotidien-pages/version.txt
 
       - name: Publier dans la branche gh-pages
         env:
@@ -45,7 +48,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout --orphan gh-pages
           git rm -rf .
-          cp -R dist/. .
+          cp -R /tmp/quotidien-pages/. .
           git add -A
           git commit -m "deploy: Quotidien ${GITHUB_SHA}"
           git push --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
