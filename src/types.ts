@@ -6,6 +6,12 @@ export type SyncStatus = 'local' | 'pending' | 'synced' | 'conflict';
 export type Priority = 'normal' | 'important' | 'urgent';
 export type Recurrence = '' | 'daily' | 'weekly' | 'monthly';
 export type WeekDay = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+export type TaskStatus = 'inbox' | 'next' | 'waiting' | 'someday';
+export type EnergyLevel = 'low' | 'medium' | 'high';
+export type GoalStatus = 'active' | 'paused' | 'completed' | 'abandoned';
+export type GoalArea = 'personal' | 'work' | 'health' | 'finance' | 'learning' | 'other';
+export type TimeBlockType = 'focus' | 'meeting' | 'admin' | 'sport' | 'personal' | 'buffer';
+export type DashboardWidget = 'timeline' | 'priorities' | 'habits' | 'goals' | 'mood' | 'insights';
 
 export interface Meta {
   id: Id;
@@ -35,6 +41,14 @@ export interface Task extends Meta {
   recurrence: Recurrence;
   subtasks: Subtask[];
   order: number;
+  description?: string;
+  tags?: string[];
+  status?: TaskStatus;
+  context?: string;
+  energy?: EnergyLevel;
+  actualMinutes?: number;
+  parentGoalId?: Id | null;
+  startDate?: ISODate | null;
 }
 
 export interface CalendarEvent extends Meta {
@@ -49,6 +63,10 @@ export interface CalendarEvent extends Meta {
   recurrence: Recurrence;
   reminderMinutes: number | null;
   countdown: boolean;
+  allDay?: boolean;
+  endDate?: ISODate | null;
+  color?: string;
+  url?: string;
 }
 
 export interface Note extends Meta {
@@ -58,6 +76,9 @@ export interface Note extends Meta {
   tags: string[];
   pinned: boolean;
   archived: boolean;
+  folder?: string;
+  favorite?: boolean;
+  sourceUrl?: string;
 }
 
 export interface Habit extends Meta {
@@ -68,6 +89,10 @@ export interface Habit extends Meta {
   completions: Record<ISODate, number>;
   unit: string;
   target: number;
+  color?: string;
+  icon?: string;
+  skipped?: Record<ISODate, boolean>;
+  reminderTime?: string | null;
 }
 
 export interface RoutineStep { id: Id; label: string; }
@@ -78,6 +103,8 @@ export interface Routine extends Meta {
   days: WeekDay[];
   steps: RoutineStep[];
   completions: Record<ISODate, Id[]>;
+  durationMinutes?: number;
+  color?: string;
 }
 
 export interface Exercise {
@@ -92,6 +119,8 @@ export interface Program extends Meta {
   kind: 'program';
   name: string;
   exercises: Exercise[];
+  category?: string;
+  goal?: string;
 }
 
 export interface WorkoutSession extends Meta {
@@ -101,6 +130,8 @@ export interface WorkoutSession extends Meta {
   durationMinutes: number;
   notes: string;
   exercises: Exercise[];
+  effort?: number;
+  calories?: number | null;
 }
 
 export interface WeightEntry extends Meta { kind: 'weight'; date: ISODate; kg: number; }
@@ -124,6 +155,38 @@ export interface WeeklyReview extends Meta {
   priorities: string;
 }
 
+export interface Goal extends Meta {
+  kind: 'goal';
+  title: string;
+  area: GoalArea;
+  status: GoalStatus;
+  targetDate: ISODate | null;
+  progress: number;
+  notes: string;
+  project: string;
+  color: string;
+}
+
+export interface TimeBlock extends Meta {
+  kind: 'timeBlock';
+  date: ISODate;
+  start: string;
+  end: string;
+  title: string;
+  type: TimeBlockType;
+  linkedTaskIds: Id[];
+  notes: string;
+}
+
+export interface MoodEntry extends Meta {
+  kind: 'mood';
+  date: ISODate;
+  mood: number;
+  energy: number;
+  stress: number;
+  note: string;
+}
+
 export interface Preferences {
   theme: Theme;
   mode: 'local' | 'synced';
@@ -140,6 +203,12 @@ export interface Preferences {
   top3: Record<ISODate, Id[]>;
   lastActiveDate: ISODate;
   installDismissed: boolean;
+  dashboardWidgets?: DashboardWidget[];
+  workingDayStart?: string;
+  workingDayEnd?: string;
+  weekStartsMonday?: boolean;
+  defaultFocusMinutes?: number;
+  compactMode?: boolean;
 }
 
 export interface AppState {
@@ -160,10 +229,13 @@ export interface AppState {
   water: Record<ISODate, number>;
   projects: string[];
   reviews: WeeklyReview[];
+  goals: Goal[];
+  timeBlocks: TimeBlock[];
+  moods: MoodEntry[];
   notificationLog: Record<string, ISODateTime>;
   preferences: Preferences;
 }
 
 export type Screen = 'today' | 'plan' | 'notes' | 'tracking';
-export type PlanTab = 'tasks' | 'agenda';
-export type TrackingTab = 'habits' | 'sport' | 'health';
+export type PlanTab = 'tasks' | 'agenda' | 'goals';
+export type TrackingTab = 'habits' | 'sport' | 'health' | 'analytics';
