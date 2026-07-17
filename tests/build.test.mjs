@@ -11,23 +11,16 @@ test('le manifeste identifie Quotidien Life OS comme PWA installable', async () 
   assert.ok(manifest.shortcuts.some(shortcut => shortcut.url.includes('lifeos=1')));
 });
 
-test('le service worker précharge le shell V7.1.2', async () => {
+test('le service worker précharge le shell V7.1.3', async () => {
   const worker = await readFile('public/sw.js', 'utf8');
-  assert.match(worker, /v7\.1\.2/);
-  assert.match(worker, /assets\/main\.js/);
-  assert.match(worker, /assets\/app-v61\.js/);
-  assert.match(worker, /assets\/version-brand\.js/);
-  assert.match(worker, /assets\/normalization\.js/);
-  assert.match(worker, /assets\/life-os\/hub\.js/);
-  assert.match(worker, /assets\/wave-a\/app\.js/);
+  assert.match(worker, /v7\.1\.3/);
+  for (const path of ['assets/main.js','assets/mobile-interactions.js','assets/app-v61.js','assets/version-brand.js','assets/normalization.js','assets/life-os/hub.js','assets/wave-a/app.js']) assert.ok(worker.includes(path));
   assert.match(worker, /showNotification/);
 });
 
 test('la migration couvre les domaines historiques', async () => {
   const migration = await readFile('src/migration.ts', 'utf8');
-  for (const key of ['taches', 'evenements', 'notes', 'habitudes', 'routines', 'programmesPerso', 'seances', 'poids', 'sommeil', 'repas', 'mesures', 'eau']) {
-    assert.ok(migration.includes(key), `migration manquante pour ${key}`);
-  }
+  for (const key of ['taches', 'evenements', 'notes', 'habitudes', 'routines', 'programmesPerso', 'seances', 'poids', 'sommeil', 'repas', 'mesures', 'eau']) assert.ok(migration.includes(key), `migration manquante pour ${key}`);
 });
 
 test('le modèle V6.1 reste présent sous le hub V7', async () => {
