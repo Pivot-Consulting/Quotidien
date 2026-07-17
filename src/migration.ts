@@ -15,11 +15,14 @@ export function emptyState(): AppState {
   return {
     schemaVersion: 6, deviceId: device,
     tasks: [], events: [], notes: [], habits: [], routines: [], programs: [], sessions: [], focusSessions: [],
-    weights: [], sleep: [], meals: [], measurements: [], water: {}, projects: ['Personnel', 'Travail'], reviews: [], notificationLog: {},
+    weights: [], sleep: [], meals: [], measurements: [], water: {}, projects: ['Personnel', 'Travail'], reviews: [],
+    goals: [], timeBlocks: [], moods: [], notificationLog: {},
     preferences: {
       theme: 'system', mode: 'local', morningSummaryTime: '07:30', eveningReviewTime: '21:30',
       defaultTaskReminderTime: '09:00', defaultEventReminderMinutes: 30, notificationsEnabled: false, objectiveSessions: 3,
       pinHash: null, lastExportAt: null, activeProject: null, autoRollOverdue: false, top3: {}, lastActiveDate: today(), installDismissed: false,
+      dashboardWidgets: ['timeline', 'priorities', 'habits', 'goals', 'mood', 'insights'], workingDayStart: '08:00', workingDayEnd: '19:00',
+      weekStartsMonday: true, defaultFocusMinutes: 25, compactMode: false,
     },
   };
 }
@@ -27,7 +30,6 @@ export function emptyState(): AppState {
 const string = (value: unknown, fallback = ''): string => typeof value === 'string' ? value : fallback;
 const number = (value: unknown, fallback = 0): number => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const list = (value: unknown): Array<Record<string, unknown>> => Array.isArray(value) ? value as Array<Record<string, unknown>> : [];
-
 
 function normalizeRoutineCompletions(value: unknown, stepIds: string[]): Record<string, string[]> {
   if (!value || typeof value !== 'object') return {};
@@ -57,33 +59,35 @@ export function migrateV5(): AppState {
       priority: item.urgent ? 'urgent' : item.important ? 'important' : 'normal', urgent: Boolean(item.urgent), important: Boolean(item.important),
       recurrence: item.repete === 'quotidien' ? 'daily' : item.repete === 'hebdo' ? 'weekly' : item.repete === 'mensuel' ? 'monthly' : '',
       subtasks: list(item.sous).map(sub => ({ id: string(sub.id, uid()), title: string(sub.l, 'Sous-tâche'), completed: Boolean(sub.f) })), order: number(item.ordre, index),
+      description: string(item.description), tags: Array.isArray(item.tags) ? item.tags.map(String) : [], status: 'next', context: '', energy: 'medium', actualMinutes: 0, parentGoalId: null, startDate: null,
     }));
     state.events = list(legacy.evenements).map((item): CalendarEvent => ({
       ...meta(device), id: string(item.id, uid()), kind: 'event', title: string(item.titre, 'Événement'), date: string(item.date, today()),
       time: string(item.heure) || null, durationMinutes: number(item.duree), category: item.cat === 'travail' ? 'work' : item.cat === 'sante' ? 'health' : item.cat === 'perso' ? 'personal' : 'other',
       location: string(item.lieu), notes: '', recurrence: item.recur === 'quotidien' ? 'daily' : item.recur === 'hebdo' ? 'weekly' : item.recur === 'mensuel' ? 'monthly' : '',
-      reminderMinutes: number(item.rappel, -1) >= 0 ? number(item.rappel) : null, countdown: Boolean(item.star),
+      reminderMinutes: number(item.rappel, -1) >= 0 ? number(item.rappel) : null, countdown: Boolean(item.star), allDay: !string(item.heure), endDate: null, color: '#2d6cdf', url: '',
     }));
     state.notes = list(legacy.notes).map((item): Note => ({
       ...meta(device), id: string(item.id, uid()), kind: 'note', title: string(item.titre, 'Note'), body: string(item.corps),
-      tags: Array.isArray(item.tags) ? item.tags.map(String) : [], pinned: Boolean(item.epingle), archived: Boolean(item.archive),
+      tags: Array.isArray(item.tags) ? item.tags.map(String) : [], pinned: Boolean(item.epingle), archived: Boolean(item.archive), folder: 'Notes', favorite: false, sourceUrl: '',
     }));
     state.habits = list(legacy.habitudes).map((item): Habit => ({
       ...meta(device), id: string(item.id, uid()), kind: 'habit', name: string(item.nom, 'Habitude'), days: Array.isArray(item.joursSemaine) ? item.joursSemaine.map(Number).filter(value => value >= 0 && value <= 6) as Habit['days'] : [1,2,3,4,5,6,0], weeklyGoal: number(item.objectifHebdo, Array.isArray(item.joursSemaine) ? item.joursSemaine.length : 7),
       completions: Object.fromEntries(Object.entries((item.jours as Record<string, unknown>) || {}).filter(([, value]) => Boolean(value)).map(([date]) => [date, 1])), unit: 'fois', target: 1,
+      color: '#11a4b7', icon: '✓', skipped: {}, reminderTime: null,
     }));
     state.routines = list(legacy.routines).map((item): Routine => ({
       ...meta(device), id: string(item.id, uid()), kind: 'routine', name: string(item.nom, 'Routine'), time: string(item.heure) || null,
       days: Array.isArray(item.joursSemaine) ? item.joursSemaine.map(Number).filter(value => value >= 0 && value <= 6) as Routine['days'] : [1,2,3,4,5,6,0],
       steps: list(item.etapes).map(step => ({ id: string(step.id, uid()), label: string(step.label ?? step.l, 'Étape') })),
-      completions: normalizeRoutineCompletions(item.fait ?? item.completions, list(item.etapes).map(step => string(step.id, ''))),
+      completions: normalizeRoutineCompletions(item.fait ?? item.completions, list(item.etapes).map(step => string(step.id, ''))), durationMinutes: 15, color: '#9b51cf',
     }));
     state.programs = list(legacy.programmesPerso).map((item): Program => ({
-      ...meta(device), id: string(item.id, uid()), kind: 'program', name: string(item.nom, 'Programme'), exercises: list(item.exercices).map(ex => ({ id: uid(), name: string(ex.nom, 'Exercice'), sets: number(ex.series, 3), reps: number(ex.reps, 10), weight: number(ex.charge) })),
+      ...meta(device), id: string(item.id, uid()), kind: 'program', name: string(item.nom, 'Programme'), exercises: list(item.exercices).map(ex => ({ id: uid(), name: string(ex.nom, 'Exercice'), sets: number(ex.series, 3), reps: number(ex.reps, 10), weight: number(ex.charge) })), category: 'Personnalisé', goal: '',
     }));
     state.sessions = list(legacy.seances).map((item): WorkoutSession => ({
       ...meta(device), id: string(item.id, uid()), kind: 'session', date: string(item.date, today()), type: string(item.type, 'Sport'), durationMinutes: number(item.duree), notes: string(item.notes),
-      exercises: list(item.exos).map(ex => ({ id: uid(), name: string(ex.nom, 'Exercice'), sets: number(ex.series, 3), reps: number(ex.reps, 10), weight: number(ex.charge) })),
+      exercises: list(item.exos).map(ex => ({ id: uid(), name: string(ex.nom, 'Exercice'), sets: number(ex.series, 3), reps: number(ex.reps, 10), weight: number(ex.charge) })), effort: 5, calories: null,
     }));
     state.focusSessions = list(legacy.focusSessions).map((item): FocusSession => ({ ...meta(device), id: string(item.id, uid()), kind: 'focus', taskId: item.taskId ? String(item.taskId) : null, taskTitle: string(item.taskTitle ?? item.titre, 'Focus'), date: string(item.date, today()), minutes: number(item.minutes ?? item.duree) }));
     state.weights = list(legacy.poids).map((item): WeightEntry => ({ ...meta(device), id: string(item.id, uid()), kind: 'weight', date: string(item.date, today()), kg: number(item.kg) }));
@@ -91,19 +95,6 @@ export function migrateV5(): AppState {
     state.meals = list(legacy.repas).map((item): MealEntry => ({ ...meta(device), id: string(item.id, uid()), kind: 'meal', date: string(item.date, today()), mealType: string(item.type, 'Repas'), description: string(item.desc) }));
     state.measurements = list(legacy.mesures).map((item): MeasurementEntry => ({ ...meta(device), id: string(item.id, uid()), kind: 'measurement', date: string(item.date, today()), name: string(item.nom, 'Mesure'), value: number(item.valeur), unit: 'cm' }));
     state.water = (legacy.eau as Record<string, number>) || {};
-    for (const entry of list(legacy.corbeille)) {
-      const item = (entry.item && typeof entry.item === 'object' ? entry.item : {}) as Record<string, unknown>;
-      const deletedAt = string(entry.deletedAt, stamp);
-      const deletedMeta = { ...meta(device), id: string(item.id, uid()), deletedAt };
-      if (entry.kind === 'tache') state.tasks.push({ ...deletedMeta, kind:'task', title:string(item.libelle,'Tâche'), completed:Boolean(item.fait), completedAt:item.faitLe?`${String(item.faitLe)}T12:00:00`:null, dueDate:item.echeance?String(item.echeance):null, dueTime:null, reminderMinutes:null, project:string(item.projet,'Personnel'), estimatedMinutes:number(item.duree), priority:item.urgent?'urgent':item.important?'important':'normal', urgent:Boolean(item.urgent), important:Boolean(item.important), recurrence:item.repete==='quotidien'?'daily':item.repete==='hebdo'?'weekly':item.repete==='mensuel'?'monthly':'', subtasks:list(item.sous).map(sub=>({id:string(sub.id,uid()),title:string(sub.l,'Sous-tâche'),completed:Boolean(sub.f)})), order:number(item.ordre) });
-      if (entry.kind === 'evenement') state.events.push({ ...deletedMeta, kind:'event', title:string(item.titre,'Événement'), date:string(item.date,today()), time:string(item.heure)||null, durationMinutes:number(item.duree), category:item.cat==='travail'?'work':item.cat==='sante'?'health':item.cat==='perso'?'personal':'other', location:string(item.lieu), notes:'', recurrence:item.recur==='quotidien'?'daily':item.recur==='hebdo'?'weekly':item.recur==='mensuel'?'monthly':'', reminderMinutes:number(item.rappel,-1)>=0?number(item.rappel):null, countdown:Boolean(item.star) });
-      if (entry.kind === 'note') state.notes.push({ ...deletedMeta, kind:'note', title:string(item.titre,'Note'), body:string(item.corps), tags:Array.isArray(item.tags)?item.tags.map(String):[], pinned:Boolean(item.epingle), archived:Boolean(item.archive) });
-      if (entry.kind === 'habitude') state.habits.push({ ...deletedMeta, kind:'habit', name:string(item.nom,'Habitude'), days:Array.isArray(item.joursSemaine)?item.joursSemaine.map(Number).filter(value=>value>=0&&value<=6) as Habit['days']:[1,2,3,4,5,6,0], weeklyGoal:number(item.objectifHebdo,7), completions:Object.fromEntries(Object.entries((item.jours as Record<string, unknown>)||{}).filter(([,value])=>Boolean(value)).map(([date])=>[date,1])), unit:'fois', target:1 });
-      if (entry.kind === 'routine') { const rawSteps=list(item.etapes); const steps=rawSteps.map(step=>({id:string(step.id,uid()),label:string(step.label??step.l,'Étape')})); state.routines.push({ ...deletedMeta, kind:'routine', name:string(item.nom,'Routine'), time:string(item.heure)||null, days:Array.isArray(item.joursSemaine)?item.joursSemaine.map(Number).filter(value=>value>=0&&value<=6) as Routine['days']:[1,2,3,4,5,6,0], steps, completions:normalizeRoutineCompletions(item.fait??item.completions,steps.map(step=>step.id)) }); }
-      if (entry.kind === 'programme') state.programs.push({ ...deletedMeta, kind:'program', name:string(item.nom,'Programme'), exercises:list(item.exercices).map(ex=>({id:uid(),name:string(ex.nom,'Exercice'),sets:number(ex.series,3),reps:number(ex.reps,10),weight:number(ex.charge)})) });
-      if (entry.kind === 'seance') state.sessions.push({ ...deletedMeta, kind:'session', date:string(item.date,today()), type:string(item.type,'Sport'), durationMinutes:number(item.duree), notes:string(item.notes), exercises:list(item.exos).map(ex=>({id:uid(),name:string(ex.nom,'Exercice'),sets:number(ex.series,3),reps:number(ex.reps,10),weight:number(ex.charge)})) });
-      if (entry.kind === 'repas') state.meals.push({ ...deletedMeta, kind:'meal', date:string(item.date,today()), mealType:string(item.type,'Repas'), description:string(item.desc) });
-    }
     const prefs = (legacy.prefs as Record<string, unknown>) || {};
     state.preferences.theme = prefs.theme === 'sombre' ? 'dark' : 'light';
     state.preferences.notificationsEnabled = Boolean(prefs.notif);
