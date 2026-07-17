@@ -1,1 +1,15 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0f172a"><title>Quotidien Reset 1.0</title><style>body{margin:0;background:#0f172a;color:#fff;font-family:-apple-system,sans-serif}.app{max-width:720px;margin:auto;padding:24px 16px 120px}.card{background:#18263a;border:1px solid #31435c;border-radius:22px;padding:20px;margin-bottom:14px}h1{font-size:34px}input,button{font:inherit;border-radius:14px;padding:13px}input{width:100%;box-sizing:border-box;background:#0b1320;color:white;border:1px solid #31435c}button{border:0;background:#3b82f6;color:white;font-weight:800}.row{display:flex;gap:10px}.row input{flex:1}.task{display:flex;align-items:center;gap:10px;padding:12px;background:#111c2b;border-radius:14px;margin-top:8px}.task span{flex:1}.done span{text-decoration:line-through;opacity:.5}.muted{color:#9fb0c7}</style></head><body><main class="app"><section class="card"><b>QUOTIDIEN RESET 1.0</b><h1>Bonjour Raphaël</h1><p class="muted">Version reconstruite sans framework, sans build, sans module externe et sans service worker.</p><button id="test">Tester un clic</button><p id="status" class="muted">JavaScript chargé.</p></section><section class="card"><form id="form" class="row"><input id="input" placeholder="Nouvelle tâche" required><button>Ajouter</button></form><div id="list"></div></section></main><script>(function(){var K='quotidien-reset-v1',tasks=[],$=function(id){return document.getElementById(id)};try{tasks=JSON.parse(localStorage.getItem(K)||'[]')}catch(e){tasks=[]}function save(){localStorage.setItem(K,JSON.stringify(tasks))}function render(){$('list').innerHTML=tasks.length?tasks.map(function(t){return '<div class="task '+(t.done?'done':'')+'"><button data-a="toggle" data-id="'+t.id+'">'+(t.done?'✓':'○')+'</button><span>'+t.title.replace(/[&<>]/g,'')+'</span><button data-a="delete" data-id="'+t.id+'">×</button></div>'}).join(''):'<p class="muted">Aucune tâche.</p>'}$('test').onclick=function(){$('status').textContent='Clic reçu à '+new Date().toLocaleTimeString('fr-FR')};$('form').onsubmit=function(e){e.preventDefault();var v=$('input').value.trim();if(!v)return;tasks.unshift({id:String(Date.now()),title:v,done:false});$('input').value='';save();render()};$('list').onclick=function(e){var b=e.target.closest('button[data-a]');if(!b)return;var id=b.dataset.id;if(b.dataset.a==='toggle')tasks=tasks.map(function(t){return t.id===id?{id:t.id,title:t.title,done:!t.done}:t});else tasks=tasks.filter(function(t){return t.id!==id});save();render()};if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister()})})}if('caches' in window){caches.keys().then(function(keys){keys.forEach(function(k){caches.delete(k)})})}render()})();</script></body></html>
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="description" content="Quotidien 2.0 — reconstruction propre et locale.">
+  <title>Quotidien 2.0</title>
+  <link rel="stylesheet" href="./app.css?v=200">
+</head>
+<body>
+  <div id="app"></div>
+  <script src="./app.js?v=200" defer></script>
+</body>
+</html>
