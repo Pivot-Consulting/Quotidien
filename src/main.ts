@@ -1,5 +1,3 @@
-export {};
-
 const root = document.querySelector<HTMLElement>('#app');
 
 function showRecovery(message: string): void {
@@ -10,13 +8,15 @@ function showRecovery(message: string): void {
 
 const watchdog = window.setTimeout(() => showRecovery('Délai de démarrage dépassé.'), 9000);
 
-try {
-  await import('./app-v61.js');
-  window.clearTimeout(watchdog);
-  void import('./life-os/hub.js').catch(error => console.error('Life OS indisponible', error));
-  void import('./wave-a/app.js').catch(error => console.error('Vague A indisponible', error));
-  void import('./version-brand.js').catch(error => console.error('Branding indisponible', error));
-} catch (error) {
-  window.clearTimeout(watchdog);
-  showRecovery(error instanceof Error ? error.message : String(error));
-}
+void (async () => {
+  try {
+    await import('./app-v61.js');
+    window.clearTimeout(watchdog);
+    void import('./life-os/hub.js').catch(error => console.error('Life OS indisponible', error));
+    void import('./wave-a/app.js').catch(error => console.error('Vague A indisponible', error));
+    void import('./version-brand.js').catch(error => console.error('Branding indisponible', error));
+  } catch (error) {
+    window.clearTimeout(watchdog);
+    showRecovery(error instanceof Error ? error.message : String(error));
+  }
+})();
