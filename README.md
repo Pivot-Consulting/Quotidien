@@ -1,78 +1,71 @@
-# Quotidien V6.1
+# Quotidien V7 Life OS
 
-Application personnelle **local-first** pour organiser les tâches, l’agenda, les notes, les objectifs, les habitudes, les routines, le sport et le suivi quotidien.
+Application personnelle **local-first** pour organiser le quotidien et piloter les grands domaines de vie.
 
-Quotidien fonctionne hors connexion et conserve les données sur l’appareil. Les anciennes données V5 et V6 sont normalisées automatiquement lorsqu’elles sont ouvertes sur la même adresse web et dans le même navigateur.
+La branche V7 conserve tout le socle V6.1 — tâches, agenda, objectifs, notes, habitudes, routines, sport, santé et analyses — et ajoute un hub modulaire regroupant 20 espaces supplémentaires. Les données restent sur l’appareil par défaut et l’application fonctionne hors connexion.
 
-## Outils principaux
+## Socle quotidien hérité de V6.1
 
-### Aujourd’hui
+- écran Aujourd’hui avec chronologie, trois priorités, charge, humeur, habitudes et objectifs ;
+- tâches GTD, sous-tâches, projets, tags, énergie, récurrence, rappels et mode Focus ;
+- agenda, événements, time blocking et import/export `.ics` ;
+- objectifs et progression ;
+- notes Markdown, journal, dossiers, liens, graphe et export Obsidian ;
+- habitudes, routines, sport, sommeil, poids, hydratation, repas et mensurations ;
+- analyses sur 28 jours ;
+- capture et recherche universelles ;
+- sauvegarde JSON et PWA hors connexion.
 
-- chronologie réunissant événements et blocs de temps ;
-- trois priorités quotidiennes ;
-- charge estimée et temps disponible ;
-- humeur, énergie et stress ;
-- habitudes du jour ;
-- objectifs actifs ;
-- capture rapide vers la boîte de réception.
+## Les 20 espaces Life OS
 
-### Tâches
+### Organiser
 
-- listes et projets ;
-- description, tags, contexte et niveau d’énergie ;
-- statuts `Inbox`, prochaine action, en attente et un jour ;
-- échéance, heure, date de démarrage et rappels ;
-- temps estimé et temps réellement consacré ;
-- sous-tâches, récurrence, priorités et matrice urgent/important ;
-- liaison à un objectif ;
-- duplication, report et mode Focus.
+- projets de vie ;
+- documents et administratif ;
+- automatisations personnelles ;
+- assistant personnel ;
+- foyer partagé.
 
-### Agenda
+### Se développer
 
-- événements récurrents et rappels ;
-- navigation quotidienne ;
-- blocs de temps avec type, début, fin et tâches liées ;
-- lieux, liens, notes, couleurs et compte à rebours ;
-- import/export Apple Calendar `.ics`.
+- apprentissage ;
+- carrière ;
+- décisions ;
+- journal avancé ;
+- progression et gamification.
 
-### Objectifs
+### Prendre soin de soi
 
-- domaines personnel, professionnel, santé, finances et apprentissage ;
-- statut, date cible, progression et notes ;
-- tâches rattachées et calcul de progression ;
-- mise en pause, clôture et abandon.
+- nutrition ;
+- santé avancée ;
+- relations ;
+- sécurité et urgence.
 
-### Notes
+### Piloter sa vie
 
-- Markdown et liens `[[Note]]` ;
-- dossiers, tags, favorites, épingles, archives et sources ;
-- journal quotidien ;
-- recherche universelle ;
-- graphe des connaissances et export Obsidian.
+- finances ;
+- maison ;
+- voyages ;
+- vie numérique ;
+- impact environnemental ;
+- équilibre de vie.
 
-### Habitudes et routines
+## Alpha 1 : socle commun immédiatement utilisable
 
-- jours programmés, cible quotidienne et objectif hebdomadaire ;
-- icône, couleur, rappel et unité personnalisée ;
-- séries, historique hebdomadaire et jours neutralisés ;
-- routines multi-étapes avec durée et horaire.
+Chaque espace propose :
 
-### Sport et santé
+- une présentation et des résultats attendus ;
+- des points de départ ;
+- une capture d’éléments ;
+- notes, tags, date et statut ;
+- recherche globale ;
+- activation ou masquage ;
+- import et export JSON ;
+- stockage local hors connexion.
 
-- programmes sportifs personnalisés ;
-- séances, durée, effort perçu, calories et exercices ;
-- poids, sommeil, hydratation, repas et mensurations ;
-- humeur, énergie et stress ;
-- analyses sur 28 jours et recommandations automatiques.
+Le bouton flottant **20 espaces** ouvre le hub. Le raccourci clavier est `Ctrl/Cmd + Maj + K`. La PWA expose aussi un raccourci « Ouvrir les 20 espaces ».
 
-### Productivité avancée
-
-- capture universelle ;
-- recherche globale avec `Ctrl/Cmd + K` ;
-- nouvelle capture avec `Ctrl/Cmd + N` ;
-- mode Focus lié aux tâches ;
-- sauvegarde et restauration JSON ;
-- PWA installable et utilisable hors connexion.
+Le document [`docs/V7-LIFE-OS.md`](docs/V7-LIFE-OS.md) décrit l’architecture et les quatre vagues de spécialisation.
 
 ## Développement
 
@@ -100,21 +93,16 @@ Dans GitHub, sélectionner une fois : **Settings → Pages → Source → GitHub
 
 ## Migration et sécurité des données
 
-La migration couvre les tâches, projets, événements, notes, habitudes, routines, programmes, séances, sessions de concentration, poids, sommeil, repas, eau, mensurations, préférences et corbeille.
+La V7 ne remplace pas la base V6.1. Les nouveaux espaces utilisent actuellement une clé locale séparée, `quotidien-v7-life-os`, afin de protéger les données quotidiennes existantes et de permettre une évolution progressive du schéma.
 
-La normalisation V6.1 ajoute les nouveaux champs et tableaux sans supprimer les données déjà enregistrées. Avant une évolution importante, conserver malgré tout un export JSON.
+Les anciennes données V5 et V6 restent normalisées par le socle principal. Avant une évolution importante, conserver un export JSON.
 
 ## Données et confidentialité
 
-Par défaut, aucune donnée personnelle n’est envoyée à un serveur. IndexedDB est le stockage principal et `localStorage` sert de secours. Le PIN est un verrou visuel et non un chiffrement de la base.
+Par défaut, aucune donnée personnelle n’est envoyée à un serveur. IndexedDB et `localStorage` assurent le fonctionnement local. Le PIN actuel est un verrou visuel et non un chiffrement de la base.
+
+Les futurs modules Documents, Santé, Finances, Relations et Sécurité devront être chiffrés côté client avant toute synchronisation distante.
 
 ## Backend optionnel
 
-Le dossier `worker/` contient le point de départ Cloudflare Worker/D1 pour :
-
-- compte facultatif ;
-- synchronisation entre appareils ;
-- Web Push fiable quand l’application est fermée ;
-- calendrier Apple privé abonné.
-
-Il n’est pas requis pour utiliser Quotidien en mode local.
+Le dossier `worker/` contient le point de départ Cloudflare Worker/D1 pour la synchronisation entre appareils, les notifications Web Push et le calendrier Apple privé abonné. Il n’est pas requis pour utiliser Quotidien localement.
