@@ -29,6 +29,7 @@ void (async () => {
   try {
     await removeLegacyWorkersAndCaches();
     await import('./app-v61.js');
+    await import('./version-brand.js');
     window.clearTimeout(watchdog);
     void import('./life-os/hub.js').catch(error => console.error('Life OS indisponible', error));
     void import('./wave-a/app.js').catch(error => console.error('Vague A indisponible', error));
