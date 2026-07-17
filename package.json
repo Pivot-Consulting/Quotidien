@@ -1,6 +1,6 @@
 {
-  "name": "quotidien-v6",
-  "version": "6.1.0",
+  "name": "quotidien-life-os",
+  "version": "7.0.0-alpha.1",
   "private": true,
   "type": "module",
   "scripts": {
