@@ -22,7 +22,7 @@ test('le point d’entrée charge le hub, la vague A et la marque V7.1', async (
 
 test('la PWA précharge Life OS et la vague A', async () => {
   const worker = await readFile('public/sw.js', 'utf8');
-  assert.match(worker, /v7\.1\.1/);
+  assert.match(worker, /v7\.1\.2/);
   for (const path of ['life-os/catalog.js','life-os/store.js','life-os/hub.js','wave-a/app.js','wave-a/store.js','version-brand.js']) assert.ok(worker.includes(path));
 });
 
