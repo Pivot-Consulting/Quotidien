@@ -130,7 +130,7 @@ export class Store {
   async setTop3(date: string, ids: Id[]): Promise<void> { this.state.preferences.top3[date] = ids.slice(0, 3); await this.commit(); }
   async setPreference<K extends keyof AppState['preferences']>(key: K, value: AppState['preferences'][K]): Promise<void> { this.state.preferences[key] = value; await this.commit(); }
   async addProject(name: string): Promise<void> { const clean = name.trim(); if (!clean || this.state.projects.includes(clean)) return; this.state.projects.push(clean); await this.commit(); }
-  async replace(next: AppState): Promise<void> { this.state = next; await replaceState(next); this.listeners.forEach(listener => listener(this.snapshot)); }
+  async replace(next: AppState): Promise<void> { await replaceState(next); this.state = await loadState(); this.listeners.forEach(listener => listener(this.snapshot)); }
   async purgeDeleted(): Promise<void> {
     const cutoff = Date.now() - 30 * 86400000;
     const keep = <T extends { deletedAt: string | null }>(items: T[]): T[] => items.filter(item => !item.deletedAt || new Date(item.deletedAt).getTime() > cutoff);
