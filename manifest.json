@@ -1,16 +1,40 @@
 {
+  "id": "./index.html",
   "name": "Mon Quotidien",
   "short_name": "Quotidien",
-  "description": "Calendrier, tâches, notes, sport — tout mon quotidien, hors connexion.",
+  "description": "Calendrier, tâches, notes, routines, sport et suivi personnel — hors connexion.",
   "lang": "fr",
+  "dir": "ltr",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "portrait-primary",
   "background_color": "#12233B",
   "theme_color": "#12233B",
+  "categories": ["productivity", "lifestyle", "health", "utilities"],
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Nouvelle tâche",
+      "short_name": "Tâche",
+      "url": "./index.html?capture=tache",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Nouvelle note",
+      "short_name": "Note",
+      "url": "./index.html?capture=note",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Nouvel événement",
+      "short_name": "Événement",
+      "url": "./index.html?capture=evenement",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    }
   ]
 }
