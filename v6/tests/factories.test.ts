@@ -1,1 +1,0 @@
-import{describe,expect,it}from'vitest';import{createNote,createTask}from'../src/domain/factories';describe('factories',()=>{it('creates a task',()=>{const task=createTask(' Tester ');expect(task.title).toBe('Tester');expect(task.completed).toBe(false)});it('creates a note',()=>{expect(createNote('','Texte').title).toBe('Nouvelle note')})});

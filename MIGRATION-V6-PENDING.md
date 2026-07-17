@@ -1,1 +1,0 @@
-Migration complète en cours. Ce fichier temporaire sera remplacé par le commit atomique final.

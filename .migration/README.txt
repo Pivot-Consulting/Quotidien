@@ -1,1 +1,0 @@
-Payload binaire temporaire pour appliquer la migration V6 complète via GitHub Actions.
