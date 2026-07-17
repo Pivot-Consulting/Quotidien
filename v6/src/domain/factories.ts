@@ -1,49 +1,44 @@
-import type { AppEvent, Note, Task } from './types';
+import type { EntityMeta, Note, Task } from './types';
 
 const now = () => new Date().toISOString();
 const id = () => crypto.randomUUID();
+const deviceId = () => localStorage.getItem('quotidien-device-id') || 'local-device';
 
-export function createTask(title: string, dueDate?: string): Task {
+function meta(): EntityMeta {
   const timestamp = now();
   return {
     id: id(),
-    kind: 'task',
-    title: title.trim(),
-    completed: false,
-    dueDate: dueDate || null,
-    priority: 0,
     createdAt: timestamp,
     updatedAt: timestamp,
     deletedAt: null,
+    syncStatus: 'local',
+    deviceId: deviceId(),
+    revision: 1,
+  };
+}
+
+export function createTask(title: string, dueDate?: string): Task {
+  return {
+    ...meta(),
+    kind: 'task',
+    title: title.trim(),
+    completed: false,
+    completedAt: null,
+    dueDate: dueDate || null,
+    dueTime: null,
+    project: 'Personnel',
+    estimatedMinutes: 0,
+    priority: 'normal',
   };
 }
 
 export function createNote(title: string, body = ''): Note {
-  const timestamp = now();
   return {
-    id: id(),
+    ...meta(),
     kind: 'note',
     title: title.trim() || 'Nouvelle note',
     body,
     tags: [],
-    createdAt: timestamp,
-    updatedAt: timestamp,
-    deletedAt: null,
-  };
-}
-
-export function createEvent(title: string, startsAt: string): AppEvent {
-  const timestamp = now();
-  return {
-    id: id(),
-    kind: 'event',
-    title: title.trim(),
-    startsAt,
-    endsAt: null,
-    location: '',
-    reminderMinutes: 30,
-    createdAt: timestamp,
-    updatedAt: timestamp,
-    deletedAt: null,
+    pinned: false,
   };
 }
