@@ -1,5 +1,5 @@
 export type WaveAType = 'project'|'transaction'|'document'|'asset'|'automation';
-export interface WaveAItem { id:string; type:WaveAType; title:string; amount?:number; date?:string; status:string; category:string; notes:string; progress?:number; createdAt:string; }
+export interface WaveAItem { id:string; type:WaveAType; title:string; amount?:number|undefined; date?:string|undefined; status:string; category:string; notes:string; progress?:number|undefined; createdAt:string; }
 export interface WaveAState { version:1; items:WaveAItem[]; }
 const KEY='quotidien-v7-wave-a';
 const now=()=>new Date().toISOString();
