@@ -2,7 +2,7 @@
   "id": "./",
   "name": "Quotidien",
   "short_name": "Quotidien",
-  "description": "Tâches, agenda, notes, habitudes, sport et suivi personnel — hors connexion.",
+  "description": "Tâches, agenda, objectifs, notes, habitudes, sport, santé et analyses — hors connexion.",
   "lang": "fr",
   "start_url": "./",
   "scope": "./",
@@ -16,8 +16,9 @@
     {"src":"./icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
   ],
   "shortcuts": [
-    {"name":"Nouvelle tâche","url":"./?capture=task","icons":[{"src":"./icon-192.png","sizes":"192x192"}]},
-    {"name":"Nouvelle note","url":"./?capture=note","icons":[{"src":"./icon-192.png","sizes":"192x192"}]},
-    {"name":"Nouvel événement","url":"./?capture=event","icons":[{"src":"./icon-192.png","sizes":"192x192"}]}
+    {"name":"Nouvelle tâche","short_name":"Tâche","url":"./?capture=task","icons":[{"src":"./icon-192.png","sizes":"192x192"}]},
+    {"name":"Nouvelle note","short_name":"Note","url":"./?capture=note","icons":[{"src":"./icon-192.png","sizes":"192x192"}]},
+    {"name":"Nouvel événement","short_name":"Événement","url":"./?capture=event","icons":[{"src":"./icon-192.png","sizes":"192x192"}]},
+    {"name":"Nouvel objectif","short_name":"Objectif","url":"./?capture=goal","icons":[{"src":"./icon-192.png","sizes":"192x192"}]}
   ]
 }
