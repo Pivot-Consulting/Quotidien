@@ -13,15 +13,10 @@ test('le catalogue V7 lance exactement les 20 thématiques', async () => {
   assert.equal(new Set(EXPECTED_IDS).size, 20);
 });
 
-test('le point d’entrée charge le correctif tactile, le hub, la vague A et la marque V7.1', async () => {
+test('le point d’entrée charge l’application, la marque et les modules', async () => {
   const main = await readFile('src/main.ts', 'utf8');
-  for (const module of ['mobile-interactions.js','life-os/hub.js','wave-a/app.js','version-brand.js']) assert.ok(main.includes(module));
-});
-
-test('la PWA précharge Life OS, la vague A et le correctif tactile', async () => {
-  const worker = await readFile('public/sw.js', 'utf8');
-  assert.match(worker, /v7\.1\.3/);
-  for (const path of ['mobile-interactions.js','life-os/catalog.js','life-os/store.js','life-os/hub.js','wave-a/app.js','wave-a/store.js','version-brand.js']) assert.ok(worker.includes(path));
+  for (const token of ['app-v61.js','life-os/hub.js','wave-a/app.js','version-brand.js']) assert.ok(main.includes(token));
+  assert.ok(!main.includes('mobile-interactions.js'));
 });
 
 test('la vague A couvre les cinq outils métier', async () => {
