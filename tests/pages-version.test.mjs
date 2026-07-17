@@ -2,11 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-test('la page publique annonce V7.1', async () => {
+test('la page publique annonce V7.1.3', async () => {
   const html = await readFile('index.html', 'utf8');
-  assert.match(html, /Quotidien V7\.1/);
+  assert.match(html, /Quotidien V7\.1\.3/);
   assert.doesNotMatch(html, /Quotidien V6\.1/);
-  assert.match(html, /main\.js\?v=7\.1\.2/);
+  assert.match(html, /main\.js\?v=7\.1\.3/);
 });
 
 test('le correctif de marque remplace le libellé historique', async () => {
