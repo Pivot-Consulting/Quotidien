@@ -6,25 +6,38 @@ const DB_NAME = 'quotidien-v6';
 const STORE = 'state';
 const KEY = 'current';
 const FALLBACK_KEY = 'quotidien-v6-state';
+const IDB_TIMEOUT_MS = 3500;
+
+function withTimeout<T>(promise: Promise<T>, milliseconds = IDB_TIMEOUT_MS): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = window.setTimeout(() => reject(new Error('IndexedDB timeout')), milliseconds);
+    promise.then(value => { window.clearTimeout(timer); resolve(value); }, error => { window.clearTimeout(timer); reject(error); });
+  });
+}
 
 function openDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
+  return withTimeout(new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, 1);
     request.onupgradeneeded = () => {
       if (!request.result.objectStoreNames.contains(STORE)) request.result.createObjectStore(STORE);
     };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
-  });
+    request.onblocked = () => reject(new Error('IndexedDB blocked'));
+  }));
 }
 
 async function fromIndexedDb(): Promise<AppState | null> {
   const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const request = db.transaction(STORE, 'readonly').objectStore(STORE).get(KEY);
-    request.onsuccess = () => resolve((request.result as AppState | undefined) ?? null);
-    request.onerror = () => reject(request.error);
-  });
+  try {
+    return await withTimeout(new Promise((resolve, reject) => {
+      const request = db.transaction(STORE, 'readonly').objectStore(STORE).get(KEY);
+      request.onsuccess = () => resolve((request.result as AppState | undefined) ?? null);
+      request.onerror = () => reject(request.error);
+    }));
+  } finally {
+    db.close();
+  }
 }
 
 export async function loadState(): Promise<AppState> {
@@ -46,12 +59,16 @@ export async function saveState(state: AppState): Promise<void> {
   localStorage.setItem(FALLBACK_KEY, JSON.stringify(normalized));
   try {
     const db = await openDb();
-    await new Promise<void>((resolve, reject) => {
-      const tx = db.transaction(STORE, 'readwrite');
-      tx.objectStore(STORE).put(normalized, KEY);
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
+    try {
+      await withTimeout(new Promise<void>((resolve, reject) => {
+        const tx = db.transaction(STORE, 'readwrite');
+        tx.objectStore(STORE).put(normalized, KEY);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      }));
+    } finally {
+      db.close();
+    }
   } catch { /* localStorage remains available */ }
 }
 

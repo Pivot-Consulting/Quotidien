@@ -1,3 +1,5 @@
+export {};
+
 const VERSION = 'V7.1';
 
 function refreshBrand(): void {

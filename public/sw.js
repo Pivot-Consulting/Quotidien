@@ -1,4 +1,4 @@
-const VERSION='v7.1.1';
+const VERSION='v7.1.2';
 const CACHE=`quotidien-${VERSION}`;
 const SHELL=['./','./index.html','./assets/main.js','./assets/app-v61.js','./assets/version-brand.js','./assets/store.js','./assets/storage.js','./assets/normalization.js','./assets/migration.js','./assets/types.js','./assets/utils.js','./assets/life-os/hub.js','./assets/life-os/catalog.js','./assets/life-os/store.js','./assets/wave-a/app.js','./assets/wave-a/store.js','./assets/styles.css','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting())));
