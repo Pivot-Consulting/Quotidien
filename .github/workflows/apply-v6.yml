@@ -14,6 +14,8 @@ on:
 
 permissions:
   contents: write
+  issues: write
+  pull-requests: write
 
 jobs:
   migrate:
@@ -25,6 +27,7 @@ jobs:
         with:
           ref: v6-app
           fetch-depth: 0
+          show-progress: false
 
       - name: Rebuild verified V6 source tree
         shell: bash
@@ -37,10 +40,21 @@ jobs:
 
       - name: Commit complete V6
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "feat: replace V5 with complete Quotidien V6"
-          git push origin HEAD:v6-app
+          set +e
+          {
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "feat: replace V5 with complete Quotidien V6"
+            git push origin HEAD:v6-app
+          } > /tmp/migration.log 2>&1
+          status=$?
+          cat /tmp/migration.log
+          if [ "$status" -ne 0 ]; then
+            body=$(printf '### Échec automatique de la migration V6\n\n```text\n%s\n```' "$(cat /tmp/migration.log)")
+            gh api repos/${{ github.repository }}/issues/${{ github.event.pull_request.number || 1 }}/comments -f body="$body" || true
+            exit "$status"
+          fi
