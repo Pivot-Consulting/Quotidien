@@ -1,0 +1,1 @@
+The connector blob endpoint will be used for binary assets in the final tree.
