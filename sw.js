@@ -5,7 +5,7 @@
    (v3 -> v4 -> v5…) pour que les téléphones reçoivent
    la nouvelle version.
 ===================================================== */
-const VERSION = "v3";
+const VERSION = "v4";
 const CACHE = "mon-quotidien-" + VERSION;
 
 const FICHIERS = [

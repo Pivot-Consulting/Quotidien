@@ -11,29 +11,16 @@
 <link rel="icon" type="image/png" href="icon-192.png">
 <title>Mon Quotidien</title>
 <style>
-/* ============ Système de design — inspiration plan de métro ============ */
 :root{
-  --encre:#12233B;
-  --papier:#F4F6F8;
-  --carte:#FFFFFF;
-  --ligne1:#F2B705;   /* Aujourd'hui */
-  --ligne2:#2E6FE0;   /* Tâches */
-  --ligne3:#0FA36B;   /* Agenda */
-  --ligne4:#B04BD9;   /* Notes */
-  --ligne5:#E85D3A;   /* Sport */
-  --texte:#1D2733;
-  --texte2:#5A6B7E;
-  --trait:#DDE4EB;
-  --danger:#D63B3B;
-  --rayon:14px;
+  --encre:#12233B; --papier:#F4F6F8; --carte:#FFFFFF;
+  --ligne1:#F2B705; --ligne2:#2E6FE0; --ligne3:#0FA36B;
+  --ligne4:#B04BD9; --ligne5:#E85D3A; --ligne6:#12A5B8;
+  --texte:#1D2733; --texte2:#5A6B7E; --trait:#DDE4EB;
+  --danger:#D63B3B; --rayon:14px;
 }
 html[data-theme="sombre"]{
-  --encre:#0B1220;
-  --papier:#0F1622;
-  --carte:#182130;
-  --texte:#E8EDF4;
-  --texte2:#95A5B8;
-  --trait:#2A3547;
+  --encre:#0B1220; --papier:#0F1622; --carte:#182130;
+  --texte:#E8EDF4; --texte2:#95A5B8; --trait:#2A3547;
   color-scheme:dark;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -42,51 +29,40 @@ body{
   font-family:"Avenir Next","Avenir",Futura,-apple-system,"Segoe UI",Roboto,sans-serif;
   background:var(--papier);color:var(--texte);
   padding-bottom:calc(74px + env(safe-area-inset-bottom));
-  transition:background .2s;
 }
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
 input,textarea,select{font-family:inherit;font-size:16px;color:var(--texte)}
 
-/* ---- En-tête ---- */
 header{
   background:var(--encre);color:#fff;
-  padding:calc(14px + env(safe-area-inset-top)) 18px 14px;
-  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:calc(14px + env(safe-area-inset-top)) 16px 14px;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
   position:sticky;top:0;z-index:20;
 }
 header h1{font-size:17px;font-weight:600;letter-spacing:.3px}
 header .date{font-size:12.5px;opacity:.75;margin-top:2px;text-transform:capitalize}
-.tete-actions{display:flex;gap:8px;align-items:center}
-.btn-menu{color:#fff;font-size:13px;border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:6px 12px}
-.btn-theme{color:#fff;font-size:17px;border:1px solid rgba(255,255,255,.35);border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center}
+.tete-actions{display:flex;gap:7px;align-items:center}
+.btn-menu{color:#fff;font-size:13px;border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:6px 11px}
+.btn-theme{color:#fff;font-size:16px;border:1px solid rgba(255,255,255,.35);border-radius:50%;width:33px;height:33px;display:flex;align-items:center;justify-content:center}
 
-/* ---- Pastilles de ligne (signature) ---- */
-.pastille{
-  display:inline-flex;align-items:center;justify-content:center;
-  width:26px;height:26px;border-radius:50%;
-  color:#fff;font-weight:700;font-size:13px;flex:none;
-}
+.pastille{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;color:#fff;font-weight:700;font-size:13px;flex:none}
 
-/* ---- Sections ---- */
 main{padding:16px 14px 20px;max-width:640px;margin:0 auto}
 .ecran{display:none}
 .ecran.actif{display:block;animation:app .18s ease}
 @keyframes app{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.ecran.actif{animation:none}}
-
 .titre-section{display:flex;align-items:center;gap:10px;margin:6px 0 14px}
 .titre-section h2{font-size:20px;font-weight:700}
-
 .carte{background:var(--carte);border:1px solid var(--trait);border-radius:var(--rayon);padding:14px;margin-bottom:12px}
-.carte h3{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--texte2);margin-bottom:10px}
+.carte h3{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--texte2);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.carte h3 .normal{text-transform:none;letter-spacing:0;font-weight:600}
 .vide{color:var(--texte2);font-size:14px;padding:6px 0}
 
-/* ---- Formulaires ---- */
 .ligne-ajout{display:flex;gap:8px;margin-bottom:12px}
 .ligne-ajout input[type=text]{flex:1}
-input[type=text],input[type=date],input[type=time],input[type=number],textarea,select{
-  width:100%;background:var(--carte);border:1px solid var(--trait);
-  border-radius:10px;padding:10px 12px;outline:none;
+input[type=text],input[type=date],input[type=time],input[type=number],input[type=password],textarea,select{
+  width:100%;background:var(--carte);border:1px solid var(--trait);border-radius:10px;padding:10px 12px;outline:none;
 }
 input:focus,textarea:focus,select:focus{border-color:var(--ligne2);box-shadow:0 0 0 3px rgba(46,111,224,.12)}
 textarea{resize:vertical;min-height:80px}
@@ -97,44 +73,51 @@ html[data-theme="sombre"] .btn{background:var(--ligne2)}
 .champ{margin-bottom:10px}
 .champ label{display:block;font-size:12.5px;font-weight:600;color:var(--texte2);margin-bottom:4px}
 .deux-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.trois-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.quatre-cols{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px}
 
-/* ---- Tâches ---- */
+/* Tâches */
 .item{display:flex;align-items:flex-start;gap:10px;padding:11px 2px;border-bottom:1px solid var(--trait)}
 .item:last-child{border-bottom:none}
-.coche{
-  width:22px;height:22px;border-radius:50%;border:2px solid var(--ligne2);
-  flex:none;margin-top:1px;display:flex;align-items:center;justify-content:center;
-  color:#fff;font-size:13px;
-}
+.coche{width:22px;height:22px;border-radius:50%;border:2px solid var(--ligne2);flex:none;margin-top:1px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px}
 .coche.fait{background:var(--ligne2);border-color:var(--ligne2)}
 .item .contenu{flex:1;min-width:0}
 .item .libelle{font-size:15px;line-height:1.35;word-wrap:break-word}
 .item.fait .libelle{text-decoration:line-through;color:var(--texte2)}
-.item .meta{font-size:12px;color:var(--texte2);margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.item .meta{font-size:12px;color:var(--texte2);margin-top:3px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .badge{font-size:11px;font-weight:700;border-radius:6px;padding:2px 6px}
 .badge.haute{background:rgba(214,59,59,.14);color:var(--danger)}
-.badge.moyenne{background:rgba(242,183,5,.18);color:#9A6B00}
-html[data-theme="sombre"] .badge.moyenne{color:#F2C94C}
-.badge.basse{background:rgba(46,111,224,.14);color:var(--ligne2)}
 .badge.retard{background:var(--danger);color:#fff}
 .badge.repete{background:rgba(15,163,107,.14);color:var(--ligne3)}
+.badge.projet{background:rgba(46,111,224,.12);color:var(--ligne2)}
+.badge.urgent{background:rgba(232,93,58,.14);color:var(--ligne5)}
+.badge.important{background:rgba(242,183,5,.2);color:#9A6B00}
+html[data-theme="sombre"] .badge.important{color:#F2C94C}
 .btn-suppr{color:var(--texte2);font-size:17px;padding:2px 6px;flex:none}
+.btn-mini{font-size:12px;color:var(--texte2);border:1px solid var(--trait);border-radius:6px;padding:3px 8px}
 .filtres{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
-.filtres button{border:1px solid var(--trait);background:var(--carte);border-radius:20px;padding:6px 12px;font-size:13px;color:var(--texte2)}
-.filtres button.actif{background:var(--encre);color:#fff;border-color:var(--encre)}
-html[data-theme="sombre"] .filtres button.actif{background:var(--ligne2);border-color:var(--ligne2)}
+.filtres button,.chip{border:1px solid var(--trait);background:var(--carte);border-radius:20px;padding:6px 12px;font-size:13px;color:var(--texte2)}
+.filtres button.actif,.chip.actif{background:var(--encre);color:#fff;border-color:var(--encre)}
+html[data-theme="sombre"] .filtres button.actif,html[data-theme="sombre"] .chip.actif{background:var(--ligne2);border-color:var(--ligne2)}
+.ordre-btns{display:flex;flex-direction:column;gap:3px;flex:none}
+.ordre-btns button{font-size:11px;line-height:1;padding:3px 6px;color:var(--texte2);border:1px solid var(--trait);border-radius:5px}
+.sous{margin-top:6px}
+.sous .srow{display:flex;gap:8px;align-items:center;padding:3px 0;font-size:13.5px}
+.sous .srow.faite span{text-decoration:line-through;color:var(--texte2)}
+.mini-coche{width:17px;height:17px;border-radius:50%;border:2px solid var(--ligne2);font-size:9px;color:#fff;display:flex;align-items:center;justify-content:center;flex:none}
+.mini-coche.fait{background:var(--ligne2)}
+.sous .ajout{display:flex;gap:6px;margin-top:4px}
+.sous .ajout input{padding:6px 10px;font-size:14px}
+.quad{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.quad .bloc{border:1px solid var(--trait);border-radius:10px;padding:8px;min-height:60px}
+.quad h4{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
 
-/* ---- Agenda ---- */
+/* Agenda */
 .cal-tete{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .cal-tete .mois{font-weight:700;font-size:15px;text-transform:capitalize}
-.cal-tete button{font-size:18px;padding:4px 12px;color:var(--texte)}
+.cal-tete button{font-size:18px;padding:4px 12px}
 .cal-grille{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
 .cal-grille .jour-nom{font-size:11px;font-weight:700;color:var(--texte2);padding:4px 0}
-.cal-case{
-  aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  border-radius:8px;font-size:13px;position:relative;color:var(--texte);
-}
+.cal-case{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:8px;font-size:13px;position:relative}
 .cal-case:not(:empty):hover{background:var(--trait)}
 .cal-case.aujourdhui{background:var(--encre);color:#fff;font-weight:700}
 html[data-theme="sombre"] .cal-case.aujourdhui{background:var(--ligne2)}
@@ -146,77 +129,107 @@ html[data-theme="sombre"] .cal-case.aujourdhui{background:var(--ligne2)}
 .evenement .heure{font-weight:700;font-size:13px;color:var(--ligne3);flex:none;width:52px;margin-top:1px}
 .evenement .contenu{flex:1;min-width:0}
 .evenement .titre{font-size:15px}
-.evenement .lieu{font-size:12.5px;color:var(--texte2)}
-.evenement .rappel-info{font-size:11.5px;color:var(--texte2)}
+.evenement .lieu,.evenement .rappel-info{font-size:12px;color:var(--texte2)}
+.cat-point{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+.sem-jour{padding:8px 2px;border-bottom:1px solid var(--trait)}
+.sem-jour:last-child{border-bottom:none}
+.sem-jour .nom{font-size:13px;font-weight:700;text-transform:capitalize}
+.sem-jour.auj .nom{color:var(--ligne3)}
+.sem-jour .evts{font-size:13.5px;color:var(--texte2);margin-top:2px}
+.compte{display:flex;align-items:center;gap:10px;padding:7px 2px;border-bottom:1px solid var(--trait)}
+.compte:last-child{border-bottom:none}
+.compte .j{font-size:17px;font-weight:800;color:var(--ligne3);min-width:52px}
 
-/* ---- Notes ---- */
+/* Notes */
 .note{background:var(--carte);border:1px solid var(--trait);border-radius:var(--rayon);padding:13px;margin-bottom:10px}
 .note.surbrillance{outline:2px solid var(--ligne4)}
-.note .titre{font-weight:700;font-size:15px;margin-bottom:4px;display:flex;justify-content:space-between;gap:8px}
-.note .corps{font-size:14px;color:var(--texte);white-space:pre-wrap;line-height:1.45;word-wrap:break-word}
-.note .corps.replie{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.note.epinglee{border-color:var(--ligne4)}
+.note .titre{font-weight:700;font-size:15px;margin-bottom:4px;display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.note .titre .outils{display:flex;gap:2px;flex:none}
+.note .outils button{font-size:14px;padding:2px 5px;color:var(--texte2)}
+.note .outils button.on{color:var(--ligne4)}
+.note .corps{font-size:14px;line-height:1.45;word-wrap:break-word}
+.note .corps.replie{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
 .note .tags{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}
 .tag{background:rgba(176,75,217,.14);color:var(--ligne4);font-size:11.5px;font-weight:600;border-radius:6px;padding:2px 8px}
 .note .pied{font-size:11.5px;color:var(--texte2);margin-top:6px}
 .lien-note{color:var(--ligne4);font-weight:600;text-decoration:underline;cursor:pointer}
 .retroliens{margin-top:8px;font-size:12px;color:var(--texte2)}
-.retroliens .lien-note{font-size:12px}
+.md-h1{font-weight:800;font-size:16px;margin:6px 0 2px}
+.md-h2{font-weight:700;font-size:14.5px;margin:5px 0 2px}
+.md-li{margin:1px 0}
+.md-vide{height:8px}
+.md-case{display:flex;gap:7px;align-items:center;margin:3px 0}
+.md-case .case{width:17px;height:17px;border-radius:5px;border:2px solid var(--ligne4);font-size:10px;color:#fff;display:flex;align-items:center;justify-content:center;flex:none}
+.md-case .case.cochee{background:var(--ligne4)}
+.md-case .barre{text-decoration:line-through;color:var(--texte2)}
+code{background:var(--trait);border-radius:4px;padding:0 4px;font-size:13px}
 
-/* ---- Sport ---- */
+/* Sport & Suivi */
 .habitude{display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid var(--trait)}
 .habitude:last-child{border-bottom:none}
 .habitude .nom{flex:1;font-size:15px}
 .habitude .serie{font-size:12px;color:var(--texte2);white-space:nowrap}
 .coche-hab{width:26px;height:26px;border-radius:8px;border:2px solid var(--ligne5);flex:none;color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center}
 .coche-hab.fait{background:var(--ligne5);border-color:var(--ligne5)}
+.suivi .coche-hab{border-color:var(--ligne6)}
+.suivi .coche-hab.fait{background:var(--ligne6)}
 .seance{padding:10px 2px;border-bottom:1px solid var(--trait);display:flex;gap:10px;align-items:flex-start}
 .seance:last-child{border-bottom:none}
 .seance .type{font-weight:700;font-size:14px}
-.seance .details{font-size:12.5px;color:var(--texte2);margin-top:2px}
+.seance .details{font-size:12.5px;color:var(--texte2);margin-top:2px;white-space:pre-line}
 .stat-ligne{display:flex;gap:10px}
 .stat{flex:1;background:rgba(232,93,58,.12);border-radius:10px;padding:10px;text-align:center}
 .stat .valeur{font-size:20px;font-weight:800;color:var(--ligne5)}
 .stat .libelle{font-size:11.5px;color:var(--texte2);margin-top:2px}
+.stat.bleu{background:rgba(46,111,224,.1)} .stat.bleu .valeur{color:var(--ligne2)}
+.stat.vert{background:rgba(15,163,107,.1)} .stat.vert .valeur{color:var(--ligne3)}
+.stat.violet{background:rgba(176,75,217,.1)} .stat.violet .valeur{color:var(--ligne4)}
+.stat.cyan{background:rgba(18,165,184,.1)} .stat.cyan .valeur{color:var(--ligne6)}
 .programme{padding:10px 2px;border-bottom:1px solid var(--trait)}
 .programme:last-child{border-bottom:none}
 .programme .entete{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .programme .nom{font-weight:700;font-size:14px}
 .programme .infos{font-size:12px;color:var(--texte2)}
 .programme .detail{font-size:13px;color:var(--texte2);margin-top:4px;line-height:1.4}
+.jauge{height:10px;background:var(--trait);border-radius:6px;overflow:hidden;margin-top:6px}
+.jauge i{display:block;height:100%;background:var(--ligne5);border-radius:6px;transition:width .3s}
+.graph{width:100%;height:auto;display:block;margin-top:8px}
+.exo-ligne{display:grid;grid-template-columns:2.2fr .9fr .9fr 1fr auto;gap:5px;margin-bottom:6px;align-items:center}
+.exo-ligne input{padding:8px 9px;font-size:14px}
+.exo-ligne .ent{font-size:10.5px;font-weight:700;color:var(--texte2);text-transform:uppercase}
+.minuteur-aff{text-align:center;padding:8px 0}
+.minuteur-aff .phase{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--texte2)}
+.minuteur-aff .temps{font-size:54px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+.minuteur-aff.effort .temps{color:var(--ligne5)}
+.minuteur-aff.repos .temps{color:var(--ligne3)}
+.minuteur-aff .tours{font-size:13px;color:var(--texte2)}
+.eau{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.eau .n{font-size:24px;font-weight:800;color:var(--ligne6);min-width:80px}
+.btn-rond{width:36px;height:36px;border-radius:50%;background:var(--trait);font-size:19px;font-weight:700}
 
-/* ---- Barre d'onglets (plan de ligne) ---- */
-nav{
-  position:fixed;bottom:0;left:0;right:0;z-index:30;
-  background:var(--carte);border-top:1px solid var(--trait);
-  padding:6px 4px calc(6px + env(safe-area-inset-bottom));
-}
+/* Navigation */
+nav{position:fixed;bottom:0;left:0;right:0;z-index:30;background:var(--carte);border-top:1px solid var(--trait);padding:6px 2px calc(6px + env(safe-area-inset-bottom))}
 .nav-int{max-width:640px;margin:0 auto;display:flex;position:relative}
-.nav-int::before{
-  content:"";position:absolute;top:17px;left:10%;right:10%;height:3px;
-  background:var(--trait);border-radius:2px;
-}
-nav button{
-  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
-  padding:4px 0;color:var(--texte2);font-size:10.5px;font-weight:600;position:relative;
-}
-nav .station{
-  width:22px;height:22px;border-radius:50%;background:var(--carte);
-  border:3px solid var(--trait);transition:border-color .15s,transform .15s;
-}
+.nav-int::before{content:"";position:absolute;top:16px;left:8%;right:8%;height:3px;background:var(--trait);border-radius:2px}
+nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;color:var(--texte2);font-size:9.5px;font-weight:600;position:relative}
+nav .station{width:20px;height:20px;border-radius:50%;background:var(--carte);border:3px solid var(--trait);transition:border-color .15s,transform .15s}
 nav button.actif{color:var(--texte)}
 nav button[data-ecran=auj].actif .station{border-color:var(--ligne1);transform:scale(1.15)}
 nav button[data-ecran=taches].actif .station{border-color:var(--ligne2);transform:scale(1.15)}
 nav button[data-ecran=agenda].actif .station{border-color:var(--ligne3);transform:scale(1.15)}
 nav button[data-ecran=notes].actif .station{border-color:var(--ligne4);transform:scale(1.15)}
 nav button[data-ecran=sport].actif .station{border-color:var(--ligne5);transform:scale(1.15)}
+nav button[data-ecran=suivi].actif .station{border-color:var(--ligne6);transform:scale(1.15)}
 
-/* ---- Divers ---- */
+/* Divers */
 .bandeau{background:rgba(242,183,5,.15);border:1px solid rgba(242,183,5,.4);color:#7A5E00;font-size:13px;border-radius:10px;padding:10px 12px;margin-bottom:12px;display:none}
 html[data-theme="sombre"] .bandeau{color:#F2C94C}
 .dialogue-fond{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:40;display:none;align-items:flex-end;justify-content:center}
 .dialogue-fond.ouvert{display:flex}
-.dialogue{background:var(--carte);border-radius:16px 16px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));width:100%;max-width:640px;max-height:85vh;overflow:auto}
+.dialogue{background:var(--carte);border-radius:16px 16px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));width:100%;max-width:640px;max-height:88vh;overflow:auto}
 .dialogue h3{font-size:17px;margin-bottom:12px}
+.dialogue h4{font-size:13px;text-transform:uppercase;letter-spacing:.8px;color:var(--texte2);margin:14px 0 6px}
 .dialogue p{font-size:13.5px;color:var(--texte2);line-height:1.5;margin-bottom:8px}
 .actions{display:flex;gap:8px;margin-top:12px}
 .actions .btn{flex:1}
@@ -226,10 +239,31 @@ details.formulaire summary::-webkit-details-marker{display:none}
 .etat-notif{font-size:12.5px;font-weight:600;margin-top:6px}
 .etat-notif.ok{color:var(--ligne3)}
 .etat-notif.ko{color:var(--danger)}
+.verrou{position:fixed;inset:0;background:var(--encre);z-index:100;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#fff;padding:20px}
+.verrou.actif{display:flex}
+.verrou .logo{width:64px;height:64px;border-radius:50%;border:5px solid var(--ligne1);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800}
+.verrou input{max-width:220px;text-align:center;font-size:24px;letter-spacing:8px;background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3);color:#fff}
+.verrou .erreur{color:#FF9B9B;font-size:13px;min-height:18px}
+.recherche-fond{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;display:none;align-items:flex-start;justify-content:center;padding:14px}
+.recherche-fond.ouvert{display:flex}
+.recherche-boite{background:var(--carte);border-radius:14px;width:100%;max-width:640px;max-height:80vh;overflow:auto;padding:12px;margin-top:calc(env(safe-area-inset-top) + 10px)}
+.resultat{padding:10px 4px;border-bottom:1px solid var(--trait);cursor:pointer}
+.resultat:last-child{border-bottom:none}
+.resultat .rtype{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px}
+.resultat .rtitre{font-size:14.5px;margin-top:1px}
+.resultat .rextrait{font-size:12.5px;color:var(--texte2);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 :focus-visible{outline:2px solid var(--ligne2);outline-offset:2px}
 </style>
 </head>
 <body>
+
+<div class="verrou" id="verrou">
+  <div class="logo">Q</div>
+  <div style="font-size:15px;opacity:.85">Entre ton code pour déverrouiller</div>
+  <input type="password" inputmode="numeric" id="verrou-code" maxlength="8" autocomplete="off">
+  <div class="erreur" id="verrou-erreur"></div>
+  <button class="btn" style="background:var(--ligne1);color:#12233B" onclick="deverrouiller()">Déverrouiller</button>
+</div>
 
 <header>
   <div>
@@ -237,31 +271,46 @@ details.formulaire summary::-webkit-details-marker{display:none}
     <div class="date" id="date-tete"></div>
   </div>
   <div class="tete-actions">
+    <button class="btn-theme" id="btn-recherche" aria-label="Recherche globale">🔍</button>
     <button class="btn-theme" id="btn-theme" aria-label="Basculer le mode sombre">🌙</button>
     <button class="btn-menu" id="btn-donnees">Réglages</button>
   </div>
 </header>
 
 <main>
-  <div class="bandeau" id="bandeau-memoire">
-    ⚠️ Le stockage n'est pas disponible ici : les données seront perdues à la fermeture. Une fois l'app installée sur ton téléphone, tout sera sauvegardé automatiquement.
-  </div>
+  <div class="bandeau" id="bandeau-memoire">⚠️ Le stockage n'est pas disponible ici : les données seront perdues à la fermeture. Une fois l'app installée sur ton téléphone, tout est sauvegardé automatiquement.</div>
+  <div class="bandeau" id="bandeau-export">💾 Ça fait plus de deux semaines sans sauvegarde. Un export ne prend que 2 secondes !<br><button class="btn petit" style="margin-top:6px" onclick="exporterDonnees()">Exporter maintenant</button></div>
 
-  <!-- ================= AUJOURD'HUI ================= -->
+  <!-- ============ AUJOURD'HUI ============ -->
   <section class="ecran" id="ecran-auj">
     <div class="titre-section"><span class="pastille" style="background:var(--ligne1)">A</span><h2>Aujourd'hui</h2></div>
 
     <div class="carte">
       <h3>Note rapide</h3>
-      <div class="ligne-ajout">
+      <div class="ligne-ajout" style="margin-bottom:0">
         <input type="text" id="capture-rapide" placeholder="Une idée dans le métro ? Capture-la…">
         <button class="btn" onclick="captureRapide()">＋</button>
       </div>
-      <div style="font-size:12px;color:var(--texte2)">Envoyée directement dans tes Notes avec le tag « boîte de réception ».</div>
     </div>
 
     <div class="carte">
-      <h3>Tâches du jour</h3>
+      <h3>Ta semaine en chiffres <button class="btn-mini" onclick="ouvrirRevue()">🧭 Revue hebdo</button></h3>
+      <div class="stat-ligne">
+        <div class="stat bleu"><div class="valeur" id="chiffre-taches">0</div><div class="libelle">tâches finies</div></div>
+        <div class="stat"><div class="valeur" id="chiffre-minutes">0</div><div class="libelle">min de sport</div></div>
+        <div class="stat violet"><div class="valeur" id="chiffre-notes">0</div><div class="libelle">notes créées</div></div>
+        <div class="stat cyan"><div class="valeur" id="chiffre-habitudes">—</div><div class="libelle">habitudes</div></div>
+      </div>
+      <div id="graph-semaine"></div>
+    </div>
+
+    <div class="carte" id="carte-comptes" style="display:none">
+      <h3>Comptes à rebours</h3>
+      <div id="auj-comptes"></div>
+    </div>
+
+    <div class="carte">
+      <h3>Tâches du jour <span class="normal" id="charge-jour"></span></h3>
       <div id="auj-taches"></div>
     </div>
 
@@ -276,7 +325,7 @@ details.formulaire summary::-webkit-details-marker{display:none}
     </div>
   </section>
 
-  <!-- ================= TÂCHES ================= -->
+  <!-- ============ TÂCHES ============ -->
   <section class="ecran" id="ecran-taches">
     <div class="titre-section"><span class="pastille" style="background:var(--ligne2)">T</span><h2>Tâches</h2></div>
 
@@ -285,23 +334,17 @@ details.formulaire summary::-webkit-details-marker{display:none}
         <input type="text" id="tache-libelle" placeholder="Nouvelle tâche…">
         <button class="btn" onclick="ajouterTache()">＋</button>
       </div>
-      <div class="trois-cols">
+      <div class="quatre-cols">
         <div class="champ"><label for="tache-date">Échéance</label><input type="date" id="tache-date"></div>
-        <div class="champ"><label for="tache-prio">Priorité</label>
-          <select id="tache-prio">
-            <option value="moyenne">Moyenne</option>
-            <option value="haute">Haute</option>
-            <option value="basse">Basse</option>
-          </select>
-        </div>
+        <div class="champ"><label for="tache-projet">Liste</label><select id="tache-projet"></select></div>
+        <div class="champ"><label for="tache-duree">Durée (min)</label><input type="number" id="tache-duree" min="0" placeholder="—"></div>
         <div class="champ"><label for="tache-repete">Répéter</label>
-          <select id="tache-repete">
-            <option value="">Jamais</option>
-            <option value="quotidien">Chaque jour</option>
-            <option value="hebdo">Chaque semaine</option>
-            <option value="mensuel">Chaque mois</option>
-          </select>
+          <select id="tache-repete"><option value="">Jamais</option><option value="quotidien">Chaque jour</option><option value="hebdo">Chaque semaine</option><option value="mensuel">Chaque mois</option></select>
         </div>
+      </div>
+      <div class="filtres" style="margin-bottom:0">
+        <button class="chip" id="chip-urgent" onclick="this.classList.toggle('actif')">🔥 Urgent</button>
+        <button class="chip" id="chip-important" onclick="this.classList.toggle('actif')">⭐ Important</button>
       </div>
     </div>
 
@@ -311,21 +354,52 @@ details.formulaire summary::-webkit-details-marker{display:none}
       <button data-f="faites">Terminées</button>
       <button data-f="toutes">Toutes</button>
     </div>
+    <div class="filtres">
+      <button class="chip actif" id="chip-vue-liste" onclick="changerVueTaches('liste')">☰ Liste</button>
+      <button class="chip" id="chip-vue-matrice" onclick="changerVueTaches('matrice')">▦ Matrice</button>
+      <button class="chip" id="chip-tri" onclick="basculerTri()">Tri : auto</button>
+    </div>
+    <div class="filtres" id="filtres-projets"></div>
 
     <div class="carte"><div id="liste-taches"></div></div>
+
+    <details class="formulaire">
+      <summary><span class="btn secondaire petit" style="display:inline-block">⚙ Gérer mes listes</span></summary>
+      <div class="carte" style="margin-top:8px">
+        <div id="liste-projets"></div>
+        <div class="ligne-ajout" style="margin:8px 0 0">
+          <input type="text" id="projet-nom" placeholder="Nouvelle liste (ex : Études)">
+          <button class="btn" onclick="ajouterProjet()">＋</button>
+        </div>
+      </div>
+    </details>
   </section>
 
-  <!-- ================= AGENDA ================= -->
+  <!-- ============ AGENDA ============ -->
   <section class="ecran" id="ecran-agenda">
     <div class="titre-section"><span class="pastille" style="background:var(--ligne3)">C</span><h2>Agenda</h2></div>
 
-    <div class="carte">
+    <div class="filtres">
+      <button class="chip actif" id="chip-mois" onclick="changerVueAgenda('mois')">Mois</button>
+      <button class="chip" id="chip-semaine" onclick="changerVueAgenda('semaine')">Semaine</button>
+    </div>
+
+    <div class="carte" id="carte-cal-mois">
       <div class="cal-tete">
         <button onclick="changerMois(-1)" aria-label="Mois précédent">‹</button>
         <div class="mois" id="cal-mois"></div>
         <button onclick="changerMois(1)" aria-label="Mois suivant">›</button>
       </div>
       <div class="cal-grille" id="cal-grille"></div>
+    </div>
+
+    <div class="carte" id="carte-cal-semaine" style="display:none">
+      <div class="cal-tete">
+        <button onclick="changerSemaine(-1)" aria-label="Semaine précédente">‹</button>
+        <div class="mois" id="sem-titre"></div>
+        <button onclick="changerSemaine(1)" aria-label="Semaine suivante">›</button>
+      </div>
+      <div id="sem-liste"></div>
     </div>
 
     <div class="carte">
@@ -340,17 +414,22 @@ details.formulaire summary::-webkit-details-marker{display:none}
             <div class="champ"><label for="evt-heure">Heure</label><input type="time" id="evt-heure"></div>
           </div>
           <div class="deux-cols">
-            <div class="champ"><label for="evt-lieu">Lieu</label><input type="text" id="evt-lieu"></div>
-            <div class="champ"><label for="evt-rappel">Rappel</label>
-              <select id="evt-rappel">
-                <option value="-1">Aucun</option>
-                <option value="0">À l'heure pile</option>
-                <option value="10">10 min avant</option>
-                <option value="30">30 min avant</option>
-                <option value="60">1 h avant</option>
-                <option value="1440">1 jour avant</option>
-              </select>
+            <div class="champ"><label for="evt-duree">Durée (min)</label><input type="number" id="evt-duree" min="0" placeholder="60"></div>
+            <div class="champ"><label for="evt-cat">Catégorie</label>
+              <select id="evt-cat"><option value="perso">🟣 Perso</option><option value="travail">🔵 Travail</option><option value="sante">🟢 Santé</option><option value="autre">⚪ Autre</option></select>
             </div>
+          </div>
+          <div class="deux-cols">
+            <div class="champ"><label for="evt-recur">Répéter</label>
+              <select id="evt-recur"><option value="">Jamais</option><option value="quotidien">Chaque jour</option><option value="hebdo">Chaque semaine</option><option value="mensuel">Chaque mois</option></select>
+            </div>
+            <div class="champ"><label for="evt-rappel">Rappel</label>
+              <select id="evt-rappel"><option value="-1">Aucun</option><option value="0">À l'heure pile</option><option value="10">10 min avant</option><option value="30">30 min avant</option><option value="60">1 h avant</option><option value="1440">1 jour avant</option></select>
+            </div>
+          </div>
+          <div class="champ"><label for="evt-lieu">Lieu</label><input type="text" id="evt-lieu"></div>
+          <div class="filtres" style="margin-bottom:10px">
+            <button class="chip" id="chip-star" onclick="this.classList.toggle('actif')">⏳ Gros événement (compte à rebours)</button>
           </div>
           <button class="btn" onclick="ajouterEvenement()">Ajouter à l'agenda</button>
         </div>
@@ -361,25 +440,53 @@ details.formulaire summary::-webkit-details-marker{display:none}
       <h3>À venir (7 jours)</h3>
       <div id="liste-a-venir"></div>
     </div>
+
+    <div class="carte">
+      <h3>Synchronisation (.ics)</h3>
+      <p style="font-size:13px;color:var(--texte2);margin-bottom:8px">Exporte tes événements pour les importer dans Google Calendar ou l'agenda iPhone — ou l'inverse.</p>
+      <div class="actions" style="margin-top:0">
+        <button class="btn petit" onclick="exporterICS()">Exporter .ics</button>
+        <button class="btn secondaire petit" onclick="document.getElementById('import-ics').click()">Importer .ics</button>
+      </div>
+      <input type="file" id="import-ics" accept=".ics" style="display:none" onchange="importerICS(event)">
+    </div>
   </section>
 
-  <!-- ================= NOTES ================= -->
+  <!-- ============ NOTES ============ -->
   <section class="ecran" id="ecran-notes">
     <div class="titre-section"><span class="pastille" style="background:var(--ligne4)">N</span><h2>Notes</h2></div>
 
     <div class="carte">
+      <div class="deux-cols" style="margin-bottom:10px">
+        <button class="btn secondaire petit" onclick="journalDuJour()">📓 Journal du jour</button>
+        <select id="note-modele" onchange="appliquerModele()">
+          <option value="">Modèle…</option><option value="reunion">Réunion</option><option value="idee">Idée</option><option value="lecture">Lecture</option>
+        </select>
+      </div>
       <div class="champ"><input type="text" id="note-titre" placeholder="Titre de la note"></div>
-      <div class="champ"><textarea id="note-corps" placeholder="Écris librement… Astuce : tape [[Titre d'une autre note]] pour créer un lien entre tes notes."></textarea></div>
-      <div class="champ"><input type="text" id="note-tags" placeholder="Tags séparés par des virgules (ex : idées, travail, lecture)"></div>
+      <div class="champ"><textarea id="note-corps" placeholder="Markdown accepté : # Titre · **gras** · *italique* · - liste · - [ ] case à cocher · [[Lien vers une note]]"></textarea></div>
+      <div class="champ"><input type="text" id="note-tags" placeholder="Tags séparés par des virgules"></div>
       <button class="btn" onclick="ajouterNote()">Enregistrer la note</button>
     </div>
 
     <div class="champ"><input type="text" id="recherche-notes" placeholder="🔍 Rechercher dans le second cerveau…" oninput="afficherNotes()"></div>
+    <div class="filtres">
+      <button class="chip actif" data-vn="actives" onclick="changerVueNotes(this)">Actives</button>
+      <button class="chip" data-vn="epinglees" onclick="changerVueNotes(this)">📌 Épinglées</button>
+      <button class="chip" data-vn="archivees" onclick="changerVueNotes(this)">🗄 Archivées</button>
+      <button class="chip" onclick="ouvrirGraphe()">🕸 Graphe</button>
+    </div>
     <div class="filtres" id="filtres-tags"></div>
     <div id="liste-notes"></div>
+
+    <div class="carte">
+      <h3>Export Obsidian</h3>
+      <p style="font-size:13px;color:var(--texte2);margin-bottom:8px">Télécharge toutes tes notes en fichiers .md (une note = un fichier), directement compatibles avec Obsidian.</p>
+      <button class="btn petit" onclick="exporterMarkdown()">Exporter en .md (zip)</button>
+    </div>
   </section>
 
-  <!-- ================= SPORT ================= -->
+  <!-- ============ SPORT ============ -->
   <section class="ecran" id="ecran-sport">
     <div class="titre-section"><span class="pastille" style="background:var(--ligne5)">S</span><h2>Sport</h2></div>
 
@@ -388,17 +495,47 @@ details.formulaire summary::-webkit-details-marker{display:none}
       <div class="stat-ligne">
         <div class="stat"><div class="valeur" id="stat-seances">0</div><div class="libelle">séances</div></div>
         <div class="stat"><div class="valeur" id="stat-minutes">0</div><div class="libelle">minutes</div></div>
-        <div class="stat"><div class="valeur" id="stat-habitudes">0%</div><div class="libelle">habitudes tenues</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+        <span style="font-size:13px;color:var(--texte2);flex:1">Objectif : <b id="objectif-texte"></b></span>
+        <input type="number" id="objectif-seances" min="1" max="14" style="width:70px;padding:6px 8px" onchange="changerObjectif()">
+      </div>
+      <div class="jauge"><i id="jauge-objectif" style="width:0%"></i></div>
+      <div id="graph-sport"></div>
+    </div>
+
+    <div class="carte">
+      <h3>Minuteur d'intervalles</h3>
+      <div class="quatre-cols" style="grid-template-columns:1fr 1fr 1fr">
+        <div class="champ"><label for="min-effort">Effort (s)</label><input type="number" id="min-effort" value="30" min="5"></div>
+        <div class="champ"><label for="min-repos">Repos (s)</label><input type="number" id="min-repos" value="30" min="0"></div>
+        <div class="champ"><label for="min-tours">Tours</label><input type="number" id="min-tours" value="8" min="1"></div>
+      </div>
+      <div class="minuteur-aff" id="minuteur-aff">
+        <div class="phase" id="min-phase">Prêt ?</div>
+        <div class="temps" id="min-temps">0:30</div>
+        <div class="tours" id="min-compteur"></div>
+      </div>
+      <div class="actions" style="margin-top:4px">
+        <button class="btn" id="btn-min-start" onclick="minuteurStart()">▶ Démarrer</button>
+        <button class="btn secondaire" onclick="minuteurReset()">↺ Réinitialiser</button>
       </div>
     </div>
 
     <div class="carte">
-      <h3>Habitudes quotidiennes</h3>
-      <div id="liste-habitudes"></div>
-      <div class="ligne-ajout" style="margin-top:10px;margin-bottom:0">
-        <input type="text" id="habitude-nom" placeholder="Nouvelle habitude (ex : étirements)">
-        <button class="btn" onclick="ajouterHabitude()">＋</button>
-      </div>
+      <h3>Mes programmes</h3>
+      <div id="liste-programmes-perso"></div>
+      <details class="formulaire" id="form-prog" style="margin:10px 0 0">
+        <summary><span class="btn secondaire petit" style="display:inline-block">＋ Créer / modifier un programme</span></summary>
+        <div style="margin-top:10px">
+          <input type="hidden" id="prog-id">
+          <div class="champ"><label for="prog-nom">Nom du programme</label><input type="text" id="prog-nom" placeholder="Ex : Push day"></div>
+          <div class="exo-ligne"><span class="ent">Exercice</span><span class="ent">Séries</span><span class="ent">Reps</span><span class="ent">Charge kg</span><span></span></div>
+          <div id="prog-exos"></div>
+          <button class="btn secondaire petit" onclick="ajouterLigneExo()">＋ Exercice</button>
+          <div class="actions"><button class="btn" onclick="sauverProgramme()">Enregistrer le programme</button></div>
+        </div>
+      </details>
     </div>
 
     <div class="carte">
@@ -406,18 +543,21 @@ details.formulaire summary::-webkit-details-marker{display:none}
       <div id="liste-programmes"></div>
     </div>
 
+    <div class="carte">
+      <h3>Progression par exercice</h3>
+      <select id="prog-exo-select" onchange="afficherProgression()"></select>
+      <div id="graph-progression"></div>
+    </div>
+
     <div class="carte" id="carte-seance">
       <h3>Enregistrer une séance</h3>
       <div class="deux-cols">
         <div class="champ"><label for="seance-type">Type</label>
-          <select id="seance-type">
-            <option>Musculation</option><option>Course</option><option>Vélo</option>
-            <option>Natation</option><option>Yoga</option><option>Marche</option><option>HIIT</option><option>Autre</option>
-          </select>
+          <select id="seance-type"><option>Musculation</option><option>Course</option><option>Vélo</option><option>Natation</option><option>Yoga</option><option>Marche</option><option>HIIT</option><option>Autre</option></select>
         </div>
         <div class="champ"><label for="seance-duree">Durée (min)</label><input type="number" id="seance-duree" min="1" placeholder="45"></div>
       </div>
-      <div class="champ"><label for="seance-notes">Détails (exercices, distance, ressenti…)</label><textarea id="seance-notes" style="min-height:60px"></textarea></div>
+      <div class="champ"><label for="seance-notes">Détails</label><textarea id="seance-notes" style="min-height:60px"></textarea></div>
       <button class="btn" onclick="ajouterSeance()">Enregistrer</button>
     </div>
 
@@ -426,9 +566,72 @@ details.formulaire summary::-webkit-details-marker{display:none}
       <div id="liste-seances"></div>
     </div>
   </section>
+
+  <!-- ============ SUIVI ============ -->
+  <section class="ecran suivi" id="ecran-suivi">
+    <div class="titre-section"><span class="pastille" style="background:var(--ligne6)">V</span><h2>Suivi</h2></div>
+
+    <div class="carte">
+      <h3>Habitudes quotidiennes</h3>
+      <div id="liste-habitudes"></div>
+      <div class="ligne-ajout" style="margin:10px 0 0">
+        <input type="text" id="habitude-nom" placeholder="Nouvelle habitude (ex : lire 10 min)">
+        <button class="btn" onclick="ajouterHabitude()">＋</button>
+      </div>
+      <div id="graph-habitudes"></div>
+    </div>
+
+    <div class="carte">
+      <h3>Poids</h3>
+      <div class="ligne-ajout" style="margin-bottom:4px">
+        <input type="number" id="poids-kg" step="0.1" min="20" placeholder="Poids du jour (kg)">
+        <button class="btn" onclick="ajouterPoids()">＋</button>
+      </div>
+      <div id="graph-poids"></div>
+    </div>
+
+    <div class="carte">
+      <h3>Sommeil</h3>
+      <div class="deux-cols">
+        <div class="champ"><label for="sommeil-h">Heures (nuit dernière)</label><input type="number" id="sommeil-h" step="0.5" min="0" max="16" placeholder="7.5"></div>
+        <div class="champ"><label for="sommeil-q">Qualité</label>
+          <select id="sommeil-q"><option value="3">😐 Correcte</option><option value="4">🙂 Bonne</option><option value="5">😴 Excellente</option><option value="2">😕 Moyenne</option><option value="1">😫 Mauvaise</option></select>
+        </div>
+      </div>
+      <button class="btn petit" onclick="ajouterSommeil()">Enregistrer la nuit</button>
+      <div id="graph-sommeil"></div>
+    </div>
+
+    <div class="carte">
+      <h3>Alimentation & hydratation</h3>
+      <div class="eau">
+        <span style="font-size:13px;color:var(--texte2)">Eau aujourd'hui</span>
+        <button class="btn-rond" onclick="changerEau(-1)">−</button>
+        <span class="n" id="eau-n">0 verre</span>
+        <button class="btn-rond" onclick="changerEau(1)">＋</button>
+      </div>
+      <div class="deux-cols">
+        <div class="champ"><select id="repas-type"><option>Petit-déj</option><option>Déjeuner</option><option>Dîner</option><option>Collation</option></select></div>
+        <div class="champ"><input type="text" id="repas-desc" placeholder="Ce que tu as mangé"></div>
+      </div>
+      <button class="btn petit" onclick="ajouterRepas()">Ajouter le repas</button>
+      <div id="liste-repas" style="margin-top:8px"></div>
+    </div>
+
+    <div class="carte">
+      <h3>Mensurations</h3>
+      <div class="deux-cols">
+        <div class="champ"><input type="text" id="mesure-nom" placeholder="Ex : tour de taille" list="mesures-connues"></div>
+        <div class="champ"><input type="number" id="mesure-val" step="0.5" placeholder="cm"></div>
+      </div>
+      <datalist id="mesures-connues"><option value="Tour de taille"><option value="Tour de bras"><option value="Tour de poitrine"><option value="Tour de cuisse"></datalist>
+      <button class="btn petit" onclick="ajouterMesure()">Enregistrer</button>
+      <select id="mesure-select" onchange="afficherMesures()" style="margin-top:10px"></select>
+      <div id="graph-mesures"></div>
+    </div>
+  </section>
 </main>
 
-<!-- ---- Barre d'onglets ---- -->
 <nav aria-label="Navigation principale">
   <div class="nav-int">
     <button data-ecran="auj" class="actif"><span class="station"></span>Aujourd'hui</button>
@@ -436,38 +639,77 @@ details.formulaire summary::-webkit-details-marker{display:none}
     <button data-ecran="agenda"><span class="station"></span>Agenda</button>
     <button data-ecran="notes"><span class="station"></span>Notes</button>
     <button data-ecran="sport"><span class="station"></span>Sport</button>
+    <button data-ecran="suivi"><span class="station"></span>Suivi</button>
   </div>
 </nav>
 
-<!-- ---- Dialogue réglages ---- -->
-<div class="dialogue-fond" id="dlg-donnees">
+<!-- Recherche globale -->
+<div class="recherche-fond" id="recherche-fond">
+  <div class="recherche-boite">
+    <input type="text" id="recherche-globale" placeholder="🔍 Chercher partout : tâches, notes, événements, séances…" oninput="rechercheGlobale()">
+    <div id="recherche-resultats"></div>
+  </div>
+</div>
+
+<!-- Revue hebdo -->
+<div class="dialogue-fond" id="dlg-revue">
   <div class="dialogue">
-    <h3>Réglages</h3>
-
-    <h3 style="font-size:13px;text-transform:uppercase;letter-spacing:.8px;color:var(--texte2);margin-bottom:6px">Rappels</h3>
-    <p>Reçois une notification avant tes événements. Les rappels fonctionnent quand l'app est ouverte (même en arrière-plan sur la plupart des téléphones Android).</p>
-    <button class="btn" id="btn-notif" onclick="activerNotifications()">Activer les rappels</button>
-    <div class="etat-notif" id="etat-notif"></div>
-
-    <h3 style="font-size:13px;text-transform:uppercase;letter-spacing:.8px;color:var(--texte2);margin:16px 0 6px">Mes données</h3>
-    <p>Tout est stocké uniquement sur cet appareil. Pense à exporter une sauvegarde de temps en temps (réimportable ici ou sur un autre appareil).</p>
+    <h3>🧭 Revue hebdomadaire</h3>
+    <div id="revue-stats"></div>
+    <h4>Qu'est-ce qui a bien avancé ?</h4>
+    <textarea id="revue-1" style="min-height:60px"></textarea>
+    <h4>Qu'est-ce qui a bloqué ?</h4>
+    <textarea id="revue-2" style="min-height:60px"></textarea>
+    <h4>Les 3 priorités de la semaine prochaine</h4>
+    <textarea id="revue-3" style="min-height:60px"></textarea>
     <div class="actions">
-      <button class="btn" onclick="exporterDonnees()">Exporter</button>
-      <button class="btn secondaire" onclick="document.getElementById('import-fichier').click()">Importer</button>
-    </div>
-    <input type="file" id="import-fichier" accept=".json" style="display:none" onchange="importerDonnees(event)">
-    <div class="actions">
-      <button class="btn secondaire" onclick="fermerDialogue()">Fermer</button>
+      <button class="btn" onclick="sauverRevue()">Enregistrer dans mes notes</button>
+      <button class="btn secondaire" onclick="fermer('dlg-revue')">Fermer</button>
     </div>
   </div>
 </div>
 
+<!-- Graphe des notes -->
+<div class="dialogue-fond" id="dlg-graphe">
+  <div class="dialogue">
+    <h3>🕸 Graphe du second cerveau</h3>
+    <p>Chaque bulle est une note ; les traits sont tes liens [[…]]. Touche une bulle pour ouvrir la note.</p>
+    <div id="graphe-svg"></div>
+    <div class="actions"><button class="btn secondaire" onclick="fermer('dlg-graphe')">Fermer</button></div>
+  </div>
+</div>
+
+<!-- Réglages -->
+<div class="dialogue-fond" id="dlg-donnees">
+  <div class="dialogue">
+    <h3>Réglages</h3>
+
+    <h4>Rappels</h4>
+    <p>Reçois une notification avant tes événements. Les rappels fonctionnent quand l'app est ouverte (même en arrière-plan sur la plupart des Android).</p>
+    <button class="btn" id="btn-notif" onclick="activerNotifications()">Activer les rappels</button>
+    <div class="etat-notif" id="etat-notif"></div>
+
+    <h4>Verrouillage par code</h4>
+    <p id="pin-etat">Aucun code défini.</p>
+    <div class="deux-cols">
+      <input type="password" inputmode="numeric" id="pin-nouveau" maxlength="8" placeholder="Code (4-8 chiffres)">
+      <button class="btn petit" onclick="definirPin()">Définir / changer</button>
+    </div>
+    <button class="btn secondaire petit" style="margin-top:8px" onclick="supprimerPin()">Supprimer le code</button>
+    <p style="margin-top:6px;font-size:12px">Note honnête : c'est un verrou d'écran contre les regards indiscrets, pas un chiffrement des données.</p>
+
+    <h4>Mes données</h4>
+    <p>Tout est stocké uniquement sur cet appareil. Exporte une sauvegarde régulièrement (réimportable ici ou sur un autre appareil).</p>
+    <div class="actions" style="margin-top:0">
+      <button class="btn" onclick="exporterDonnees()">Exporter</button>
+      <button class="btn secondaire" onclick="document.getElementById('import-fichier').click()">Importer</button>
+    </div>
+    <input type="file" id="import-fichier" accept=".json" style="display:none" onchange="importerDonnees(event)">
+    <div class="actions"><button class="btn secondaire" onclick="fermer('dlg-donnees')">Fermer</button></div>
+  </div>
+</div>
 <script>
-/* =====================================================
-   Mon Quotidien v2 — hors-ligne, données 100 % locales
-   Nouveautés : mode sombre, tâches récurrentes, rappels,
-   programmes d'entraînement, liens [[entre notes]]
-===================================================== */
+/* ============ Mon Quotidien v4 ============ */
 
 // ---------- Stockage ----------
 const CLE = "mon-quotidien-v1";
@@ -475,16 +717,18 @@ let memoireSeule = false;
 let etat = chargerEtat();
 
 function etatVide(){
-  return { taches:[], evenements:[], notes:[], habitudes:[], seances:[], notifie:{}, prefs:{theme:"clair", notif:false} };
+  return { taches:[], projets:["Perso","Travail"], evenements:[], notes:[], habitudes:[], seances:[],
+    programmesPerso:[], poids:[], sommeil:[], repas:[], mesures:[], eau:{}, notifie:{},
+    prefs:{theme:"clair", notif:false, pin:null, dernierExport:null, objectifSeances:3, tri:"auto"} };
 }
 function chargerEtat(){
   try{
     const brut = localStorage.getItem(CLE);
-    return brut ? Object.assign(etatVide(), JSON.parse(brut)) : etatVide();
-  }catch(e){
-    memoireSeule = true;
-    return etatVide();
-  }
+    if(!brut) return etatVide();
+    const e = Object.assign(etatVide(), JSON.parse(brut));
+    e.prefs = Object.assign(etatVide().prefs, e.prefs||{});
+    return e;
+  }catch(err){ memoireSeule = true; return etatVide(); }
 }
 function sauver(){
   if(memoireSeule) return;
@@ -494,16 +738,46 @@ function sauver(){
 
 // ---------- Utilitaires ----------
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
-function cleDate(d){
-  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
-}
+function cleDate(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 const AUJ = cleDate(new Date());
-function dateLisible(iso){
-  const [a,m,j] = iso.split("-").map(Number);
-  return new Date(a,m-1,j).toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"});
-}
+function dateLisible(iso){ const [a,m,j]=iso.split("-").map(Number); return new Date(a,m-1,j).toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"}); }
+function jourSemaine(iso){ const [a,m,j]=iso.split("-").map(Number); return new Date(a,m-1,j).getDay(); }
+function decaler(iso, n){ const [a,m,j]=iso.split("-").map(Number); const d=new Date(a,m-1,j); d.setDate(d.getDate()+n); return cleDate(d); }
+function lundiDe(iso){ return decaler(iso, -((jourSemaine(iso)+6)%7)); }
 function echap(s){ return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 function attr(s){ return String(s).replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/"/g,"&quot;"); }
+const CAT = { perso:{c:"#B04BD9",n:"Perso"}, travail:{c:"#2E6FE0",n:"Travail"}, sante:{c:"#0FA36B",n:"Santé"}, autre:{c:"#8896A6",n:"Autre"} };
+
+// ---------- Graphiques SVG maison ----------
+function svgBarres(vals, labels, couleur, h){
+  h = h||84;
+  const max = Math.max(...vals, 1), n = vals.length, w = 300, lw = w/n, bw = lw*0.58;
+  let s = `<svg viewBox="0 0 ${w} ${h+18}" class="graph" role="img">`;
+  vals.forEach((v,i)=>{
+    const x = i*lw + (lw-bw)/2, bh = Math.max(v/max*(h-14), v?3:0);
+    s += `<rect x="${x}" y="${h-bh}" width="${bw}" height="${bh}" rx="3" fill="${couleur}" opacity="${v?0.9:0.18}"/>`;
+    if(v) s += `<text x="${x+bw/2}" y="${h-bh-4}" font-size="9.5" text-anchor="middle" fill="var(--texte2)">${v}</text>`;
+    if(labels && labels[i]!=null) s += `<text x="${x+bw/2}" y="${h+13}" font-size="9" text-anchor="middle" fill="var(--texte2)">${labels[i]}</text>`;
+  });
+  return s+"</svg>";
+}
+function svgLigne(points, couleur, h){
+  h = h||100;
+  if(points.length<1) return '<div class="vide">Pas encore de données — ça viendra vite !</div>';
+  const w=300, pad=14;
+  const ys=points.map(p=>p.y), min=Math.min(...ys), max=Math.max(...ys), plage=(max-min)||1;
+  const px=i=> points.length===1 ? w/2 : pad + i*(w-2*pad)/(points.length-1);
+  const py=v=> 14 + (h-28)*(1-(v-min)/plage);
+  let chemin = points.map((p,i)=>(i?"L":"M")+px(i).toFixed(1)+" "+py(p.y).toFixed(1)).join(" ");
+  let s = `<svg viewBox="0 0 ${w} ${h+16}" class="graph" role="img">`;
+  s += `<path d="${chemin}" fill="none" stroke="${couleur}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+  points.forEach((p,i)=>{ s += `<circle cx="${px(i)}" cy="${py(p.y)}" r="3" fill="${couleur}"/>`; });
+  const der = points[points.length-1];
+  s += `<text x="${px(points.length-1)}" y="${py(der.y)-7}" font-size="10" font-weight="700" text-anchor="middle" fill="${couleur}">${der.y}</text>`;
+  s += `<text x="${pad}" y="${h+13}" font-size="9" fill="var(--texte2)">${points[0].x}</text>`;
+  s += `<text x="${w-pad}" y="${h+13}" font-size="9" text-anchor="end" fill="var(--texte2)">${der.x}</text>`;
+  return s+"</svg>";
+}
 
 // ---------- Thème ----------
 function appliquerTheme(){
@@ -516,15 +790,74 @@ document.getElementById("btn-theme").addEventListener("click", ()=>{
   sauver(); appliquerTheme();
 });
 
-// ---------- Navigation ----------
-document.querySelectorAll("nav button").forEach(b=>{
-  b.addEventListener("click", ()=> montrerEcran(b.dataset.ecran));
-});
+// ---------- Verrou PIN ----------
+async function hacher(code){
+  try{
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("mq:"+code));
+    return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
+  }catch(e){ return "brut:"+code; }
+}
+async function definirPin(){
+  const code = document.getElementById("pin-nouveau").value.trim();
+  if(!/^\d{4,8}$/.test(code)){ alert("Le code doit contenir 4 à 8 chiffres."); return; }
+  etat.prefs.pin = await hacher(code);
+  document.getElementById("pin-nouveau").value = "";
+  sauver(); majEtatPin();
+}
+function supprimerPin(){ etat.prefs.pin = null; sauver(); majEtatPin(); }
+function majEtatPin(){
+  document.getElementById("pin-etat").textContent = etat.prefs.pin ? "✓ Un code protège l'ouverture de l'app." : "Aucun code défini.";
+}
+async function deverrouiller(){
+  const champ = document.getElementById("verrou-code");
+  const h = await hacher(champ.value.trim());
+  if(h === etat.prefs.pin){
+    document.getElementById("verrou").classList.remove("actif");
+    champ.value=""; document.getElementById("verrou-erreur").textContent="";
+  }else{
+    document.getElementById("verrou-erreur").textContent = "Code incorrect";
+    champ.value=""; champ.focus();
+  }
+}
+document.getElementById("verrou-code").addEventListener("keydown", e=>{ if(e.key==="Enter") deverrouiller(); });
+
+// ---------- Navigation & dialogues ----------
+document.querySelectorAll("nav button").forEach(b=> b.addEventListener("click", ()=> montrerEcran(b.dataset.ecran)));
 function montrerEcran(nom){
   document.querySelectorAll(".ecran").forEach(e=>e.classList.remove("actif"));
   document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("actif", b.dataset.ecran===nom));
   document.getElementById("ecran-"+nom).classList.add("actif");
   toutAfficher();
+}
+function ouvrir(id){ document.getElementById(id).classList.add("ouvert"); }
+function fermer(id){ document.getElementById(id).classList.remove("ouvert"); }
+["dlg-donnees","dlg-revue","dlg-graphe","recherche-fond"].forEach(id=>{
+  document.getElementById(id).addEventListener("click", e=>{ if(e.target.id===id) fermer(id); });
+});
+document.getElementById("btn-donnees").addEventListener("click", ()=>{ ouvrir("dlg-donnees"); majEtatNotif(); majEtatPin(); });
+
+// ---------- Recherche globale ----------
+document.getElementById("btn-recherche").addEventListener("click", ()=>{
+  ouvrir("recherche-fond");
+  const c = document.getElementById("recherche-globale");
+  c.value=""; document.getElementById("recherche-resultats").innerHTML=""; c.focus();
+});
+function rechercheGlobale(){
+  const q = document.getElementById("recherche-globale").value.trim().toLowerCase();
+  const zone = document.getElementById("recherche-resultats");
+  if(q.length<2){ zone.innerHTML=""; return; }
+  const res = [];
+  etat.taches.forEach(t=>{ if(t.libelle.toLowerCase().includes(q)) res.push({type:"Tâche", c:"var(--ligne2)", titre:t.libelle, extrait:(t.fait?"terminée":"à faire")+(t.echeance?" · "+dateLisible(t.echeance):""), action:`montrerEcran('taches');fermer('recherche-fond')`}); });
+  etat.notes.forEach(n=>{ if((n.titre+" "+n.corps+" "+n.tags.join(" ")).toLowerCase().includes(q)) res.push({type:"Note", c:"var(--ligne4)", titre:n.titre, extrait:(n.corps||"").slice(0,80), action:`fermer('recherche-fond');ouvrirNote('${attr(n.titre)}')`}); });
+  etat.evenements.forEach(e=>{ if((e.titre+" "+(e.lieu||"")).toLowerCase().includes(q)) res.push({type:"Événement", c:"var(--ligne3)", titre:e.titre, extrait:dateLisible(e.date)+(e.heure?" · "+e.heure:""), action:`fermer('recherche-fond');montrerEcran('agenda');choisirJour('${e.date}')`}); });
+  etat.seances.forEach(s=>{ if((s.type+" "+(s.notes||"")).toLowerCase().includes(q)) res.push({type:"Séance", c:"var(--ligne5)", titre:s.type+" · "+s.duree+" min", extrait:dateLisible(s.date), action:`montrerEcran('sport');fermer('recherche-fond')`}); });
+  zone.innerHTML = res.length ? res.slice(0,25).map(r=>
+    `<div class="resultat" onclick="${r.action}">
+      <div class="rtype" style="color:${r.c}">${r.type}</div>
+      <div class="rtitre">${echap(r.titre)}</div>
+      ${r.extrait?`<div class="rextrait">${echap(r.extrait)}</div>`:""}
+    </div>`).join("")
+  : '<div class="vide" style="padding:10px 4px">Aucun résultat.</div>';
 }
 
 // ---------- Aujourd'hui ----------
@@ -533,27 +866,67 @@ function captureRapide(){
   const texte = champ.value.trim();
   if(!texte) return;
   etat.notes.unshift({ id:uid(), titre:texte.slice(0,60), corps:texte, tags:["boîte de réception"], date:AUJ });
-  champ.value = "";
-  sauver(); toutAfficher();
+  champ.value = ""; sauver(); toutAfficher();
 }
 function afficherAujourdhui(){
-  const zone = document.getElementById("auj-taches");
   const dj = etat.taches.filter(t => !t.fait && t.echeance && t.echeance <= AUJ);
-  zone.innerHTML = dj.length ? dj.map(ligneTacheHTML).join("")
-    : '<div class="vide">Rien d\'urgent aujourd\'hui ✨ Ajoute des tâches avec une échéance pour les voir ici.</div>';
+  document.getElementById("auj-taches").innerHTML = dj.length ? dj.map(t=>ligneTacheHTML(t,false)).join("")
+    : '<div class="vide">Rien d\'urgent aujourd\'hui ✨</div>';
+  const charge = dj.reduce((a,t)=>a+(t.duree||0),0);
+  document.getElementById("charge-jour").textContent = charge ? "⏱ "+(charge>=60? Math.floor(charge/60)+"h"+String(charge%60).padStart(2,"0") : charge+" min") : "";
 
-  const za = document.getElementById("auj-agenda");
-  const evts = etat.evenements.filter(e => e.date===AUJ).sort((a,b)=>(a.heure||"").localeCompare(b.heure||""));
-  za.innerHTML = evts.length ? evts.map(evenementHTML).join("")
+  const evts = evenementsDuJour(AUJ);
+  document.getElementById("auj-agenda").innerHTML = evts.length ? evts.map(evenementHTML).join("")
     : '<div class="vide">Aucun événement prévu aujourd\'hui.</div>';
 
-  const zh = document.getElementById("auj-habitudes");
-  zh.innerHTML = etat.habitudes.length ? etat.habitudes.map(habitudeHTML).join("")
-    : '<div class="vide">Crée tes habitudes dans l\'onglet Sport pour les cocher chaque jour ici.</div>';
+  document.getElementById("auj-habitudes").innerHTML = etat.habitudes.length ? etat.habitudes.map(habitudeHTML).join("")
+    : '<div class="vide">Crée tes habitudes dans l\'onglet Suivi pour les cocher ici.</div>';
+
+  // Comptes à rebours
+  const stars = etat.evenements.filter(e=>e.star && !e.recur && e.date>=AUJ).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,4);
+  document.getElementById("carte-comptes").style.display = stars.length ? "block" : "none";
+  document.getElementById("auj-comptes").innerHTML = stars.map(e=>{
+    const jours = Math.round((new Date(e.date)-new Date(AUJ))/864e5);
+    return `<div class="compte"><span class="j">${jours===0?"Auj.":"J−"+jours}</span><span>${echap(e.titre)} · ${dateLisible(e.date)}</span></div>`;
+  }).join("");
+}
+function majStatsSemaine(){
+  const lundi = lundiDe(AUJ);
+  const tachesFaites = etat.taches.filter(t=>t.fait && t.faitLe && t.faitLe>=lundi);
+  const seances = etat.seances.filter(s=>s.date>=lundi);
+  const notes = etat.notes.filter(n=>n.date>=lundi);
+  document.getElementById("chiffre-taches").textContent = tachesFaites.length;
+  document.getElementById("chiffre-minutes").textContent = seances.reduce((a,s)=>a+s.duree,0);
+  document.getElementById("chiffre-notes").textContent = notes.length;
+  let coches=0,total=0;
+  const nbJours = ((jourSemaine(AUJ)+6)%7)+1;
+  etat.habitudes.forEach(h=>{ for(let i=0;i<nbJours;i++){ total++; if(h.jours[decaler(lundi,i)]) coches++; } });
+  document.getElementById("chiffre-habitudes").textContent = total? Math.round(coches/total*100)+"%" : "—";
+  const labels=["L","M","M","J","V","S","D"];
+  const vals = labels.map((_,i)=> etat.taches.filter(t=>t.fait && t.faitLe===decaler(lundi,i)).length);
+  document.getElementById("graph-semaine").innerHTML =
+    '<div style="font-size:12px;color:var(--texte2);margin-top:10px">Tâches terminées par jour</div>' + svgBarres(vals, labels, "#2E6FE0");
+}
+
+// ---------- Revue hebdomadaire ----------
+function ouvrirRevue(){
+  const lundi = lundiDe(AUJ);
+  const tf = etat.taches.filter(t=>t.fait && t.faitLe && t.faitLe>=lundi).length;
+  const sc = etat.seances.filter(s=>s.date>=lundi);
+  document.getElementById("revue-stats").innerHTML =
+    `<p>Semaine du ${dateLisible(lundi)} : <b>${tf}</b> tâches terminées · <b>${sc.length}</b> séances (${sc.reduce((a,s)=>a+s.duree,0)} min) · <b>${etat.notes.filter(n=>n.date>=lundi).length}</b> notes créées.</p>`;
+  ouvrir("dlg-revue");
+}
+function sauverRevue(){
+  const r1=document.getElementById("revue-1").value.trim(), r2=document.getElementById("revue-2").value.trim(), r3=document.getElementById("revue-3").value.trim();
+  const corps = "# Ce qui a bien avancé\n"+(r1||"—")+"\n\n# Ce qui a bloqué\n"+(r2||"—")+"\n\n# Priorités de la semaine prochaine\n"+(r3||"—");
+  etat.notes.unshift({ id:uid(), titre:"Revue de la semaine du "+dateLisible(lundiDe(AUJ)), corps, tags:["revue"], date:AUJ });
+  ["revue-1","revue-2","revue-3"].forEach(i=>document.getElementById(i).value="");
+  sauver(); fermer("dlg-revue"); toutAfficher();
 }
 
 // ---------- Tâches ----------
-let filtreTaches = "actives";
+let filtreTaches = "actives", vueTaches = "liste", projetFiltre = null;
 document.getElementById("filtres-taches").addEventListener("click", e=>{
   if(e.target.dataset.f){
     filtreTaches = e.target.dataset.f;
@@ -561,24 +934,62 @@ document.getElementById("filtres-taches").addEventListener("click", e=>{
     afficherTaches();
   }
 });
+function changerVueTaches(v){
+  vueTaches = v;
+  document.getElementById("chip-vue-liste").classList.toggle("actif", v==="liste");
+  document.getElementById("chip-vue-matrice").classList.toggle("actif", v==="matrice");
+  afficherTaches();
+}
+function basculerTri(){
+  etat.prefs.tri = etat.prefs.tri==="auto" ? "manuel" : "auto";
+  document.getElementById("chip-tri").textContent = "Tri : "+etat.prefs.tri;
+  sauver(); afficherTaches();
+}
+function majSelectProjets(){
+  document.getElementById("tache-projet").innerHTML = etat.projets.map(p=>`<option>${echap(p)}</option>`).join("");
+  document.getElementById("filtres-projets").innerHTML =
+    `<button class="chip ${projetFiltre===null?"actif":""}" onclick="filtrerProjet(null)">Toutes les listes</button>` +
+    etat.projets.map(p=>`<button class="chip ${projetFiltre===p?"actif":""}" onclick="filtrerProjet('${attr(p)}')">${echap(p)}</button>`).join("");
+  document.getElementById("liste-projets").innerHTML = etat.projets.map(p=>
+    `<div class="habitude"><div class="nom">${echap(p)}</div>${etat.projets.length>1?`<button class="btn-suppr" onclick="supprimerProjet('${attr(p)}')">×</button>`:""}</div>`).join("");
+}
+function filtrerProjet(p){ projetFiltre = p; majSelectProjets(); afficherTaches(); }
+function ajouterProjet(){
+  const nom = document.getElementById("projet-nom").value.trim();
+  if(!nom || etat.projets.includes(nom)) return;
+  etat.projets.push(nom);
+  document.getElementById("projet-nom").value="";
+  sauver(); majSelectProjets();
+}
+function supprimerProjet(nom){
+  etat.projets = etat.projets.filter(p=>p!==nom);
+  etat.taches.forEach(t=>{ if(t.projet===nom) t.projet = etat.projets[0]; });
+  if(projetFiltre===nom) projetFiltre=null;
+  sauver(); majSelectProjets(); afficherTaches();
+}
 function ajouterTache(){
   const champ = document.getElementById("tache-libelle");
   const libelle = champ.value.trim();
   if(!libelle) return;
   const repete = document.getElementById("tache-repete").value;
   let echeance = document.getElementById("tache-date").value || null;
-  if(repete && !echeance) echeance = AUJ; // une tâche récurrente a besoin d'une date de départ
+  if(repete && !echeance) echeance = AUJ;
   etat.taches.unshift({
-    id:uid(), libelle, echeance,
-    priorite: document.getElementById("tache-prio").value,
-    repete, fait:false
+    id:uid(), libelle, echeance, repete, fait:false,
+    projet: document.getElementById("tache-projet").value,
+    duree: parseInt(document.getElementById("tache-duree").value,10)||0,
+    urgent: document.getElementById("chip-urgent").classList.contains("actif"),
+    important: document.getElementById("chip-important").classList.contains("actif"),
+    sous:[], ordre: Date.now()
   });
   champ.value=""; document.getElementById("tache-date").value="";
-  document.getElementById("tache-repete").value="";
+  document.getElementById("tache-duree").value=""; document.getElementById("tache-repete").value="";
+  document.getElementById("chip-urgent").classList.remove("actif");
+  document.getElementById("chip-important").classList.remove("actif");
   sauver(); toutAfficher();
 }
 function prochaineEcheance(iso, repete){
-  const base = iso > AUJ ? iso : AUJ; // si la tâche était en retard, on repart d'aujourd'hui
+  const base = iso > AUJ ? iso : AUJ;
   const [a,m,j] = base.split("-").map(Number);
   const d = new Date(a,m-1,j);
   if(repete==="quotidien") d.setDate(d.getDate()+1);
@@ -590,81 +1001,168 @@ function basculerTache(id){
   const t = etat.taches.find(t=>t.id===id);
   if(!t) return;
   t.fait = !t.fait;
-  // Récurrence : quand on termine, la prochaine occurrence est créée automatiquement
+  t.faitLe = t.fait ? AUJ : null;
   if(t.fait && t.repete){
-    etat.taches.unshift({
-      id:uid(), libelle:t.libelle, priorite:t.priorite,
-      repete:t.repete, echeance:prochaineEcheance(t.echeance||AUJ, t.repete),
-      fait:false
-    });
-    t.repete = ""; // l'occurrence terminée devient une simple tâche archivée
+    etat.taches.unshift({ id:uid(), libelle:t.libelle, projet:t.projet, duree:t.duree, urgent:t.urgent, important:t.important,
+      repete:t.repete, echeance:prochaineEcheance(t.echeance||AUJ, t.repete), fait:false, sous:(t.sous||[]).map(s=>({id:uid(),l:s.l,f:false})), ordre:Date.now() });
+    t.repete = "";
   }
   sauver(); toutAfficher();
 }
-function supprimerTache(id){
-  etat.taches = etat.taches.filter(t=>t.id!==id);
-  sauver(); toutAfficher();
+function supprimerTache(id){ etat.taches = etat.taches.filter(t=>t.id!==id); sauver(); toutAfficher(); }
+function reporterDemain(id){
+  const t = etat.taches.find(t=>t.id===id);
+  if(t){ t.echeance = decaler(AUJ,1); sauver(); toutAfficher(); }
+}
+function deplacerTache(id, sens){
+  const visibles = tachesFiltrees();
+  const i = visibles.findIndex(t=>t.id===id);
+  const cible = visibles[i+sens];
+  if(!cible) return;
+  const t = etat.taches.find(t=>t.id===id);
+  [t.ordre, cible.ordre] = [cible.ordre, t.ordre];
+  sauver(); afficherTaches();
+}
+function ajouterSousTache(id){
+  const champ = document.getElementById("st-"+id);
+  const l = champ.value.trim();
+  if(!l) return;
+  const t = etat.taches.find(t=>t.id===id);
+  (t.sous = t.sous||[]).push({id:uid(), l, f:false});
+  sauver(); afficherTaches(); afficherAujourdhui();
+  const nouveau = document.getElementById("st-"+id); if(nouveau) nouveau.focus();
+}
+function basculerSous(tid, sid){
+  const t = etat.taches.find(t=>t.id===tid);
+  const s = (t.sous||[]).find(s=>s.id===sid);
+  if(s){ s.f = !s.f; sauver(); afficherTaches(); afficherAujourdhui(); }
+}
+function supprimerSous(tid, sid){
+  const t = etat.taches.find(t=>t.id===tid);
+  t.sous = (t.sous||[]).filter(s=>s.id!==sid);
+  sauver(); afficherTaches(); afficherAujourdhui();
 }
 const LIB_REPETE = {quotidien:"↻ quotidien", hebdo:"↻ hebdo", mensuel:"↻ mensuel"};
-function ligneTacheHTML(t){
+function ligneTacheHTML(t, complet){
   const retard = !t.fait && t.echeance && t.echeance < AUJ;
+  const sous = t.sous||[];
+  const nf = sous.filter(s=>s.f).length;
   return `<div class="item ${t.fait?"fait":""}">
-    <button class="coche ${t.fait?"fait":""}" onclick="basculerTache('${t.id}')" aria-label="${t.fait?"Marquer à faire":"Marquer terminée"}">${t.fait?"✓":""}</button>
+    ${complet && etat.prefs.tri==="manuel" && filtreTaches!=="faites" ? `<div class="ordre-btns"><button onclick="deplacerTache('${t.id}',-1)">▲</button><button onclick="deplacerTache('${t.id}',1)">▼</button></div>`:""}
+    <button class="coche ${t.fait?"fait":""}" onclick="basculerTache('${t.id}')" aria-label="Basculer">${t.fait?"✓":""}</button>
     <div class="contenu">
       <div class="libelle">${echap(t.libelle)}</div>
       <div class="meta">
-        <span class="badge ${t.priorite}">${t.priorite}</span>
+        <span class="badge projet">${echap(t.projet||"Perso")}</span>
+        ${t.urgent?'<span class="badge urgent">🔥 urgent</span>':""}
+        ${t.important?'<span class="badge important">⭐ important</span>':""}
         ${t.repete?`<span class="badge repete">${LIB_REPETE[t.repete]}</span>`:""}
+        ${t.duree?`<span>⏱ ${t.duree} min</span>`:""}
         ${t.echeance ? (retard ? `<span class="badge retard">en retard · ${dateLisible(t.echeance)}</span>` : `<span>📅 ${dateLisible(t.echeance)}</span>`) : ""}
+        ${sous.length?`<span>☑ ${nf}/${sous.length}</span>`:""}
+        ${!t.fait && t.echeance && t.echeance<=AUJ ? `<button class="btn-mini" onclick="reporterDemain('${t.id}')">→ demain</button>`:""}
       </div>
+      ${complet ? `<div class="sous">
+        ${sous.map(s=>`<div class="srow ${s.f?"faite":""}">
+          <button class="mini-coche ${s.f?"fait":""}" onclick="basculerSous('${t.id}','${s.id}')">${s.f?"✓":""}</button>
+          <span style="flex:1">${echap(s.l)}</span>
+          <button class="btn-suppr" style="font-size:13px" onclick="supprimerSous('${t.id}','${s.id}')">×</button>
+        </div>`).join("")}
+        ${!t.fait?`<div class="ajout"><input type="text" id="st-${t.id}" placeholder="＋ sous-tâche" onkeydown="if(event.key==='Enter')ajouterSousTache('${t.id}')"></div>`:""}
+      </div>`:""}
     </div>
     <button class="btn-suppr" onclick="supprimerTache('${t.id}')" aria-label="Supprimer">×</button>
   </div>`;
 }
-function afficherTaches(){
+function tachesFiltrees(){
   let liste = etat.taches;
   if(filtreTaches==="actives") liste = liste.filter(t=>!t.fait);
   if(filtreTaches==="faites")  liste = liste.filter(t=>t.fait);
   if(filtreTaches==="auj")     liste = liste.filter(t=>!t.fait && t.echeance && t.echeance<=AUJ);
-  const poids = {haute:0, moyenne:1, basse:2};
-  liste = [...liste].sort((a,b)=>{
-    const ea = a.echeance||"9999", eb = b.echeance||"9999";
-    if(ea!==eb) return ea.localeCompare(eb);
-    return poids[a.priorite]-poids[b.priorite];
-  });
-  document.getElementById("liste-taches").innerHTML =
-    liste.length ? liste.map(ligneTacheHTML).join("") : '<div class="vide">Aucune tâche ici.</div>';
+  if(projetFiltre) liste = liste.filter(t=>(t.projet||"Perso")===projetFiltre);
+  if(etat.prefs.tri==="manuel"){
+    liste = [...liste].sort((a,b)=>(a.ordre||0)-(b.ordre||0));
+  }else{
+    liste = [...liste].sort((a,b)=>{
+      const ea = a.echeance||"9999", eb = b.echeance||"9999";
+      if(ea!==eb) return ea.localeCompare(eb);
+      return (b.urgent+b.important) - (a.urgent+a.important);
+    });
+  }
+  return liste;
+}
+function afficherTaches(){
+  document.getElementById("chip-tri").textContent = "Tri : "+etat.prefs.tri;
+  const liste = tachesFiltrees();
+  const zone = document.getElementById("liste-taches");
+  if(vueTaches==="matrice"){
+    const q = {
+      fi:{t:"🔥⭐ Faire d'abord", c:"var(--danger)", l:liste.filter(t=>t.urgent&&t.important)},
+      pl:{t:"⭐ Planifier", c:"#9A6B00", l:liste.filter(t=>!t.urgent&&t.important)},
+      vf:{t:"🔥 Vite fait", c:"var(--ligne5)", l:liste.filter(t=>t.urgent&&!t.important)},
+      op:{t:"En option", c:"var(--texte2)", l:liste.filter(t=>!t.urgent&&!t.important)}
+    };
+    zone.innerHTML = `<div class="quad">`+Object.values(q).map(b=>
+      `<div class="bloc"><h4 style="color:${b.c}">${b.t}</h4>${b.l.length? b.l.map(t=>ligneTacheHTML(t,false)).join("") : '<div class="vide" style="font-size:12.5px">—</div>'}</div>`).join("")+`</div>`;
+  }else{
+    zone.innerHTML = liste.length ? liste.map(t=>ligneTacheHTML(t,true)).join("") : '<div class="vide">Aucune tâche ici.</div>';
+  }
 }
 
 // ---------- Agenda ----------
 let moisAffiche = new Date(); moisAffiche.setDate(1);
-let jourChoisi = AUJ;
-function changerMois(delta){
-  moisAffiche.setMonth(moisAffiche.getMonth()+delta);
+let jourChoisi = AUJ, semaineBase = lundiDe(AUJ), vueAgenda = "mois";
+function occursOn(e, iso){
+  if(!e.recur) return e.date===iso;
+  if(iso < e.date) return false;
+  if(e.recur==="quotidien") return true;
+  if(e.recur==="hebdo") return jourSemaine(iso)===jourSemaine(e.date);
+  if(e.recur==="mensuel") return iso.slice(8)===e.date.slice(8);
+  return false;
+}
+function evenementsDuJour(iso){
+  return etat.evenements.filter(e=>occursOn(e,iso)).sort((a,b)=>(a.heure||"").localeCompare(b.heure||""));
+}
+function changerVueAgenda(v){
+  vueAgenda = v;
+  document.getElementById("chip-mois").classList.toggle("actif", v==="mois");
+  document.getElementById("chip-semaine").classList.toggle("actif", v==="semaine");
+  document.getElementById("carte-cal-mois").style.display = v==="mois"?"block":"none";
+  document.getElementById("carte-cal-semaine").style.display = v==="semaine"?"block":"none";
   afficherCalendrier();
 }
+function changerMois(delta){ moisAffiche.setMonth(moisAffiche.getMonth()+delta); afficherCalendrier(); }
+function changerSemaine(delta){ semaineBase = decaler(semaineBase, delta*7); afficherCalendrier(); }
 function choisirJour(iso){
   jourChoisi = iso;
   document.getElementById("evt-date").value = iso;
   afficherCalendrier(); afficherEvenementsJour();
 }
 function afficherCalendrier(){
-  document.getElementById("cal-mois").textContent =
-    moisAffiche.toLocaleDateString("fr-FR",{month:"long",year:"numeric"});
+  // Vue mois
+  document.getElementById("cal-mois").textContent = moisAffiche.toLocaleDateString("fr-FR",{month:"long",year:"numeric"});
   const g = document.getElementById("cal-grille");
-  const noms = ["L","M","M","J","V","S","D"];
-  let html = noms.map(n=>`<div class="jour-nom">${n}</div>`).join("");
-  const premier = new Date(moisAffiche);
-  let decalage = (premier.getDay()+6)%7;
-  for(let i=0;i<decalage;i++) html += `<div class="cal-case"></div>`;
+  let html = ["L","M","M","J","V","S","D"].map(n=>`<div class="jour-nom">${n}</div>`).join("");
+  const decal = (new Date(moisAffiche).getDay()+6)%7;
+  for(let i=0;i<decal;i++) html += `<div class="cal-case"></div>`;
   const nbJours = new Date(moisAffiche.getFullYear(), moisAffiche.getMonth()+1, 0).getDate();
   for(let j=1;j<=nbJours;j++){
     const iso = cleDate(new Date(moisAffiche.getFullYear(), moisAffiche.getMonth(), j));
-    const aEvt = etat.evenements.some(e=>e.date===iso);
+    const aEvt = etat.evenements.some(e=>occursOn(e,iso));
     const cls = ["cal-case", iso===AUJ?"aujourdhui":"", iso===jourChoisi?"choisi":""].join(" ");
     html += `<button class="${cls}" onclick="choisirJour('${iso}')">${j}${aEvt?'<span class="point"></span>':""}</button>`;
   }
   g.innerHTML = html;
+  // Vue semaine
+  document.getElementById("sem-titre").textContent = "Semaine du "+dateLisible(semaineBase);
+  document.getElementById("sem-liste").innerHTML = [0,1,2,3,4,5,6].map(i=>{
+    const iso = decaler(semaineBase,i);
+    const evts = evenementsDuJour(iso);
+    return `<div class="sem-jour ${iso===AUJ?"auj":""}" onclick="choisirJour('${iso}')" style="cursor:pointer">
+      <div class="nom">${dateLisible(iso)}</div>
+      <div class="evts">${evts.length? evts.map(e=>`<span class="cat-point" style="background:${CAT[e.cat||"autre"].c}"></span>${e.heure?e.heure+" ":""}${echap(e.titre)}`).join("<br>") : "—"}</div>
+    </div>`;
+  }).join("");
 }
 const LIB_RAPPEL = {0:"à l'heure", 10:"10 min avant", 30:"30 min avant", 60:"1 h avant", 1440:"1 j avant"};
 function ajouterEvenement(){
@@ -675,25 +1173,25 @@ function ajouterEvenement(){
     id:uid(), titre, date,
     heure: document.getElementById("evt-heure").value || "",
     lieu: document.getElementById("evt-lieu").value.trim(),
-    rappel: parseInt(document.getElementById("evt-rappel").value,10)
+    duree: parseInt(document.getElementById("evt-duree").value,10)||0,
+    cat: document.getElementById("evt-cat").value,
+    recur: document.getElementById("evt-recur").value,
+    rappel: parseInt(document.getElementById("evt-rappel").value,10),
+    star: document.getElementById("chip-star").classList.contains("actif")
   });
-  document.getElementById("evt-titre").value="";
-  document.getElementById("evt-heure").value="";
-  document.getElementById("evt-lieu").value="";
-  document.getElementById("evt-rappel").value="-1";
+  ["evt-titre","evt-heure","evt-lieu","evt-duree"].forEach(i=>document.getElementById(i).value="");
+  document.getElementById("evt-rappel").value="-1"; document.getElementById("evt-recur").value="";
+  document.getElementById("chip-star").classList.remove("actif");
   document.getElementById("form-evt").open = false;
   jourChoisi = date;
   sauver(); toutAfficher();
 }
-function supprimerEvenement(id){
-  etat.evenements = etat.evenements.filter(e=>e.id!==id);
-  sauver(); toutAfficher();
-}
+function supprimerEvenement(id){ etat.evenements = etat.evenements.filter(e=>e.id!==id); sauver(); toutAfficher(); }
 function evenementHTML(e){
   return `<div class="evenement">
     <div class="heure">${e.heure||"—"}</div>
     <div class="contenu">
-      <div class="titre">${echap(e.titre)}</div>
+      <div class="titre"><span class="cat-point" style="background:${CAT[e.cat||"autre"].c}"></span>${echap(e.titre)}${e.duree?` <span style="font-size:12px;color:var(--texte2)">(${e.duree} min)</span>`:""}${e.recur?` <span class="badge repete">${LIB_REPETE[e.recur]}</span>`:""}</div>
       ${e.lieu?`<div class="lieu">📍 ${echap(e.lieu)}</div>`:""}
       ${e.rappel>=0?`<div class="rappel-info">🔔 ${LIB_RAPPEL[e.rappel]||""}</div>`:""}
     </div>
@@ -701,77 +1199,96 @@ function evenementHTML(e){
   </div>`;
 }
 function afficherEvenementsJour(){
-  document.getElementById("titre-jour-choisi").textContent =
-    jourChoisi===AUJ ? "Aujourd'hui" : dateLisible(jourChoisi);
-  const evts = etat.evenements.filter(e=>e.date===jourChoisi).sort((a,b)=>(a.heure||"").localeCompare(b.heure||""));
+  document.getElementById("titre-jour-choisi").textContent = jourChoisi===AUJ ? "Aujourd'hui" : dateLisible(jourChoisi);
+  const evts = evenementsDuJour(jourChoisi);
   document.getElementById("liste-evenements-jour").innerHTML =
     evts.length ? evts.map(evenementHTML).join("") : '<div class="vide">Rien de prévu ce jour-là.</div>';
 }
 function afficherAVenir(){
-  const limite = cleDate(new Date(Date.now()+7*864e5));
-  const evts = etat.evenements
-    .filter(e=>e.date>=AUJ && e.date<=limite)
-    .sort((a,b)=> (a.date+a.heure).localeCompare(b.date+b.heure));
-  document.getElementById("liste-a-venir").innerHTML = evts.length
-    ? evts.map(e=>`<div class="evenement">
-        <div class="heure" style="width:auto;min-width:52px">${dateLisible(e.date)}</div>
-        <div class="contenu"><div class="titre">${e.heure?e.heure+" · ":""}${echap(e.titre)}</div>
+  let html = "";
+  for(let i=0;i<=7;i++){
+    const iso = decaler(AUJ,i);
+    evenementsDuJour(iso).forEach(e=>{
+      html += `<div class="evenement">
+        <div class="heure" style="width:auto;min-width:52px">${dateLisible(iso)}</div>
+        <div class="contenu"><div class="titre"><span class="cat-point" style="background:${CAT[e.cat||"autre"].c}"></span>${e.heure?e.heure+" · ":""}${echap(e.titre)}</div>
         ${e.lieu?`<div class="lieu">📍 ${echap(e.lieu)}</div>`:""}</div>
-      </div>`).join("")
-    : '<div class="vide">Semaine calme pour l\'instant.</div>';
+      </div>`;
+    });
+  }
+  document.getElementById("liste-a-venir").innerHTML = html || '<div class="vide">Semaine calme pour l\'instant.</div>';
 }
 
-// ---------- Rappels / notifications ----------
-function majEtatNotif(){
-  const zone = document.getElementById("etat-notif");
-  const btn = document.getElementById("btn-notif");
-  if(!("Notification" in window)){
-    zone.textContent = "Les notifications ne sont pas disponibles dans ce navigateur.";
-    zone.className = "etat-notif ko"; btn.style.display="none"; return;
-  }
-  if(Notification.permission==="granted" && etat.prefs.notif){
-    zone.textContent = "✓ Rappels activés"; zone.className = "etat-notif ok";
-    btn.textContent = "Désactiver les rappels";
-  }else if(Notification.permission==="denied"){
-    zone.textContent = "Notifications refusées : autorise-les dans les réglages de ton navigateur.";
-    zone.className = "etat-notif ko"; btn.style.display="none";
-  }else{
-    zone.textContent = ""; btn.textContent = "Activer les rappels";
-  }
+// ---------- Export / import ICS ----------
+function icsDate(iso, heure){
+  const d = iso.replace(/-/g,"");
+  return heure ? d+"T"+heure.replace(":","")+"00" : d;
 }
-async function activerNotifications(){
-  if(etat.prefs.notif && Notification.permission==="granted"){
-    etat.prefs.notif = false; sauver(); majEtatNotif(); return;
-  }
-  const perm = await Notification.requestPermission();
-  if(perm==="granted"){
-    etat.prefs.notif = true; sauver();
-    new Notification("Mon Quotidien", {body:"Les rappels sont activés 🎉"});
-  }
-  majEtatNotif();
-}
-function verifierRappels(){
-  if(!("Notification" in window) || Notification.permission!=="granted" || !etat.prefs.notif) return;
-  const maintenant = new Date();
-  let modif = false;
+function exporterICS(){
+  const L = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//MonQuotidien//FR"];
   etat.evenements.forEach(e=>{
-    if(e.rappel==null || e.rappel<0 || etat.notifie[e.id]) return;
-    const [a,m,j] = e.date.split("-").map(Number);
-    const [h,mn] = (e.heure||"08:00").split(":").map(Number);
-    const debut = new Date(a,m-1,j,h,mn);
-    const declenchement = new Date(debut.getTime() - e.rappel*60000);
-    if(maintenant >= declenchement && maintenant <= debut){
-      const quand = e.rappel===0 ? "C'est maintenant" : "Dans "+(LIB_RAPPEL[e.rappel]||"").replace(" avant","");
-      new Notification("📅 "+e.titre, {body: quand + (e.heure?" · "+e.heure:"") + (e.lieu?" · "+e.lieu:"")});
-      etat.notifie[e.id] = true; modif = true;
-    }
+    L.push("BEGIN:VEVENT","UID:"+e.id+"@mon-quotidien");
+    if(e.heure){ L.push("DTSTART:"+icsDate(e.date,e.heure)); if(e.duree) L.push("DURATION:PT"+e.duree+"M"); }
+    else L.push("DTSTART;VALUE=DATE:"+icsDate(e.date));
+    L.push("SUMMARY:"+e.titre.replace(/[\n,;]/g," "));
+    if(e.lieu) L.push("LOCATION:"+e.lieu.replace(/[\n,;]/g," "));
+    if(e.recur) L.push("RRULE:FREQ="+({quotidien:"DAILY",hebdo:"WEEKLY",mensuel:"MONTHLY"}[e.recur]));
+    L.push("END:VEVENT");
   });
-  if(modif) sauver();
+  L.push("END:VCALENDAR");
+  telecharger(new Blob([L.join("\r\n")],{type:"text/calendar"}), "mon-quotidien-agenda.ics");
 }
-setInterval(verifierRappels, 30000);
-
-// ---------- Notes (avec liens [[façon Obsidian]]) ----------
-let tagFiltre = null;
+function importerICS(ev){
+  const f = ev.target.files[0]; if(!f) return;
+  const lecteur = new FileReader();
+  lecteur.onload = ()=>{
+    const texte = lecteur.result.replace(/\r\n[ \t]/g,""); // déplier les lignes
+    const blocs = texte.split("BEGIN:VEVENT").slice(1);
+    let n = 0;
+    blocs.forEach(b=>{
+      const prendre = re => { const m = b.match(re); return m ? m[1].trim() : ""; };
+      const titre = prendre(/SUMMARY[^:]*:(.*)/);
+      const dt = prendre(/DTSTART[^:]*:([0-9T]+)/);
+      if(!titre || !dt) return;
+      const date = dt.slice(0,4)+"-"+dt.slice(4,6)+"-"+dt.slice(6,8);
+      const heure = dt.length>=13 ? dt.slice(9,11)+":"+dt.slice(11,13) : "";
+      const freq = prendre(/RRULE:.*FREQ=(\w+)/);
+      etat.evenements.push({ id:uid(), titre, date, heure,
+        lieu: prendre(/LOCATION[^:]*:(.*)/), duree:0, cat:"autre",
+        recur: {DAILY:"quotidien",WEEKLY:"hebdo",MONTHLY:"mensuel"}[freq]||"", rappel:-1, star:false });
+      n++;
+    });
+    sauver(); toutAfficher();
+    alert(n+" événement(s) importé(s).");
+  };
+  lecteur.readAsText(f); ev.target.value="";
+}
+function telecharger(blob, nom){
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = nom; a.click();
+  URL.revokeObjectURL(a.href);
+}
+</script>
+<script>
+// ---------- Notes ----------
+let tagFiltre = null, vueNotes = "actives";
+const MODELES = {
+  reunion:"# Objectif\n\n# Points abordés\n- \n\n# Décisions\n- [ ] \n\n# Prochaines étapes\n- [ ] ",
+  idee:"# L'idée en une phrase\n\n# Pourquoi c'est intéressant\n\n# Première petite étape\n- [ ] ",
+  lecture:"# Livre / article\n\n**Auteur :** \n\n# Les 3 idées clés\n- \n- \n- \n\n# Ce que j'en retire"
+};
+function appliquerModele(){
+  const m = document.getElementById("note-modele").value;
+  if(m){ document.getElementById("note-corps").value = MODELES[m]; document.getElementById("note-modele").value=""; }
+}
+function journalDuJour(){
+  const titre = "Journal — "+dateLisible(AUJ);
+  const existante = etat.notes.find(n=>n.titre===titre);
+  if(existante){ ouvrirNote(titre); return; }
+  etat.notes.unshift({ id:uid(), titre,
+    corps:"# Humeur du jour\n\n# 3 bonnes choses aujourd'hui\n- \n- \n- \n\n# En vrac", tags:["journal"], date:AUJ });
+  sauver(); toutAfficher(); ouvrirNote(titre);
+}
 function ajouterNote(){
   const titre = document.getElementById("note-titre").value.trim();
   const corps = document.getElementById("note-corps").value.trim();
@@ -781,33 +1298,52 @@ function ajouterNote(){
   ["note-titre","note-corps","note-tags"].forEach(i=>document.getElementById(i).value="");
   sauver(); toutAfficher();
 }
-function supprimerNote(id){
-  etat.notes = etat.notes.filter(n=>n.id!==id);
-  sauver(); toutAfficher();
-}
-function basculerNote(id){
-  document.querySelector(`#note-${id} .corps`)?.classList.toggle("replie");
-}
-function filtrerTag(tag){
-  tagFiltre = (tagFiltre===tag) ? null : tag;
+function supprimerNote(id){ etat.notes = etat.notes.filter(n=>n.id!==id); sauver(); toutAfficher(); }
+function basculerNote(id){ document.querySelector(`#note-${id} .corps`)?.classList.toggle("replie"); }
+function epinglerNote(id){ const n=etat.notes.find(n=>n.id===id); n.epingle=!n.epingle; sauver(); afficherNotes(); }
+function archiverNote(id){ const n=etat.notes.find(n=>n.id===id); n.archive=!n.archive; sauver(); afficherNotes(); }
+function changerVueNotes(btn){
+  vueNotes = btn.dataset.vn;
+  document.querySelectorAll("[data-vn]").forEach(b=>b.classList.toggle("actif", b===btn));
   afficherNotes();
 }
-function rendreCorps(txt){
-  // échappe le HTML puis transforme [[Titre]] en lien cliquable
-  return echap(txt).replace(/\[\[([^\[\]]+)\]\]/g, (m,titre)=>
-    `<a class="lien-note" onclick="event.stopPropagation();ouvrirNote('${attr(titre)}')">${titre}</a>`
-  );
+function filtrerTag(tag){ tagFiltre = (tagFiltre===tag)?null:tag; afficherNotes(); }
+function mdInline(s){
+  return echap(s)
+    .replace(/\[\[([^\[\]]+)\]\]/g,(m,t)=>`<a class="lien-note" onclick="event.stopPropagation();ouvrirNote('${attr(t)}')">${t}</a>`)
+    .replace(/\*\*([^*]+)\*\*/g,"<b>$1</b>")
+    .replace(/\*([^*]+)\*/g,"<i>$1</i>")
+    .replace(/`([^`]+)`/g,"<code>$1</code>");
+}
+function rendreMd(txt, noteId){
+  return txt.split("\n").map((l,i)=>{
+    const c = l.match(/^\s*- \[( |x)\] ?(.*)$/);
+    if(c) return `<div class="md-case"><button class="case ${c[1]==="x"?"cochee":""}" onclick="event.stopPropagation();basculerCase('${noteId}',${i})">${c[1]==="x"?"✓":""}</button><span class="${c[1]==="x"?"barre":""}">${mdInline(c[2])}</span></div>`;
+    if(/^## /.test(l)) return `<div class="md-h2">${mdInline(l.slice(3))}</div>`;
+    if(/^# /.test(l))  return `<div class="md-h1">${mdInline(l.slice(2))}</div>`;
+    if(/^\s*[-*] /.test(l)) return `<div class="md-li">• ${mdInline(l.replace(/^\s*[-*] /,""))}</div>`;
+    return l.trim() ? `<div>${mdInline(l)}</div>` : `<div class="md-vide"></div>`;
+  }).join("");
+}
+function basculerCase(noteId, ligne){
+  const n = etat.notes.find(n=>n.id===noteId);
+  if(!n) return;
+  const lignes = n.corps.split("\n");
+  lignes[ligne] = lignes[ligne].includes("[ ]") ? lignes[ligne].replace("[ ]","[x]") : lignes[ligne].replace("[x]","[ ]");
+  n.corps = lignes.join("\n");
+  sauver(); afficherNotes();
 }
 function trouverNoteParTitre(titre){
   const t = titre.trim().toLowerCase();
-  return etat.notes.find(n=>n.titre.toLowerCase()===t)
-      || etat.notes.find(n=>n.titre.toLowerCase().includes(t));
+  return etat.notes.find(n=>n.titre.toLowerCase()===t) || etat.notes.find(n=>n.titre.toLowerCase().includes(t));
 }
 function ouvrirNote(titre){
   const n = trouverNoteParTitre(titre);
   montrerEcran("notes");
   if(n){
     tagFiltre = null;
+    vueNotes = n.archive ? "archivees" : "actives";
+    document.querySelectorAll("[data-vn]").forEach(b=>b.classList.toggle("actif", b.dataset.vn===vueNotes));
     document.getElementById("recherche-notes").value = "";
     afficherNotes();
     const el = document.getElementById("note-"+n.id);
@@ -818,7 +1354,6 @@ function ouvrirNote(titre){
       setTimeout(()=>el.classList.remove("surbrillance"), 1600);
     }
   }else{
-    // la note n'existe pas encore : on pré-remplit le formulaire pour la créer
     document.getElementById("note-titre").value = titre;
     document.getElementById("note-corps").focus();
     window.scrollTo({top:0, behavior:"smooth"});
@@ -830,195 +1365,487 @@ function retroliens(note){
 }
 function afficherNotes(){
   const q = document.getElementById("recherche-notes").value.trim().toLowerCase();
-  const tousTags = [...new Set(etat.notes.flatMap(n=>n.tags))];
+  const tousTags = [...new Set(etat.notes.filter(n=>!n.archive).flatMap(n=>n.tags))];
   document.getElementById("filtres-tags").innerHTML = tousTags.map(t=>
-    `<button class="${tagFiltre===t?"actif":""}" onclick="filtrerTag('${attr(t)}')">#${echap(t)}</button>`
-  ).join("");
+    `<button class="chip ${tagFiltre===t?"actif":""}" onclick="filtrerTag('${attr(t)}')">#${echap(t)}</button>`).join("");
   let liste = etat.notes;
+  if(vueNotes==="actives")   liste = liste.filter(n=>!n.archive);
+  if(vueNotes==="epinglees") liste = liste.filter(n=>n.epingle && !n.archive);
+  if(vueNotes==="archivees") liste = liste.filter(n=>n.archive);
   if(tagFiltre) liste = liste.filter(n=>n.tags.includes(tagFiltre));
   if(q) liste = liste.filter(n=> (n.titre+" "+n.corps+" "+n.tags.join(" ")).toLowerCase().includes(q));
+  liste = [...liste].sort((a,b)=> (b.epingle?1:0)-(a.epingle?1:0));
   document.getElementById("liste-notes").innerHTML = liste.length ? liste.map(n=>{
     const liens = retroliens(n);
-    return `<div class="note" id="note-${n.id}">
-      <div class="titre"><span>${echap(n.titre)}</span>
-        <button class="btn-suppr" onclick="supprimerNote('${n.id}')" aria-label="Supprimer">×</button></div>
-      ${n.corps?`<div class="corps replie" onclick="basculerNote('${n.id}')">${rendreCorps(n.corps)}</div>`:""}
+    return `<div class="note ${n.epingle?"epinglee":""}" id="note-${n.id}">
+      <div class="titre"><span>${n.epingle?"📌 ":""}${echap(n.titre)}</span>
+        <span class="outils">
+          <button class="${n.epingle?"on":""}" onclick="epinglerNote('${n.id}')" aria-label="Épingler">📌</button>
+          <button onclick="archiverNote('${n.id}')" aria-label="Archiver">${n.archive?"↩":"🗄"}</button>
+          <button class="btn-suppr" onclick="supprimerNote('${n.id}')" aria-label="Supprimer">×</button>
+        </span></div>
+      ${n.corps?`<div class="corps replie" onclick="basculerNote('${n.id}')">${rendreMd(n.corps, n.id)}</div>`:""}
       ${n.tags.length?`<div class="tags">${n.tags.map(t=>`<span class="tag">#${echap(t)}</span>`).join("")}</div>`:""}
       ${liens.length?`<div class="retroliens">↩ Mentionnée dans : ${liens.map(l=>`<a class="lien-note" onclick="ouvrirNote('${attr(l.titre)}')">${echap(l.titre)}</a>`).join(", ")}</div>`:""}
       <div class="pied">${dateLisible(n.date)}</div>
     </div>`;
   }).join("")
-  : '<div class="vide" style="padding:10px 4px">Aucune note. Ton second cerveau attend sa première idée 🧠</div>';
+  : '<div class="vide" style="padding:10px 4px">Aucune note ici. Ton second cerveau attend 🧠</div>';
 }
 
-// ---------- Sport ----------
+// ---------- Graphe des notes ----------
+function ouvrirGraphe(){
+  const notes = etat.notes.filter(n=>!n.archive).slice(0,30);
+  if(notes.length<2){ alert("Ajoute au moins deux notes (avec des liens [[…]]) pour voir le graphe."); return; }
+  const T=320, cx=T/2, cy=T/2, r=T/2-46;
+  const pos = {};
+  notes.forEach((n,i)=>{
+    const a = (i/notes.length)*Math.PI*2 - Math.PI/2;
+    pos[n.id] = {x:cx+r*Math.cos(a), y:cy+r*Math.sin(a)};
+  });
+  let traits="", bulles="";
+  notes.forEach(n=>{
+    notes.forEach(m=>{
+      if(n.id!==m.id && (n.corps||"").toLowerCase().includes("[["+m.titre.toLowerCase()))
+        traits += `<line x1="${pos[n.id].x}" y1="${pos[n.id].y}" x2="${pos[m.id].x}" y2="${pos[m.id].y}" stroke="var(--trait)" stroke-width="1.5"/>`;
+    });
+  });
+  notes.forEach(n=>{
+    const nb = retroliens(n).length;
+    const ray = 7 + Math.min(nb*2.5, 10);
+    const court = n.titre.length>13 ? n.titre.slice(0,12)+"…" : n.titre;
+    bulles += `<g onclick="fermer('dlg-graphe');ouvrirNote('${attr(n.titre)}')" style="cursor:pointer">
+      <circle cx="${pos[n.id].x}" cy="${pos[n.id].y}" r="${ray}" fill="var(--ligne4)" opacity="0.85"/>
+      <text x="${pos[n.id].x}" y="${pos[n.id].y + ray + 11}" font-size="8.5" text-anchor="middle" fill="var(--texte2)">${echap(court)}</text></g>`;
+  });
+  document.getElementById("graphe-svg").innerHTML = `<svg viewBox="0 0 ${T} ${T}" class="graph">${traits}${bulles}</svg>`;
+  ouvrir("dlg-graphe");
+}
+
+// ---------- Export Markdown (zip maison, sans compression) ----------
+const TABLE_CRC = (()=>{ let t=[]; for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c = c&1 ? 0xEDB88320 ^ (c>>>1) : c>>>1; t[n]=c>>>0; } return t; })();
+function crc32(o){ let c=0xFFFFFFFF; for(let i=0;i<o.length;i++) c = TABLE_CRC[(c^o[i])&0xFF] ^ (c>>>8); return (c^0xFFFFFFFF)>>>0; }
+function zipper(fichiers){
+  const enc = new TextEncoder(), parts=[], centraux=[]; let offset=0;
+  const u16=v=>[v&255,(v>>8)&255], u32=v=>[v&255,(v>>8)&255,(v>>16)&255,(v>>>24)&255];
+  fichiers.forEach(f=>{
+    const nom=enc.encode(f.nom), data=enc.encode(f.contenu), crc=crc32(data);
+    const local=new Uint8Array([0x50,0x4B,3,4,...u16(20),...u16(0x0800),...u16(0),...u16(0),...u16(0),...u32(crc),...u32(data.length),...u32(data.length),...u16(nom.length),...u16(0)]);
+    parts.push(local,nom,data);
+    centraux.push({nom,taille:data.length,crc,offset});
+    offset += local.length+nom.length+data.length;
+  });
+  let tailleCD=0;
+  centraux.forEach(c=>{
+    const e=new Uint8Array([0x50,0x4B,1,2,...u16(20),...u16(20),...u16(0x0800),...u16(0),...u16(0),...u16(0),...u32(c.crc),...u32(c.taille),...u32(c.taille),...u16(c.nom.length),...u16(0),...u16(0),...u16(0),...u16(0),...u32(0),...u32(c.offset)]);
+    parts.push(e,c.nom); tailleCD += e.length+c.nom.length;
+  });
+  parts.push(new Uint8Array([0x50,0x4B,5,6,0,0,0,0,...u16(centraux.length),...u16(centraux.length),...u32(tailleCD),...u32(offset),0,0]));
+  return new Blob(parts,{type:"application/zip"});
+}
+function exporterMarkdown(){
+  if(!etat.notes.length){ alert("Aucune note à exporter."); return; }
+  const noms = new Set();
+  const fichiers = etat.notes.map(n=>{
+    let base = n.titre.replace(/[\\/:*?"<>|#^[\]]/g,"").trim().slice(0,80) || "note";
+    let nom = base; let i=2;
+    while(noms.has(nom)){ nom = base+" "+i; i++; }
+    noms.add(nom);
+    const entete = n.tags.length ? "---\ntags: ["+n.tags.join(", ")+"]\ndate: "+n.date+"\n---\n\n" : "";
+    return { nom: nom+".md", contenu: entete+n.corps };
+  });
+  telecharger(zipper(fichiers), "mon-second-cerveau.zip");
+}
+
+// ---------- Sport : programmes, progression, minuteur ----------
 const PROGRAMMES = [
-  {nom:"Full body débutant", type:"Musculation", duree:35,
-   detail:"3 tours : 12 squats · 10 pompes (genoux ok) · 12 rowings élastique · 30 s gainage · 15 fentes alternées. 1 min de repos entre les tours."},
-  {nom:"HIIT express", type:"HIIT", duree:20,
-   detail:"8 tours de 30 s effort / 30 s repos : jumping jacks · squats · mountain climbers · burpees (répéter le cycle 2 fois)."},
-  {nom:"Course débutant", type:"Course", duree:30,
-   detail:"5 min de marche rapide · 8 × (1 min de course / 2 min de marche) · 4 min de retour au calme."},
-  {nom:"Haut du corps", type:"Musculation", duree:40,
-   detail:"4 tours : 10 pompes · 10 dips sur chaise · 12 élévations latérales · 10 curls · 45 s gainage. 90 s de repos entre les tours."},
-  {nom:"Mobilité & étirements", type:"Yoga", duree:15,
-   detail:"Nuque et épaules · 10 chat-vache · pigeon 1 min/côté · ischios 1 min/côté · 2 min de respiration profonde."}
+  {nom:"Full body débutant", type:"Musculation", duree:35, detail:"3 tours : 12 squats · 10 pompes · 12 rowings élastique · 30 s gainage · 15 fentes. 1 min de repos entre les tours."},
+  {nom:"HIIT express", type:"HIIT", duree:20, detail:"8 tours de 30 s effort / 30 s repos : jumping jacks · squats · mountain climbers · burpees."},
+  {nom:"Course débutant", type:"Course", duree:30, detail:"5 min de marche rapide · 8 × (1 min course / 2 min marche) · 4 min retour au calme."},
+  {nom:"Haut du corps", type:"Musculation", duree:40, detail:"4 tours : 10 pompes · 10 dips · 12 élévations latérales · 10 curls · 45 s gainage."},
+  {nom:"Mobilité & étirements", type:"Yoga", duree:15, detail:"Nuque · 10 chat-vache · pigeon 1 min/côté · ischios 1 min/côté · 2 min de respiration."}
 ];
+let seanceExos = null;
 function afficherProgrammes(){
   document.getElementById("liste-programmes").innerHTML = PROGRAMMES.map((p,i)=>`
-    <div class="programme">
-      <div class="entete">
-        <div><div class="nom">${p.nom}</div><div class="infos">${p.type} · ${p.duree} min</div></div>
-        <button class="btn secondaire petit" onclick="utiliserProgramme(${i})">Utiliser</button>
-      </div>
-      <div class="detail">${p.detail}</div>
-    </div>`).join("");
+    <div class="programme"><div class="entete">
+      <div><div class="nom">${p.nom}</div><div class="infos">${p.type} · ${p.duree} min</div></div>
+      <button class="btn secondaire petit" onclick="utiliserProgramme(${i})">Utiliser</button></div>
+      <div class="detail">${p.detail}</div></div>`).join("");
+  document.getElementById("liste-programmes-perso").innerHTML = etat.programmesPerso.length ? etat.programmesPerso.map(p=>`
+    <div class="programme"><div class="entete">
+      <div><div class="nom">${echap(p.nom)}</div><div class="infos">${p.exercices.length} exercices</div></div>
+      <div style="display:flex;gap:4px">
+        <button class="btn petit" onclick="lancerProgrammePerso('${p.id}')">▶ Lancer</button>
+        <button class="btn-mini" onclick="modifierProgramme('${p.id}')">✎</button>
+        <button class="btn-suppr" onclick="supprimerProgramme('${p.id}')">×</button>
+      </div></div>
+      <div class="detail">${p.exercices.map(e=>echap(e.nom)+" "+e.series+"×"+e.reps+(e.charge?" @ "+e.charge+" kg":"")).join(" · ")}</div>
+    </div>`).join("") : '<div class="vide">Crée ton premier programme ci-dessous 💪</div>';
+}
+function ajouterLigneExo(exo){
+  exo = exo||{};
+  const div = document.createElement("div");
+  div.className = "exo-ligne";
+  div.innerHTML = `<input type="text" placeholder="Squat" value="${echap(exo.nom||"")}">
+    <input type="number" min="1" value="${exo.series||3}">
+    <input type="number" min="1" value="${exo.reps||10}">
+    <input type="number" min="0" step="0.5" value="${exo.charge||""}" placeholder="—">
+    <button class="btn-suppr" onclick="this.parentElement.remove()">×</button>`;
+  document.getElementById("prog-exos").appendChild(div);
+}
+function sauverProgramme(){
+  const nom = document.getElementById("prog-nom").value.trim();
+  if(!nom) return;
+  const exercices = [...document.querySelectorAll("#prog-exos .exo-ligne")].map(l=>{
+    const c = l.querySelectorAll("input");
+    return { nom:c[0].value.trim(), series:parseInt(c[1].value,10)||1, reps:parseInt(c[2].value,10)||1, charge:parseFloat(c[3].value)||0 };
+  }).filter(e=>e.nom);
+  if(!exercices.length){ alert("Ajoute au moins un exercice."); return; }
+  const id = document.getElementById("prog-id").value;
+  if(id){
+    const p = etat.programmesPerso.find(p=>p.id===id);
+    p.nom = nom; p.exercices = exercices;
+  }else{
+    etat.programmesPerso.push({ id:uid(), nom, exercices });
+  }
+  document.getElementById("prog-nom").value=""; document.getElementById("prog-id").value="";
+  document.getElementById("prog-exos").innerHTML="";
+  document.getElementById("form-prog").open=false;
+  sauver(); afficherProgrammes();
+}
+function modifierProgramme(id){
+  const p = etat.programmesPerso.find(p=>p.id===id);
+  document.getElementById("prog-id").value = p.id;
+  document.getElementById("prog-nom").value = p.nom;
+  document.getElementById("prog-exos").innerHTML = "";
+  p.exercices.forEach(e=>ajouterLigneExo(e));
+  document.getElementById("form-prog").open = true;
+}
+function supprimerProgramme(id){ etat.programmesPerso = etat.programmesPerso.filter(p=>p.id!==id); sauver(); afficherProgrammes(); }
+function lancerProgrammePerso(id){
+  const p = etat.programmesPerso.find(p=>p.id===id);
+  seanceExos = p.exercices.map(e=>({...e}));
+  document.getElementById("seance-type").value = "Musculation";
+  document.getElementById("seance-notes").value = p.nom+" :\n"+p.exercices.map(e=>e.nom+" "+e.series+"×"+e.reps+(e.charge?" @ "+e.charge+" kg":"")).join("\n");
+  document.getElementById("carte-seance").scrollIntoView({behavior:"smooth"});
 }
 function utiliserProgramme(i){
   const p = PROGRAMMES[i];
+  seanceExos = null;
   document.getElementById("seance-type").value = p.type;
   document.getElementById("seance-duree").value = p.duree;
-  document.getElementById("seance-notes").value = p.nom + " — " + p.detail;
-  document.getElementById("carte-seance").scrollIntoView({behavior:"smooth", block:"start"});
+  document.getElementById("seance-notes").value = p.nom+" — "+p.detail;
+  document.getElementById("carte-seance").scrollIntoView({behavior:"smooth"});
 }
+function ajouterSeance(){
+  const duree = parseInt(document.getElementById("seance-duree").value,10);
+  if(!duree || duree<1){ alert("Indique la durée de la séance."); return; }
+  etat.seances.unshift({ id:uid(), type:document.getElementById("seance-type").value, duree,
+    notes:document.getElementById("seance-notes").value.trim(), exos:seanceExos||[], date:AUJ });
+  seanceExos = null;
+  document.getElementById("seance-duree").value=""; document.getElementById("seance-notes").value="";
+  sauver(); toutAfficher();
+}
+function supprimerSeance(id){ etat.seances = etat.seances.filter(s=>s.id!==id); sauver(); toutAfficher(); }
+function changerObjectif(){
+  etat.prefs.objectifSeances = parseInt(document.getElementById("objectif-seances").value,10)||3;
+  sauver(); afficherSport();
+}
+function afficherSport(){
+  document.getElementById("liste-seances").innerHTML = etat.seances.length
+    ? etat.seances.slice(0,30).map(s=>`<div class="seance">
+        <div class="contenu" style="flex:1">
+          <div class="type">${echap(s.type)} · ${s.duree} min</div>
+          <div class="details">${dateLisible(s.date)}${s.notes?"\n"+echap(s.notes):""}</div>
+        </div>
+        <button class="btn-suppr" onclick="supprimerSeance('${s.id}')">×</button>
+      </div>`).join("")
+    : '<div class="vide">Aucune séance enregistrée pour l\'instant.</div>';
+  const lundi = lundiDe(AUJ);
+  const seancesSem = etat.seances.filter(s=>s.date>=lundi);
+  document.getElementById("stat-seances").textContent = seancesSem.length;
+  document.getElementById("stat-minutes").textContent = seancesSem.reduce((a,s)=>a+s.duree,0);
+  const obj = etat.prefs.objectifSeances;
+  document.getElementById("objectif-seances").value = obj;
+  document.getElementById("objectif-texte").textContent = seancesSem.length+" / "+obj+" séances";
+  document.getElementById("jauge-objectif").style.width = Math.min(seancesSem.length/obj*100,100)+"%";
+  // Minutes par semaine (8 dernières)
+  const labels=[], vals=[];
+  for(let i=7;i>=0;i--){
+    const deb = decaler(lundi,-7*i), fin = decaler(deb,6);
+    labels.push(i===0?"cette sem.":"S−"+i);
+    vals.push(etat.seances.filter(s=>s.date>=deb && s.date<=fin).reduce((a,s)=>a+s.duree,0));
+  }
+  document.getElementById("graph-sport").innerHTML =
+    '<div style="font-size:12px;color:var(--texte2);margin-top:12px">Minutes de sport par semaine</div>'+svgBarres(vals, labels, "#E85D3A");
+  afficherProgression();
+}
+function afficherProgression(){
+  const sel = document.getElementById("prog-exo-select");
+  const noms = [...new Set(etat.seances.flatMap(s=>(s.exos||[]).map(e=>e.nom)))];
+  const actuel = sel.value;
+  sel.innerHTML = noms.length ? noms.map(n=>`<option ${n===actuel?"selected":""}>${echap(n)}</option>`).join("") : '<option value="">Aucun exercice suivi pour l\'instant</option>';
+  const exo = sel.value;
+  const zone = document.getElementById("graph-progression");
+  if(!exo){ zone.innerHTML = '<div class="vide">Lance un de tes programmes puis enregistre la séance : la charge de chaque exercice sera suivie ici.</div>'; return; }
+  const points = etat.seances.filter(s=>(s.exos||[]).some(e=>e.nom===exo))
+    .map(s=>({x:dateLisible(s.date).replace(/^\S+ /,""), y:(s.exos.find(e=>e.nom===exo).charge)||0}))
+    .reverse();
+  zone.innerHTML = svgLigne(points, "#E85D3A") +
+    '<div style="font-size:11.5px;color:var(--texte2);margin-top:4px">Charge (kg) au fil des séances — modifie la charge dans ton programme quand tu progresses.</div>';
+}
+
+// Minuteur d'intervalles
+let minEtat = null, minInterval = null, ctxAudio = null;
+function bip(freq, duree){
+  try{
+    ctxAudio = ctxAudio || new (window.AudioContext||window.webkitAudioContext)();
+    const o = ctxAudio.createOscillator(), g = ctxAudio.createGain();
+    o.frequency.value = freq; o.connect(g); g.connect(ctxAudio.destination);
+    g.gain.setValueAtTime(0.25, ctxAudio.currentTime);
+    o.start(); o.stop(ctxAudio.currentTime + (duree||0.15));
+  }catch(e){}
+}
+function minAfficher(){
+  const aff = document.getElementById("minuteur-aff");
+  aff.className = "minuteur-aff " + (minEtat ? (minEtat.phase==="effort"?"effort":"repos") : "");
+  document.getElementById("min-phase").textContent = minEtat ? (minEtat.phase==="effort"?"💥 Effort":"😮‍💨 Repos") : "Prêt ?";
+  const s = minEtat ? minEtat.restant : parseInt(document.getElementById("min-effort").value,10)||30;
+  document.getElementById("min-temps").textContent = Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
+  document.getElementById("min-compteur").textContent = minEtat ? "Tour "+minEtat.tour+" / "+minEtat.tours : "";
+}
+function minuteurStart(){
+  if(minInterval){ // pause
+    clearInterval(minInterval); minInterval = null;
+    document.getElementById("btn-min-start").textContent = "▶ Reprendre"; return;
+  }
+  if(!minEtat){
+    minEtat = {
+      effort: parseInt(document.getElementById("min-effort").value,10)||30,
+      repos: parseInt(document.getElementById("min-repos").value,10)||0,
+      tours: parseInt(document.getElementById("min-tours").value,10)||1,
+      tour:1, phase:"effort", restant: parseInt(document.getElementById("min-effort").value,10)||30
+    };
+    bip(880,0.2);
+  }
+  document.getElementById("btn-min-start").textContent = "⏸ Pause";
+  minInterval = setInterval(()=>{
+    minEtat.restant--;
+    if(minEtat.restant<=3 && minEtat.restant>0) bip(660,0.1);
+    if(minEtat.restant<=0){
+      if(minEtat.phase==="effort" && minEtat.repos>0){
+        minEtat.phase="repos"; minEtat.restant=minEtat.repos; bip(440,0.3);
+      }else{
+        if(minEtat.tour>=minEtat.tours){
+          clearInterval(minInterval); minInterval=null;
+          bip(880,0.5); setTimeout(()=>bip(1100,0.6),250);
+          document.getElementById("min-phase").textContent = "🎉 Terminé !";
+          minEtat = null;
+          document.getElementById("btn-min-start").textContent = "▶ Démarrer";
+          minAfficher(); document.getElementById("min-phase").textContent = "🎉 Terminé !";
+          return;
+        }
+        minEtat.tour++; minEtat.phase="effort"; minEtat.restant=minEtat.effort; bip(880,0.3);
+      }
+    }
+    minAfficher();
+  }, 1000);
+  minAfficher();
+}
+function minuteurReset(){
+  clearInterval(minInterval); minInterval=null; minEtat=null;
+  document.getElementById("btn-min-start").textContent = "▶ Démarrer";
+  minAfficher();
+}
+
+// ---------- Suivi ----------
 function ajouterHabitude(){
   const champ = document.getElementById("habitude-nom");
   const nom = champ.value.trim();
   if(!nom) return;
   etat.habitudes.push({ id:uid(), nom, jours:{} });
-  champ.value = "";
-  sauver(); toutAfficher();
+  champ.value=""; sauver(); toutAfficher();
 }
-function supprimerHabitude(id){
-  etat.habitudes = etat.habitudes.filter(h=>h.id!==id);
-  sauver(); toutAfficher();
-}
+function supprimerHabitude(id){ etat.habitudes = etat.habitudes.filter(h=>h.id!==id); sauver(); toutAfficher(); }
 function basculerHabitude(id){
   const h = etat.habitudes.find(h=>h.id===id);
   if(!h) return;
-  if(h.jours[AUJ]) delete h.jours[AUJ]; else h.jours[AUJ] = true;
+  if(h.jours[AUJ]) delete h.jours[AUJ]; else h.jours[AUJ]=true;
   sauver(); toutAfficher();
 }
 function serieHabitude(h){
-  let n = 0; const d = new Date();
+  let n=0; const d=new Date();
   if(!h.jours[cleDate(d)]) d.setDate(d.getDate()-1);
   while(h.jours[cleDate(d)]){ n++; d.setDate(d.getDate()-1); }
   return n;
 }
 function habitudeHTML(h){
-  const fait = !!h.jours[AUJ];
-  const serie = serieHabitude(h);
+  const fait = !!h.jours[AUJ], serie = serieHabitude(h);
   return `<div class="habitude">
-    <button class="coche-hab ${fait?"fait":""}" onclick="basculerHabitude('${h.id}')" aria-label="${fait?"Décocher":"Cocher"} ${echap(h.nom)}">${fait?"✓":""}</button>
+    <button class="coche-hab ${fait?"fait":""}" onclick="basculerHabitude('${h.id}')">${fait?"✓":""}</button>
     <div class="nom">${echap(h.nom)}</div>
-    <div class="serie">${serie>0 ? "🔥 "+serie+" j" : ""}</div>
-    <button class="btn-suppr" onclick="supprimerHabitude('${h.id}')" aria-label="Supprimer">×</button>
+    <div class="serie">${serie>0?"🔥 "+serie+" j":""}</div>
+    <button class="btn-suppr" onclick="supprimerHabitude('${h.id}')">×</button>
   </div>`;
 }
-function ajouterSeance(){
-  const duree = parseInt(document.getElementById("seance-duree").value,10);
-  if(!duree || duree<1) return;
-  etat.seances.unshift({
-    id:uid(),
-    type: document.getElementById("seance-type").value,
-    duree,
-    notes: document.getElementById("seance-notes").value.trim(),
-    date: AUJ
-  });
-  document.getElementById("seance-duree").value="";
-  document.getElementById("seance-notes").value="";
-  sauver(); toutAfficher();
+function ajouterPoids(){
+  const kg = parseFloat(document.getElementById("poids-kg").value);
+  if(!kg) return;
+  etat.poids = etat.poids.filter(p=>p.date!==AUJ);
+  etat.poids.push({id:uid(), date:AUJ, kg});
+  etat.poids.sort((a,b)=>a.date.localeCompare(b.date));
+  document.getElementById("poids-kg").value="";
+  sauver(); afficherSuivi();
 }
-function supprimerSeance(id){
-  etat.seances = etat.seances.filter(s=>s.id!==id);
-  sauver(); toutAfficher();
+function ajouterSommeil(){
+  const h = parseFloat(document.getElementById("sommeil-h").value);
+  if(!h && h!==0) return;
+  etat.sommeil = etat.sommeil.filter(s=>s.date!==AUJ);
+  etat.sommeil.push({id:uid(), date:AUJ, heures:h, qualite:parseInt(document.getElementById("sommeil-q").value,10)});
+  etat.sommeil.sort((a,b)=>a.date.localeCompare(b.date));
+  document.getElementById("sommeil-h").value="";
+  sauver(); afficherSuivi();
 }
-function afficherSport(){
-  document.getElementById("liste-habitudes").innerHTML =
-    etat.habitudes.length ? etat.habitudes.map(habitudeHTML).join("")
-    : '<div class="vide">Ajoute une première habitude ci-dessous.</div>';
-  document.getElementById("liste-seances").innerHTML = etat.seances.length
-    ? etat.seances.slice(0,30).map(s=>`<div class="seance">
-        <div class="contenu" style="flex:1">
-          <div class="type">${echap(s.type)} · ${s.duree} min</div>
-          <div class="details">${dateLisible(s.date)}${s.notes?" — "+echap(s.notes):""}</div>
-        </div>
-        <button class="btn-suppr" onclick="supprimerSeance('${s.id}')" aria-label="Supprimer">×</button>
-      </div>`).join("")
-    : '<div class="vide">Aucune séance enregistrée pour l\'instant.</div>';
-  const d = new Date(); const lundi = new Date(d); lundi.setDate(d.getDate()-((d.getDay()+6)%7));
-  const debut = cleDate(lundi);
-  const seancesSem = etat.seances.filter(s=>s.date>=debut);
-  document.getElementById("stat-seances").textContent = seancesSem.length;
-  document.getElementById("stat-minutes").textContent = seancesSem.reduce((a,s)=>a+s.duree,0);
-  let coches=0, total=0;
-  const nbJoursEcoules = ((d.getDay()+6)%7)+1;
-  etat.habitudes.forEach(h=>{
-    for(let i=0;i<nbJoursEcoules;i++){
-      const dd = new Date(lundi); dd.setDate(lundi.getDate()+i);
-      total++; if(h.jours[cleDate(dd)]) coches++;
+function changerEau(delta){
+  etat.eau[AUJ] = Math.max((etat.eau[AUJ]||0)+delta, 0);
+  sauver(); afficherSuivi();
+}
+function ajouterRepas(){
+  const desc = document.getElementById("repas-desc").value.trim();
+  if(!desc) return;
+  etat.repas.unshift({id:uid(), date:AUJ, type:document.getElementById("repas-type").value, desc});
+  document.getElementById("repas-desc").value="";
+  sauver(); afficherSuivi();
+}
+function supprimerRepas(id){ etat.repas = etat.repas.filter(r=>r.id!==id); sauver(); afficherSuivi(); }
+function ajouterMesure(){
+  const nom = document.getElementById("mesure-nom").value.trim();
+  const val = parseFloat(document.getElementById("mesure-val").value);
+  if(!nom || !val) return;
+  etat.mesures.push({id:uid(), date:AUJ, nom, valeur:val});
+  document.getElementById("mesure-val").value="";
+  sauver(); afficherSuivi(); afficherMesures();
+}
+function afficherMesures(){
+  const sel = document.getElementById("mesure-select");
+  const noms = [...new Set(etat.mesures.map(m=>m.nom))];
+  const actuel = sel.value;
+  sel.innerHTML = noms.length ? noms.map(n=>`<option ${n===actuel?"selected":""}>${echap(n)}</option>`).join("") : '<option value="">Aucune mesure enregistrée</option>';
+  const nom = sel.value;
+  document.getElementById("graph-mesures").innerHTML = nom
+    ? svgLigne(etat.mesures.filter(m=>m.nom===nom).map(m=>({x:dateLisible(m.date).replace(/^\S+ /,""), y:m.valeur})), "#12A5B8")
+    : "";
+}
+function afficherSuivi(){
+  document.getElementById("liste-habitudes").innerHTML = etat.habitudes.length
+    ? etat.habitudes.map(habitudeHTML).join("") : '<div class="vide">Ajoute une première habitude ci-dessous.</div>';
+  // Graph habitudes : % coché sur les 7 derniers jours
+  if(etat.habitudes.length){
+    const labels=[], vals=[];
+    for(let i=6;i>=0;i--){
+      const iso = decaler(AUJ,-i);
+      labels.push(dateLisible(iso).slice(0,2));
+      const n = etat.habitudes.filter(h=>h.jours[iso]).length;
+      vals.push(Math.round(n/etat.habitudes.length*100));
     }
-  });
-  document.getElementById("stat-habitudes").textContent = total? Math.round(coches/total*100)+"%" : "—";
+    document.getElementById("graph-habitudes").innerHTML =
+      '<div style="font-size:12px;color:var(--texte2);margin-top:10px">% d\'habitudes tenues (7 jours)</div>'+svgBarres(vals, labels, "#12A5B8");
+  }else document.getElementById("graph-habitudes").innerHTML="";
+  document.getElementById("graph-poids").innerHTML =
+    svgLigne(etat.poids.slice(-30).map(p=>({x:dateLisible(p.date).replace(/^\S+ /,""), y:p.kg})), "#12A5B8");
+  const s14 = etat.sommeil.slice(-14);
+  document.getElementById("graph-sommeil").innerHTML = s14.length
+    ? svgBarres(s14.map(s=>s.heures), s14.map(s=>dateLisible(s.date).slice(0,2)), "#12A5B8")
+      + '<div style="font-size:11.5px;color:var(--texte2)">Heures de sommeil (14 dernières nuits)</div>'
+    : '<div class="vide">Enregistre ta première nuit ci-dessus.</div>';
+  const eau = etat.eau[AUJ]||0;
+  document.getElementById("eau-n").textContent = eau+" verre"+(eau>1?"s":"");
+  const repasJour = etat.repas.filter(r=>r.date===AUJ);
+  document.getElementById("liste-repas").innerHTML = repasJour.length
+    ? repasJour.map(r=>`<div class="habitude"><div class="nom"><b>${r.type}</b> — ${echap(r.desc)}</div><button class="btn-suppr" onclick="supprimerRepas('${r.id}')">×</button></div>`).join("")
+    : "";
+  afficherMesures();
 }
 
-// ---------- Export / import ----------
-document.getElementById("btn-donnees").addEventListener("click", ()=>{
-  document.getElementById("dlg-donnees").classList.add("ouvert");
+// ---------- Notifications ----------
+function majEtatNotif(){
+  const zone = document.getElementById("etat-notif"), btn = document.getElementById("btn-notif");
+  if(!("Notification" in window)){ zone.textContent="Les notifications ne sont pas disponibles dans ce navigateur."; zone.className="etat-notif ko"; btn.style.display="none"; return; }
+  if(Notification.permission==="granted" && etat.prefs.notif){ zone.textContent="✓ Rappels activés"; zone.className="etat-notif ok"; btn.textContent="Désactiver les rappels"; }
+  else if(Notification.permission==="denied"){ zone.textContent="Notifications refusées : autorise-les dans les réglages du navigateur."; zone.className="etat-notif ko"; btn.style.display="none"; }
+  else{ zone.textContent=""; btn.textContent="Activer les rappels"; }
+}
+async function activerNotifications(){
+  if(etat.prefs.notif && Notification.permission==="granted"){ etat.prefs.notif=false; sauver(); majEtatNotif(); return; }
+  const perm = await Notification.requestPermission();
+  if(perm==="granted"){ etat.prefs.notif=true; sauver(); new Notification("Mon Quotidien",{body:"Les rappels sont activés 🎉"}); }
   majEtatNotif();
-});
-function fermerDialogue(){ document.getElementById("dlg-donnees").classList.remove("ouvert"); }
-document.getElementById("dlg-donnees").addEventListener("click", e=>{
-  if(e.target.id==="dlg-donnees") fermerDialogue();
-});
+}
+function verifierRappels(){
+  if(!("Notification" in window) || Notification.permission!=="granted" || !etat.prefs.notif) return;
+  const maintenant = new Date(); let modif = false;
+  etat.evenements.forEach(e=>{
+    if(e.rappel==null || e.rappel<0) return;
+    const dateOcc = e.recur ? (occursOn(e,AUJ)?AUJ:null) : e.date;
+    if(!dateOcc || etat.notifie[e.id+dateOcc]) return;
+    const [a,m,j]=dateOcc.split("-").map(Number);
+    const [h,mn]=(e.heure||"08:00").split(":").map(Number);
+    const debut = new Date(a,m-1,j,h,mn);
+    const decl = new Date(debut.getTime()-e.rappel*60000);
+    if(maintenant>=decl && maintenant<=debut){
+      new Notification("📅 "+e.titre, {body:(e.rappel===0?"C'est maintenant":LIB_RAPPEL[e.rappel]||"") + (e.heure?" · "+e.heure:"") + (e.lieu?" · "+e.lieu:"")});
+      etat.notifie[e.id+dateOcc]=true; modif=true;
+    }
+  });
+  if(modif) sauver();
+}
+setInterval(verifierRappels, 30000);
+
+// ---------- Sauvegarde ----------
+function majBandeauExport(){
+  if(!etat.prefs.dernierExport){ etat.prefs.dernierExport = AUJ; sauver(); return; }
+  const jours = Math.round((new Date(AUJ)-new Date(etat.prefs.dernierExport))/864e5);
+  const contenu = etat.taches.length + etat.notes.length + etat.evenements.length + etat.seances.length;
+  document.getElementById("bandeau-export").style.display = (jours>=14 && contenu>5) ? "block" : "none";
+}
 function exporterDonnees(){
-  const blob = new Blob([JSON.stringify(etat,null,2)], {type:"application/json"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "mon-quotidien-sauvegarde-"+AUJ+".json";
-  a.click();
-  URL.revokeObjectURL(a.href);
+  telecharger(new Blob([JSON.stringify(etat,null,2)],{type:"application/json"}), "mon-quotidien-sauvegarde-"+AUJ+".json");
+  etat.prefs.dernierExport = AUJ; sauver(); majBandeauExport();
 }
 function importerDonnees(ev){
-  const fichier = ev.target.files[0];
-  if(!fichier) return;
+  const f = ev.target.files[0]; if(!f) return;
   const lecteur = new FileReader();
-  lecteur.onload = () => {
+  lecteur.onload = ()=>{
     try{
       const donnees = JSON.parse(lecteur.result);
       etat = Object.assign(etatVide(), donnees);
-      sauver(); appliquerTheme(); toutAfficher(); fermerDialogue();
+      etat.prefs = Object.assign(etatVide().prefs, etat.prefs||{});
+      sauver(); appliquerTheme(); majSelectProjets(); toutAfficher(); fermer("dlg-donnees");
     }catch(e){ alert("Fichier invalide : impossible de lire cette sauvegarde."); }
   };
-  lecteur.readAsText(fichier);
-  ev.target.value = "";
+  lecteur.readAsText(f); ev.target.value="";
 }
 
-// ---------- Rendu global ----------
+// ---------- Rendu global & démarrage ----------
 function toutAfficher(){
-  afficherAujourdhui();
-  afficherTaches();
-  afficherCalendrier();
-  afficherEvenementsJour();
-  afficherAVenir();
-  afficherNotes();
-  afficherSport();
-  afficherProgrammes();
+  afficherAujourdhui(); majStatsSemaine(); afficherTaches();
+  afficherCalendrier(); afficherEvenementsJour(); afficherAVenir();
+  afficherNotes(); afficherSport(); afficherProgrammes(); afficherSuivi();
 }
-document.getElementById("date-tete").textContent =
-  new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
+document.getElementById("date-tete").textContent = new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
 document.getElementById("evt-date").value = AUJ;
 if(memoireSeule) document.getElementById("bandeau-memoire").style.display="block";
 document.getElementById("capture-rapide").addEventListener("keydown",e=>{ if(e.key==="Enter") captureRapide(); });
 document.getElementById("tache-libelle").addEventListener("keydown",e=>{ if(e.key==="Enter") ajouterTache(); });
 document.getElementById("habitude-nom").addEventListener("keydown",e=>{ if(e.key==="Enter") ajouterHabitude(); });
-appliquerTheme();
-toutAfficher();
-verifierRappels();
+if(etat.prefs.pin){ document.getElementById("verrou").classList.add("actif"); document.getElementById("verrou-code").focus(); }
+appliquerTheme(); majSelectProjets(); majBandeauExport(); ajouterLigneExo();
+toutAfficher(); minAfficher(); verifierRappels();
 
-// ---------- Service worker (mode hors connexion) ----------
-if ("serviceWorker" in navigator && location.protocol === "https:") {
-  navigator.serviceWorker.register("./sw.js").catch(()=>{ /* pas bloquant */ });
+// ---------- Service worker (hors connexion) ----------
+if("serviceWorker" in navigator && location.protocol==="https:"){
+  navigator.serviceWorker.register("./sw.js").catch(()=>{});
 }
 </script>
 </body>
