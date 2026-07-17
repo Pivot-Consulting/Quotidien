@@ -1,0 +1,573 @@
+import { Store } from './store.js';
+import { active, download, escapeHtml, formatDate, formatDuration, markdown, mondayOf, occursOn, shiftDate, today, uid, weekday } from './utils.js';
+const appRoot = document.querySelector('#app');
+if (!appRoot)
+    throw new Error('Conteneur #app introuvable');
+const root = appRoot;
+const store = new Store();
+let state;
+let screen = 'today';
+let planTab = 'tasks';
+let trackingTab = 'habits';
+let taskFilter = 'open';
+let selectedDate = today();
+let noteSearch = '';
+let noteFolder = 'Toutes';
+let modalSubmit = null;
+let focusRuntime = null;
+const WEEK_LABELS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+const TASK_STATUS_LABEL = { inbox: 'Boîte de réception', next: 'Prochaine action', waiting: 'En attente', someday: 'Un jour' };
+const ENERGY_LABEL = { low: 'Énergie basse', medium: 'Énergie moyenne', high: 'Énergie haute' };
+const BLOCK_LABEL = { focus: 'Concentration', meeting: 'Réunion', admin: 'Administratif', sport: 'Sport', personal: 'Personnel', buffer: 'Marge' };
+await store.init();
+store.subscribe(next => { state = next; applyTheme(); render(); });
+registerServiceWorker();
+setTimeout(handleInitialUrl, 0);
+setInterval(checkReminders, 30_000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) {
+    selectedDate = today();
+    checkReminders();
+    render();
+} });
+root.addEventListener('click', event => void onClick(event));
+root.addEventListener('submit', event => void onSubmit(event));
+root.addEventListener('input', onInput);
+document.addEventListener('keydown', event => {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        openSearch();
+    }
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'n') {
+        event.preventDefault();
+        openQuickCapture();
+    }
+    if (event.key === 'Escape')
+        closeModal();
+});
+function applyTheme() {
+    const theme = state.preferences.theme;
+    const dark = theme === 'dark' || (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.classList.toggle('dark', dark);
+    document.documentElement.classList.toggle('compact', Boolean(state.preferences.compactMode));
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0b1422' : '#10243f');
+}
+function render() {
+    root.innerHTML = `
+    <header class="topbar">
+      <div><div class="brand">QUOTIDIEN <span>V6.1</span></div><div class="top-date">${escapeHtml(new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date()))}</div></div>
+      <div class="top-actions"><button class="icon-btn" data-action="search" aria-label="Rechercher">⌕</button><button class="icon-btn" data-action="quick-capture" aria-label="Ajouter">＋</button><button class="icon-btn" data-action="settings" aria-label="Réglages">⚙</button></div>
+    </header>
+    <main class="main">${renderScreen()}</main>
+    <nav class="bottom-nav" aria-label="Navigation">
+      ${nav('today', '⌂', 'Aujourd’hui')}${nav('plan', '▦', 'Planifier')}<button class="nav-add" data-action="quick-capture">＋</button>${nav('notes', '◇', 'Notes')}${nav('tracking', '↗', 'Suivi')}
+    </nav>
+    <div class="modal-backdrop" id="modal-backdrop" hidden><section class="modal" role="dialog" aria-modal="true"><header><h2 id="modal-title"></h2><button class="icon-btn" data-action="close-modal">×</button></header><form id="modal-form"><div id="modal-body"></div><div class="modal-actions"><button type="button" class="btn ghost" data-action="close-modal">Annuler</button><button class="btn" type="submit">Enregistrer</button></div></form></section></div>
+    <div class="toast" id="toast" hidden></div>`;
+}
+function nav(value, icon, label) { return `<button class="nav-item ${screen === value ? 'active' : ''}" data-screen="${value}"><span>${icon}</span>${label}</button>`; }
+function renderScreen() { return screen === 'today' ? renderToday() : screen === 'plan' ? renderPlan() : screen === 'notes' ? renderNotes() : renderTracking(); }
+function renderToday() {
+    const day = today();
+    const tasks = active(state.tasks).filter(task => !task.completed && (!task.startDate || task.startDate <= day));
+    const manual = (state.preferences.top3[day] ?? []).map(id => tasks.find(task => task.id === id)).filter((task) => Boolean(task));
+    const priorities = (manual.length ? manual : tasks.sort(taskSort)).slice(0, 3);
+    const events = eventsOn(day);
+    const blocks = active(state.timeBlocks).filter(block => block.date === day).sort((a, b) => a.start.localeCompare(b.start));
+    const timeline = [...events.map(event => ({ time: event.time ?? '00:00', kind: 'event', title: event.title, meta: event.location || formatDuration(event.durationMinutes), id: event.id })), ...blocks.map(block => ({ time: block.start, kind: 'block', title: block.title, meta: `${block.end} · ${BLOCK_LABEL[block.type]}`, id: block.id }))].sort((a, b) => a.time.localeCompare(b.time));
+    const habits = active(state.habits).filter(habit => habit.days.includes(weekday(day)));
+    const goals = active(state.goals).filter(goal => goal.status === 'active').sort((a, b) => (a.targetDate ?? '9999').localeCompare(b.targetDate ?? '9999')).slice(0, 3);
+    const mood = active(state.moods).find(item => item.date === day);
+    const doneWeek = active(state.tasks).filter(task => task.completedAt && task.completedAt.slice(0, 10) >= mondayOf(day)).length;
+    const focusWeek = active(state.focusSessions).filter(item => item.date >= mondayOf(day)).reduce((sum, item) => sum + item.minutes, 0);
+    const sportWeek = active(state.sessions).filter(item => item.date >= mondayOf(day)).reduce((sum, item) => sum + item.durationMinutes, 0);
+    const estimated = priorities.reduce((sum, task) => sum + task.estimatedMinutes, 0);
+    const planned = blocks.reduce((sum, block) => sum + minutesBetween(block.start, block.end), 0) + events.reduce((sum, event) => sum + event.durationMinutes, 0);
+    const next = timeline.find(item => item.time >= currentTime()) ?? timeline[0];
+    return `
+    <section class="hero-card ultra-hero"><div><span class="eyebrow">AUJOURD’HUI</span><h1>Bonjour Raphaël</h1><p>${next ? `Prochain : <strong>${escapeHtml(next.time)} · ${escapeHtml(next.title)}</strong>` : 'Ta journée est libre : choisis une prochaine action.'}</p></div><button class="btn" data-action="plan-day">Planifier</button></section>
+    <section class="stats-row four">${stat(doneWeek, 'tâches cette semaine')}${stat(focusWeek, 'min focus')}${stat(sportWeek, 'min sport')}${stat(`${estimated}/${Math.max(1, Math.round((13 * 60 - planned)))}`, 'min priorités/libres')}</section>
+    <section class="dashboard-grid">
+      <section class="card span-wide"><header class="section-head"><div><span class="eyebrow">CHRONOLOGIE</span><h2>Ma journée</h2></div><button class="mini-btn" data-action="add-block">＋ Bloc</button></header>${timeline.length ? timeline.map(item => `<article class="timeline-item"><time>${item.time}</time><i class="${item.kind}"></i><button class="item-title" data-action="${item.kind === 'block' ? 'edit-block' : 'edit-event'}" data-id="${item.id}">${escapeHtml(item.title)}</button><span>${escapeHtml(item.meta)}</span></article>`).join('') : empty('Aucun rendez-vous ni bloc de temps.')}</section>
+      <section class="card"><header class="section-head"><div><span class="eyebrow">TOP 3</span><h2>Priorités</h2></div><button class="mini-btn" data-action="plan-day">Modifier</button></header>${priorities.length ? priorities.map(renderTaskRow).join('') : empty('Choisis jusqu’à trois priorités.')}</section>
+      <section class="card"><header class="section-head"><div><span class="eyebrow">ÉQUILIBRE</span><h2>État du jour</h2></div><button class="mini-btn" data-action="mood">${mood ? 'Modifier' : 'Évaluer'}</button></header>${mood ? `<div class="mood-summary"><strong>${moodEmoji(mood.mood)} ${mood.mood}/5</strong><span>Énergie ${mood.energy}/5 · Stress ${mood.stress}/5</span><p>${escapeHtml(mood.note)}</p></div>` : empty('Note ton humeur, ton énergie et ton stress.')}</section>
+      <section class="card"><header class="section-head"><div><span class="eyebrow">HABITUDES</span><h2>À cocher</h2></div></header>${habits.length ? habits.map(renderHabitMini).join('') : empty('Aucune habitude prévue.')}</section>
+      <section class="card"><header class="section-head"><div><span class="eyebrow">OBJECTIFS</span><h2>Cap</h2></div><button class="mini-btn" data-plan-tab="goals" data-screen="plan">Ouvrir</button></header>${goals.length ? goals.map(renderGoalMini).join('') : empty('Crée ton premier objectif.')}</section>
+      <section class="card span-wide capture-card"><div><span class="eyebrow">CAPTURE RAPIDE</span><h2>Ne rien oublier</h2></div><form id="inbox-form" class="inline-form"><input name="text" placeholder="Une tâche ou une idée…" required><button class="btn">Capturer</button></form></section>
+    </section>`;
+}
+function renderPlan() {
+    return `<div class="page-title"><div><span class="eyebrow">ORGANISER</span><h1>Planifier</h1></div><button class="btn small" data-action="quick-capture">＋ Ajouter</button></div><div class="segmented triple"><button class="${planTab === 'tasks' ? 'active' : ''}" data-plan-tab="tasks">Tâches</button><button class="${planTab === 'agenda' ? 'active' : ''}" data-plan-tab="agenda">Agenda</button><button class="${planTab === 'goals' ? 'active' : ''}" data-plan-tab="goals">Objectifs</button></div>${planTab === 'tasks' ? renderTasks() : planTab === 'agenda' ? renderAgenda() : renderGoals()}`;
+}
+function renderTasks() {
+    let tasks = active(state.tasks);
+    if (taskFilter === 'open')
+        tasks = tasks.filter(item => !item.completed && item.status !== 'someday');
+    if (taskFilter === 'today')
+        tasks = tasks.filter(item => !item.completed && Boolean(item.dueDate && item.dueDate <= today()));
+    if (taskFilter === 'inbox')
+        tasks = tasks.filter(item => !item.completed && item.status === 'inbox');
+    if (taskFilter === 'waiting')
+        tasks = tasks.filter(item => !item.completed && item.status === 'waiting');
+    if (taskFilter === 'done')
+        tasks = tasks.filter(item => item.completed);
+    const project = state.preferences.activeProject;
+    if (project)
+        tasks = tasks.filter(item => item.project === project);
+    tasks.sort(taskSort);
+    return `<section class="card"><form id="task-form" class="smart-form"><input class="span-2" name="title" placeholder="Nouvelle tâche…" required><input name="dueDate" type="date"><select name="project">${state.projects.map(projectName => `<option>${escapeHtml(projectName)}</option>`).join('')}</select><select name="status"><option value="next">Prochaine action</option><option value="inbox">Boîte de réception</option><option value="waiting">En attente</option><option value="someday">Un jour</option></select><input name="estimatedMinutes" type="number" min="0" placeholder="Durée estimée"><button class="btn span-2">Ajouter</button></form></section>
+  <section class="toolbar-card"><div class="chips">${taskFilterButton('open', 'À faire')}${taskFilterButton('today', 'Aujourd’hui')}${taskFilterButton('inbox', 'Inbox')}${taskFilterButton('waiting', 'En attente')}${taskFilterButton('done', 'Terminées')}${taskFilterButton('all', 'Toutes')}</div><div class="project-filter"><button class="chip ${!project ? 'active' : ''}" data-project="">Tous</button>${state.projects.map(name => `<button class="chip ${project === name ? 'active' : ''}" data-project="${escapeHtml(name)}">${escapeHtml(name)}</button>`).join('')}</div></section>
+  <section class="card"><header class="section-head"><div><span class="eyebrow">${tasks.length} ÉLÉMENT${tasks.length > 1 ? 'S' : ''}</span><h2>${taskFilter === 'today' ? 'Aujourd’hui' : 'Mes tâches'}</h2></div><button class="mini-btn" data-action="add-project">＋ Liste</button></header>${tasks.length ? tasks.map(renderTaskRow).join('') : empty('Aucune tâche dans cette vue.')}</section>`;
+}
+function renderTaskRow(task) {
+    const overdue = !task.completed && Boolean(task.dueDate && task.dueDate < today());
+    const progress = task.subtasks.length ? Math.round(task.subtasks.filter(item => item.completed).length / task.subtasks.length * 100) : 0;
+    return `<article class="task-row ${task.completed ? 'done' : ''}"><button class="check-btn ${task.completed ? 'checked' : ''}" data-action="toggle-task" data-id="${task.id}">${task.completed ? '✓' : ''}</button><div class="item-main"><button class="item-title" data-action="edit-task" data-id="${task.id}">${escapeHtml(task.title)}</button><div class="meta-row"><span class="badge project">${escapeHtml(task.project)}</span>${task.status && task.status !== 'next' ? `<span class="badge">${TASK_STATUS_LABEL[task.status]}</span>` : ''}${task.urgent ? '<span class="badge urgent">🔥 urgent</span>' : ''}${task.important ? '<span class="badge important">⭐ important</span>' : ''}${task.dueDate ? `<span class="${overdue ? 'overdue' : ''}">📅 ${formatDate(task.dueDate)}</span>` : ''}${task.estimatedMinutes ? `<span>⏱ ${task.actualMinutes ?? 0}/${task.estimatedMinutes} min</span>` : ''}${task.energy ? `<span>⚡ ${ENERGY_LABEL[task.energy]}</span>` : ''}${task.context ? `<span>@${escapeHtml(task.context)}</span>` : ''}</div>${task.description ? `<p class="item-description">${escapeHtml(task.description)}</p>` : ''}${task.tags?.length ? `<div class="tags">${task.tags.map(tag => `<span>#${escapeHtml(tag)}</span>`).join('')}</div>` : ''}${task.subtasks.length ? `<div class="progress-line"><i style="width:${progress}%"></i></div><div class="subtasks">${task.subtasks.map(sub => `<button class="subtask ${sub.completed ? 'done' : ''}" data-action="toggle-subtask" data-id="${task.id}" data-sub-id="${sub.id}">${sub.completed ? '☑' : '☐'} ${escapeHtml(sub.title)}</button>`).join('')}</div>` : ''}</div>${!task.completed ? `<button class="mini-btn" data-action="focus" data-id="${task.id}">Focus</button>` : ''}<button class="more-btn" data-action="task-menu" data-id="${task.id}">•••</button></article>`;
+}
+function renderAgenda() {
+    const events = eventsOn(selectedDate);
+    const blocks = active(state.timeBlocks).filter(item => item.date === selectedDate).sort((a, b) => a.start.localeCompare(b.start));
+    const agenda = [...events.map(event => ({ time: event.time ?? 'Journée', sort: event.time ?? '00:00', title: event.title, meta: event.location || formatDuration(event.durationMinutes), action: 'edit-event', id: event.id, type: 'event' })), ...blocks.map(block => ({ time: block.start, sort: block.start, title: block.title, meta: `${block.end} · ${BLOCK_LABEL[block.type]}`, action: 'edit-block', id: block.id, type: 'block' }))].sort((a, b) => a.sort.localeCompare(b.sort));
+    return `<section class="card date-navigator"><button class="icon-btn" data-action="date-prev">‹</button><button data-action="date-today"><span class="eyebrow">JOUR SÉLECTIONNÉ</span><h2>${formatDate(selectedDate, { weekday: 'long', day: 'numeric', month: 'long' })}</h2></button><button class="icon-btn" data-action="date-next">›</button></section>
+  <section class="card"><header class="section-head"><div><span class="eyebrow">AGENDA + TIME BLOCKING</span><h2>Déroulé de la journée</h2></div><div><button class="mini-btn" data-action="add-event">＋ Événement</button><button class="mini-btn" data-action="add-block">＋ Bloc</button></div></header>${agenda.length ? agenda.map(item => `<article class="agenda-line ${item.type}"><time>${item.time}</time><button class="item-title" data-action="${item.action}" data-id="${item.id}">${escapeHtml(item.title)}</button><span>${escapeHtml(item.meta)}</span></article>`).join('') : empty('Aucun élément planifié.')}</section>
+  <section class="card"><header class="section-head"><h2>Prochains événements</h2><div><button class="mini-btn" data-action="export-ics">Exporter .ics</button><button class="mini-btn" data-action="import-ics">Importer</button></div></header>${upcomingEvents(21).map(({ event, date }) => `<div class="upcoming"><strong>${formatDate(date)}</strong><button class="item-title" data-action="edit-event" data-id="${event.id}">${escapeHtml(event.title)}</button><span>${event.time ?? 'Journée'}</span></div>`).join('') || empty('Aucun événement à venir.')}</section>`;
+}
+function renderGoals() {
+    const goals = active(state.goals).sort((a, b) => Number(a.status !== 'active') - Number(b.status !== 'active') || (a.targetDate ?? '9999').localeCompare(b.targetDate ?? '9999'));
+    return `<section class="card"><header class="section-head"><div><span class="eyebrow">VISION → ACTION</span><h2>Objectifs</h2></div><button class="btn small" data-action="add-goal">＋ Objectif</button></header>${goals.length ? `<div class="goal-grid">${goals.map(renderGoalCard).join('')}</div>` : empty('Crée un objectif et relie-lui des tâches.')}</section>`;
+}
+function renderGoalCard(goal) {
+    const linked = active(state.tasks).filter(task => task.parentGoalId === goal.id);
+    const done = linked.filter(task => task.completed).length;
+    const computed = linked.length ? Math.round(done / linked.length * 100) : goal.progress;
+    return `<article class="goal-card" style="--goal:${escapeHtml(goal.color)}"><header><span>${goal.area}</span><button class="more-btn" data-action="goal-menu" data-id="${goal.id}">•••</button></header><button class="goal-title" data-action="edit-goal" data-id="${goal.id}">${escapeHtml(goal.title)}</button><p>${escapeHtml(goal.notes)}</p><div class="goal-progress"><i style="width:${computed}%"></i></div><footer><strong>${computed}%</strong><span>${linked.length} tâche${linked.length > 1 ? 's' : ''}${goal.targetDate ? ` · ${formatDate(goal.targetDate)}` : ''}</span></footer></article>`;
+}
+function renderGoalMini(goal) { return `<button class="goal-mini" data-action="edit-goal" data-id="${goal.id}"><i style="width:${goal.progress}%;background:${escapeHtml(goal.color)}"></i><span>${escapeHtml(goal.title)}</span><strong>${goal.progress}%</strong></button>`; }
+function renderNotes() {
+    let notes = active(state.notes);
+    const query = noteSearch.trim().toLowerCase();
+    if (query)
+        notes = notes.filter(note => `${note.title} ${note.body} ${note.tags.join(' ')} ${note.folder ?? ''}`.toLowerCase().includes(query));
+    if (noteFolder !== 'Toutes')
+        notes = notes.filter(note => (note.folder ?? 'Notes') === noteFolder);
+    notes.sort((a, b) => Number(b.favorite) - Number(a.favorite) || Number(b.pinned) - Number(a.pinned) || b.updatedAt.localeCompare(a.updatedAt));
+    const folders = ['Toutes', ...new Set(active(state.notes).map(note => note.folder ?? 'Notes'))];
+    return `<div class="page-title"><div><span class="eyebrow">SECOND CERVEAU</span><h1>Notes</h1></div><div class="page-actions"><button class="mini-btn" data-action="daily-journal">📓 Journal</button><button class="btn" data-action="add-note">＋ Note</button></div></div><section class="card"><div class="search-field"><span>⌕</span><input id="note-search" value="${escapeHtml(noteSearch)}" placeholder="Rechercher partout…"></div><div class="chips">${folders.map(folder => `<button class="chip ${folder === noteFolder ? 'active' : ''}" data-note-folder="${escapeHtml(folder)}">${escapeHtml(folder)}</button>`).join('')}<button class="chip" data-action="note-graph">🕸 Graphe</button><button class="chip" data-action="export-markdown">Exporter Obsidian</button></div></section><section class="notes-grid">${notes.length ? notes.map(renderNoteCard).join('') : empty('Aucune note dans cette vue.')}</section>`;
+}
+function renderNoteCard(note) { return `<article class="note-card ${note.pinned ? 'pinned' : ''}"><header><button class="note-title" data-action="edit-note" data-id="${note.id}">${note.favorite ? '★ ' : ''}${note.pinned ? '📌 ' : ''}${escapeHtml(note.title)}</button><button class="more-btn" data-action="note-menu" data-id="${note.id}">•••</button></header><div class="note-meta"><span>${escapeHtml(note.folder ?? 'Notes')}</span>${note.sourceUrl ? '<span>🔗 source</span>' : ''}</div><div class="note-body">${markdown(note.body)}</div>${note.tags.length ? `<div class="tags">${note.tags.map(tag => `<span>#${escapeHtml(tag)}</span>`).join('')}</div>` : ''}</article>`; }
+function renderTracking() { return `<div class="page-title"><div><span class="eyebrow">PROGRESSION</span><h1>Suivi</h1></div></div><div class="segmented quad"><button class="${trackingTab === 'habits' ? 'active' : ''}" data-tracking-tab="habits">Habitudes</button><button class="${trackingTab === 'sport' ? 'active' : ''}" data-tracking-tab="sport">Sport</button><button class="${trackingTab === 'health' ? 'active' : ''}" data-tracking-tab="health">Santé</button><button class="${trackingTab === 'analytics' ? 'active' : ''}" data-tracking-tab="analytics">Analyses</button></div>${trackingTab === 'habits' ? renderHabits() : trackingTab === 'sport' ? renderSport() : trackingTab === 'health' ? renderHealth() : renderAnalytics()}`; }
+function renderHabits() {
+    const habits = active(state.habits);
+    const routines = active(state.routines);
+    return `<section class="card"><header class="section-head"><h2>Habitudes</h2><button class="btn small" data-action="add-habit">＋ Ajouter</button></header>${habits.length ? habits.map(renderHabitFull).join('') : empty('Ajoute une habitude mesurable.')}</section><section class="card"><header class="section-head"><h2>Routines</h2><button class="btn small" data-action="add-routine">＋ Routine</button></header>${routines.length ? routines.map(renderRoutine).join('') : empty('Crée une séquence d’actions répétables.')}</section>`;
+}
+function renderHabitMini(habit) { const value = habit.completions[today()] ?? 0; const skipped = Boolean(habit.skipped?.[today()]); const done = value >= habit.target; return `<div class="habit-row"><button class="habit-check ${done ? 'done' : ''} ${skipped ? 'skipped' : ''}" data-action="toggle-habit" data-id="${habit.id}" style="--habit:${escapeHtml(habit.color ?? '#11a4b7')}">${skipped ? '–' : done ? '✓' : escapeHtml(habit.icon ?? '')}</button><div><strong>${escapeHtml(habit.name)}</strong><span>${done ? 'Objectif atteint' : skipped ? 'Jour neutralisé' : `${value}/${habit.target} ${escapeHtml(habit.unit)}`}</span></div><button class="mini-btn" data-action="skip-habit" data-id="${habit.id}">Passer</button></div>`; }
+function renderHabitFull(habit) { const monday = mondayOf(today()); return `<article class="habit-full">${renderHabitMini(habit)}<div class="week-dots">${Array.from({ length: 7 }, (_, i) => { const date = shiftDate(monday, i); const value = habit.completions[date] ?? 0; const skipped = Boolean(habit.skipped?.[date]); return `<button class="${value >= habit.target ? 'done' : ''} ${skipped ? 'skipped' : ''}" data-action="habit-day" data-id="${habit.id}" data-date="${date}"><span>${['L', 'M', 'M', 'J', 'V', 'S', 'D'][i]}</span><i>${skipped ? '–' : value || ''}</i></button>`; }).join('')}</div><div class="habit-actions"><span>Série ${habitStreak(habit)} j · objectif ${habit.weeklyGoal}/sem.</span><button class="mini-btn" data-action="edit-habit" data-id="${habit.id}">Modifier</button></div></article>`; }
+function renderRoutine(routine) { const done = new Set(routine.completions[today()] ?? []); const progress = routine.steps.length ? Math.round(done.size / routine.steps.length * 100) : 0; return `<article class="routine"><header><div><strong>${escapeHtml(routine.name)}</strong><span>${routine.time ?? ''} · ${routine.durationMinutes ?? 15} min</span></div><button class="mini-btn" data-action="edit-routine" data-id="${routine.id}">Modifier</button></header><div class="progress-line"><i style="width:${progress}%"></i></div>${routine.steps.map(step => `<button class="routine-step ${done.has(step.id) ? 'done' : ''}" data-action="routine-step" data-id="${routine.id}" data-step-id="${step.id}">${done.has(step.id) ? '☑' : '☐'} ${escapeHtml(step.label)}</button>`).join('')}</article>`; }
+function renderSport() {
+    const sessions = active(state.sessions).sort((a, b) => b.date.localeCompare(a.date));
+    const week = sessions.filter(item => item.date >= mondayOf(today()));
+    const programs = active(state.programs);
+    return `<section class="stats-row">${stat(week.length, `séances / ${state.preferences.objectiveSessions}`)}${stat(week.reduce((sum, item) => sum + item.durationMinutes, 0), 'minutes')}${stat(Math.round(week.reduce((sum, item) => sum + (item.effort ?? 0), 0) / Math.max(1, week.length) * 10) / 10, 'effort moyen')}</section><section class="card"><header class="section-head"><h2>Enregistrer une séance</h2></header><form id="session-form" class="smart-form"><select name="type"><option>Musculation</option><option>Course</option><option>Vélo</option><option>Natation</option><option>Yoga</option><option>Marche</option><option>HIIT</option><option>Autre</option></select><input name="duration" type="number" min="1" placeholder="Durée min" required><input name="effort" type="number" min="1" max="10" value="5" placeholder="Effort /10"><input name="calories" type="number" min="0" placeholder="Calories"><textarea class="span-2" name="notes" placeholder="Détails, sensations, performances…"></textarea><button class="btn span-2">Enregistrer</button></form></section><section class="card"><header class="section-head"><h2>Programmes</h2><button class="btn small" data-action="add-program">＋ Programme</button></header>${programs.length ? programs.map(program => `<article class="program"><div><strong>${escapeHtml(program.name)}</strong><p>${escapeHtml(program.category ?? 'Programme')} · ${program.exercises.length} exercices</p></div><button class="mini-btn" data-action="use-program" data-id="${program.id}">Lancer</button></article>`).join('') : empty('Crée un programme réutilisable.')}</section><section class="card"><header class="section-head"><h2>Historique</h2></header>${sessions.length ? sessions.slice(0, 30).map(renderSession).join('') : empty('Aucune séance enregistrée.')}</section>`;
+}
+function renderSession(session) { return `<article class="session"><div><strong>${escapeHtml(session.type)} · ${formatDuration(session.durationMinutes)}</strong><span>${formatDate(session.date)} · effort ${session.effort ?? 5}/10${session.calories ? ` · ${session.calories} kcal` : ''}</span><p>${escapeHtml(session.notes)}</p></div><button class="more-btn" data-action="session-menu" data-id="${session.id}">•••</button></article>`; }
+function renderHealth() {
+    const weights = active(state.weights).sort((a, b) => a.date.localeCompare(b.date));
+    const sleeps = active(state.sleep).sort((a, b) => a.date.localeCompare(b.date));
+    const meals = active(state.meals).filter(item => item.date === today());
+    const measurements = active(state.measurements);
+    const water = state.water[today()] ?? 0;
+    const mood = active(state.moods).find(item => item.date === today());
+    return `<section class="grid-two"><section class="card"><header class="section-head"><h2>Poids</h2></header><form id="weight-form" class="inline-form"><input name="kg" type="number" step="0.1" min="20" placeholder="kg" required><button class="btn">＋</button></form>${sparkline(weights.slice(-20).map(item => item.kg), 'kg')}</section><section class="card"><header class="section-head"><h2>Sommeil</h2></header><form id="sleep-form" class="form-grid"><input name="hours" type="number" step="0.25" min="0" max="16" placeholder="Heures" required><select name="quality"><option value="5">Excellente</option><option value="4">Bonne</option><option value="3" selected>Correcte</option><option value="2">Moyenne</option><option value="1">Mauvaise</option></select><button class="btn span-2">Enregistrer</button></form>${barChart(sleeps.slice(-7).map(item => item.hours))}</section></section><section class="grid-two"><section class="card"><header class="section-head"><h2>Hydratation</h2></header><div class="water"><button data-action="water-minus">−</button><strong>${water} verre${water > 1 ? 's' : ''}</strong><button data-action="water-plus">＋</button></div></section><section class="card"><header class="section-head"><h2>Humeur</h2><button class="mini-btn" data-action="mood">${mood ? 'Modifier' : 'Ajouter'}</button></header>${mood ? `<div class="mood-summary"><strong>${moodEmoji(mood.mood)} ${mood.mood}/5</strong><span>Énergie ${mood.energy}/5 · Stress ${mood.stress}/5</span></div>` : empty('Aucune mesure aujourd’hui.')}</section></section><section class="card"><header class="section-head"><h2>Repas du jour</h2></header><form id="meal-form" class="smart-form"><select name="type"><option>Petit-déjeuner</option><option>Déjeuner</option><option>Dîner</option><option>Collation</option></select><input name="description" placeholder="Ce que tu as mangé" required><button class="btn span-2">Ajouter</button></form>${meals.map(meal => `<div class="meal"><span><strong>${escapeHtml(meal.mealType)}</strong> — ${escapeHtml(meal.description)}</span><button class="delete-btn" data-action="delete-meal" data-id="${meal.id}">×</button></div>`).join('')}</section><section class="card"><header class="section-head"><h2>Mensurations</h2></header><form id="measurement-form" class="smart-form"><input name="name" placeholder="Tour de taille" required><input name="value" type="number" step="0.1" required><select name="unit"><option>cm</option><option>kg</option><option>%</option></select><button class="btn span-2">Enregistrer</button></form>${measurements.slice(-10).reverse().map(item => `<div class="measurement"><strong>${escapeHtml(item.name)}</strong><span>${item.value} ${escapeHtml(item.unit)} · ${formatDate(item.date)}</span></div>`).join('')}</section>`;
+}
+function renderAnalytics() {
+    const start = shiftDate(today(), -27);
+    const tasks = active(state.tasks);
+    const completed = tasks.filter(task => task.completedAt && task.completedAt.slice(0, 10) >= start);
+    const focus = active(state.focusSessions).filter(item => item.date >= start);
+    const sessions = active(state.sessions).filter(item => item.date >= start);
+    const moods = active(state.moods).filter(item => item.date >= start);
+    const habits = active(state.habits);
+    const completionRate = tasks.filter(task => task.dueDate && task.dueDate >= start && task.dueDate <= today()).length ? Math.round(completed.length / tasks.filter(task => task.dueDate && task.dueDate >= start && task.dueDate <= today()).length * 100) : 0;
+    const moodAvg = moods.length ? Math.round(moods.reduce((sum, item) => sum + item.mood, 0) / moods.length * 10) / 10 : 0;
+    const habitRate = habits.length ? Math.round(habits.reduce((sum, habit) => sum + Object.entries(habit.completions).filter(([date, value]) => date >= start && value >= habit.target).length, 0) / (habits.length * 28) * 100) : 0;
+    const projectStats = state.projects.map(project => ({ project, count: completed.filter(task => task.project === project).length })).sort((a, b) => b.count - a.count);
+    return `<section class="stats-row four">${stat(completed.length, 'tâches / 28 j')}${stat(completionRate + '%', 'ponctualité')}${stat(focus.reduce((sum, item) => sum + item.minutes, 0), 'min focus')}${stat(moodAvg || '—', 'humeur moyenne')}</section><section class="grid-two"><section class="card"><header class="section-head"><h2>Répartition par projet</h2></header>${projectStats.map(item => `<div class="metric-row"><span>${escapeHtml(item.project)}</span><div><i style="width:${Math.min(100, item.count / Math.max(1, projectStats[0]?.count ?? 1) * 100)}%"></i></div><strong>${item.count}</strong></div>`).join('')}</section><section class="card"><header class="section-head"><h2>Équilibre</h2></header><div class="radar-lite"><div><strong>${habitRate}%</strong><span>habitudes</span></div><div><strong>${sessions.reduce((sum, item) => sum + item.durationMinutes, 0)}</strong><span>min sport</span></div><div><strong>${moods.length}</strong><span>check-ins</span></div></div></section></section><section class="card"><header class="section-head"><h2>Conseils automatiques</h2></header>${insights(completionRate, habitRate, moodAvg, sessions.length).map(text => `<div class="insight">✦ ${escapeHtml(text)}</div>`).join('')}</section>`;
+}
+async function onClick(event) {
+    const element = event.target.closest('[data-action],[data-screen],[data-plan-tab],[data-tracking-tab],[data-task-filter],[data-project],[data-note-folder],[data-date]');
+    if (!element)
+        return;
+    event.preventDefault();
+    if (element.dataset.screen) {
+        screen = element.dataset.screen;
+        if (element.dataset.planTab)
+            planTab = element.dataset.planTab;
+        render();
+        return;
+    }
+    if (element.dataset.planTab) {
+        planTab = element.dataset.planTab;
+        render();
+        return;
+    }
+    if (element.dataset.trackingTab) {
+        trackingTab = element.dataset.trackingTab;
+        render();
+        return;
+    }
+    if (element.dataset.taskFilter) {
+        taskFilter = element.dataset.taskFilter;
+        render();
+        return;
+    }
+    if (element.dataset.project !== undefined) {
+        await store.setPreference('activeProject', element.dataset.project || null);
+        return;
+    }
+    if (element.dataset.noteFolder) {
+        noteFolder = element.dataset.noteFolder;
+        render();
+        return;
+    }
+    const action = element.dataset.action;
+    const id = element.dataset.id ?? '';
+    if (!action)
+        return;
+    if (action === 'close-modal')
+        return closeModal();
+    if (action === 'search')
+        return openSearch();
+    if (action === 'quick-capture')
+        return openQuickCapture();
+    if (action === 'settings')
+        return openSettings();
+    if (action === 'plan-day')
+        return openPlanDay();
+    if (action === 'mood')
+        return openMood();
+    if (action === 'add-project') {
+        const value = prompt('Nom de la liste');
+        if (value)
+            await store.addProject(value);
+        return;
+    }
+    if (action === 'toggle-task')
+        return store.toggleTask(id);
+    if (action === 'edit-task')
+        return openTask(state.tasks.find(item => item.id === id));
+    if (action === 'focus')
+        return openFocus(state.tasks.find(item => item.id === id));
+    if (action === 'toggle-subtask')
+        return store.toggleSubtask(id, element.dataset.subId ?? '');
+    if (action === 'task-menu')
+        return openTaskMenu(id);
+    if (action === 'date-prev') {
+        selectedDate = shiftDate(selectedDate, -1);
+        return render();
+    }
+    if (action === 'date-next') {
+        selectedDate = shiftDate(selectedDate, 1);
+        return render();
+    }
+    if (action === 'date-today') {
+        selectedDate = today();
+        return render();
+    }
+    if (action === 'add-event')
+        return openEvent();
+    if (action === 'edit-event')
+        return openEvent(state.events.find(item => item.id === id));
+    if (action === 'add-block')
+        return openBlock();
+    if (action === 'edit-block')
+        return openBlock(state.timeBlocks.find(item => item.id === id));
+    if (action === 'export-ics')
+        return exportIcs();
+    if (action === 'import-ics')
+        return importIcs();
+    if (action === 'add-goal')
+        return openGoal();
+    if (action === 'edit-goal')
+        return openGoal(state.goals.find(item => item.id === id));
+    if (action === 'goal-menu')
+        return openGoalMenu(id);
+    if (action === 'add-note')
+        return openNote();
+    if (action === 'edit-note')
+        return openNote(state.notes.find(item => item.id === id));
+    if (action === 'note-menu')
+        return openNoteMenu(id);
+    if (action === 'daily-journal')
+        return openDailyJournal();
+    if (action === 'note-graph')
+        return openNoteGraph();
+    if (action === 'export-markdown')
+        return exportMarkdown();
+    if (action === 'toggle-habit') {
+        const habit = state.habits.find(item => item.id === id);
+        if (habit)
+            await store.setHabitValue(id, today(), (habit.completions[today()] ?? 0) >= habit.target ? 0 : habit.target);
+        return;
+    }
+    if (action === 'habit-day') {
+        const habit = state.habits.find(item => item.id === id);
+        const date = element.dataset.date ?? today();
+        if (habit)
+            await store.setHabitValue(id, date, (habit.completions[date] ?? 0) >= habit.target ? 0 : habit.target);
+        return;
+    }
+    if (action === 'skip-habit')
+        return store.skipHabit(id);
+    if (action === 'add-habit')
+        return openHabit();
+    if (action === 'edit-habit')
+        return openHabit(state.habits.find(item => item.id === id));
+    if (action === 'add-routine')
+        return openRoutine();
+    if (action === 'edit-routine')
+        return openRoutine(state.routines.find(item => item.id === id));
+    if (action === 'routine-step')
+        return store.toggleRoutineStep(id, element.dataset.stepId ?? '');
+    if (action === 'add-program')
+        return openProgram();
+    if (action === 'use-program')
+        return useProgram(id);
+    if (action === 'session-menu')
+        return openSessionMenu(id);
+    if (action === 'water-plus')
+        return store.changeWater(1);
+    if (action === 'water-minus')
+        return store.changeWater(-1);
+    if (action === 'delete-meal')
+        return store.deleteMeal(id);
+    if (action === 'focus-toggle')
+        return toggleFocus();
+    if (action === 'focus-finish')
+        return finishFocus();
+    if (action === 'export-json')
+        return exportJson();
+    if (action === 'import-json')
+        return importJson();
+    if (action === 'purge')
+        return store.purgeDeleted();
+    if (action === 'install')
+        return showToast('Dans Safari : Partager → Sur l’écran d’accueil.');
+}
+async function onSubmit(event) {
+    const form = event.target;
+    event.preventDefault();
+    if (form.id === 'modal-form') {
+        if (modalSubmit)
+            await modalSubmit(form);
+        closeModal();
+        return;
+    }
+    const data = new FormData(form);
+    if (form.id === 'inbox-form') {
+        const text = String(data.get('text') ?? '').trim();
+        if (text)
+            await store.addTask({ title: text, status: 'inbox' });
+        form.reset();
+        return;
+    }
+    if (form.id === 'task-form') {
+        await store.addTask({ title: String(data.get('title') ?? ''), dueDate: nullable(data.get('dueDate')), project: String(data.get('project') ?? 'Personnel'), status: String(data.get('status') ?? 'next'), estimatedMinutes: num(data.get('estimatedMinutes')) });
+        form.reset();
+        return;
+    }
+    if (form.id === 'session-form') {
+        await store.addSession({ type: String(data.get('type') ?? 'Sport'), durationMinutes: num(data.get('duration')), effort: num(data.get('effort'), 5), calories: nullableNumber(data.get('calories')), notes: String(data.get('notes') ?? '') });
+        form.reset();
+        return;
+    }
+    if (form.id === 'weight-form') {
+        await store.addWeight(num(data.get('kg')));
+        form.reset();
+        return;
+    }
+    if (form.id === 'sleep-form') {
+        await store.addSleep(num(data.get('hours')), num(data.get('quality'), 3));
+        form.reset();
+        return;
+    }
+    if (form.id === 'meal-form') {
+        await store.addMeal(String(data.get('type') ?? 'Repas'), String(data.get('description') ?? ''));
+        form.reset();
+        return;
+    }
+    if (form.id === 'measurement-form') {
+        await store.addMeasurement(String(data.get('name') ?? ''), num(data.get('value')), String(data.get('unit') ?? 'cm'));
+        form.reset();
+        return;
+    }
+}
+function onInput(event) { const target = event.target; if (target.id === 'note-search') {
+    noteSearch = target.value;
+    render();
+    requestAnimationFrame(() => { const next = root.querySelector('#note-search'); next?.focus(); next?.setSelectionRange(noteSearch.length, noteSearch.length); });
+} }
+function openModal(title, body, submit) { const backdrop = root.querySelector('#modal-backdrop'); const titleEl = root.querySelector('#modal-title'); const bodyEl = root.querySelector('#modal-body'); if (!backdrop || !titleEl || !bodyEl)
+    return; titleEl.textContent = title; bodyEl.innerHTML = body; modalSubmit = submit; backdrop.hidden = false; requestAnimationFrame(() => bodyEl.querySelector('input,textarea,select')?.focus()); }
+function closeModal() { const backdrop = root.querySelector('#modal-backdrop'); if (backdrop)
+    backdrop.hidden = true; modalSubmit = null; if (focusRuntime?.interval) {
+    clearInterval(focusRuntime.interval);
+    focusRuntime.interval = null;
+    focusRuntime.running = false;
+} }
+function openQuickCapture() { openModal('Capture universelle', `<div class="capture-grid"><button type="button" data-action="quick-task-form">✓<span>Tâche</span></button><button type="button" data-action="quick-event-form">▣<span>Événement</span></button><button type="button" data-action="quick-note-form">◇<span>Note</span></button><button type="button" data-action="quick-block-form">◷<span>Bloc de temps</span></button><button type="button" data-action="quick-goal-form">◎<span>Objectif</span></button><button type="button" data-action="mood">☻<span>Check-in</span></button></div>`, () => { }); setTimeout(() => { root.querySelector('[data-action="quick-task-form"]')?.addEventListener('click', () => openTask()); root.querySelector('[data-action="quick-event-form"]')?.addEventListener('click', () => openEvent()); root.querySelector('[data-action="quick-note-form"]')?.addEventListener('click', () => openNote()); root.querySelector('[data-action="quick-block-form"]')?.addEventListener('click', () => openBlock()); root.querySelector('[data-action="quick-goal-form"]')?.addEventListener('click', () => openGoal()); }, 0); }
+function openTask(task) { openModal(task ? 'Modifier la tâche' : 'Nouvelle tâche', `<div class="form-grid"><label class="span-2">Titre<input name="title" value="${escapeHtml(task?.title ?? '')}" required></label><label class="span-2">Description<textarea name="description">${escapeHtml(task?.description ?? '')}</textarea></label><label>Date d’échéance<input name="dueDate" type="date" value="${task?.dueDate ?? ''}"></label><label>Heure<input name="dueTime" type="time" value="${task?.dueTime ?? ''}"></label><label>Date de démarrage<input name="startDate" type="date" value="${task?.startDate ?? ''}"></label><label>Liste<select name="project">${state.projects.map(name => `<option ${name === task?.project ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label>Statut<select name="status">${Object.entries(TASK_STATUS_LABEL).map(([value, label]) => `<option value="${value}" ${value === (task?.status ?? 'next') ? 'selected' : ''}>${label}</option>`).join('')}</select></label><label>Énergie<select name="energy">${Object.entries(ENERGY_LABEL).map(([value, label]) => `<option value="${value}" ${value === (task?.energy ?? 'medium') ? 'selected' : ''}>${label}</option>`).join('')}</select></label><label>Durée estimée<input name="estimatedMinutes" type="number" min="0" value="${task?.estimatedMinutes ?? 0}"></label><label>Temps réel<input name="actualMinutes" type="number" min="0" value="${task?.actualMinutes ?? 0}"></label><label>Contexte<input name="context" value="${escapeHtml(task?.context ?? '')}" placeholder="ordinateur, téléphone…"></label><label>Tags<input name="tags" value="${escapeHtml((task?.tags ?? []).join(', '))}"></label><label>Objectif<select name="parentGoalId"><option value="">Aucun</option>${active(state.goals).map(goal => `<option value="${goal.id}" ${goal.id === task?.parentGoalId ? 'selected' : ''}>${escapeHtml(goal.title)}</option>`).join('')}</select></label><label>Récurrence<select name="recurrence"><option value="">Jamais</option><option value="daily" ${task?.recurrence === 'daily' ? 'selected' : ''}>Chaque jour</option><option value="weekly" ${task?.recurrence === 'weekly' ? 'selected' : ''}>Chaque semaine</option><option value="monthly" ${task?.recurrence === 'monthly' ? 'selected' : ''}>Chaque mois</option></select></label><label class="checkbox"><input name="urgent" type="checkbox" ${task?.urgent ? 'checked' : ''}> Urgent</label><label class="checkbox"><input name="important" type="checkbox" ${task?.important ? 'checked' : ''}> Important</label><label class="span-2">Sous-tâches<textarea name="subtasks" placeholder="Une ligne par sous-tâche">${escapeHtml((task?.subtasks ?? []).map(item => item.title).join('\n'))}</textarea></label></div>`, async (form) => { const d = new FormData(form); const patch = { title: String(d.get('title') ?? '').trim(), description: String(d.get('description') ?? ''), dueDate: nullable(d.get('dueDate')), dueTime: nullable(d.get('dueTime')), startDate: nullable(d.get('startDate')), project: String(d.get('project') ?? 'Personnel'), status: String(d.get('status') ?? 'next'), energy: String(d.get('energy') ?? 'medium'), estimatedMinutes: num(d.get('estimatedMinutes')), actualMinutes: num(d.get('actualMinutes')), context: String(d.get('context') ?? ''), tags: csv(d.get('tags')), parentGoalId: nullable(d.get('parentGoalId')), recurrence: String(d.get('recurrence') ?? ''), urgent: d.has('urgent'), important: d.has('important'), priority: d.has('urgent') ? 'urgent' : d.has('important') ? 'important' : 'normal', subtasks: String(d.get('subtasks') ?? '').split('\n').map(value => value.trim()).filter(Boolean).map((title, index) => ({ id: task?.subtasks[index]?.id ?? uid(), title, completed: task?.subtasks[index]?.completed ?? false })) }; if (task)
+    await store.updateTask(task.id, patch);
+else
+    await store.addTask({ title: patch.title ?? '', ...patch }); }); }
+function openEvent(event) { openModal(event ? 'Modifier l’événement' : 'Nouvel événement', `<div class="form-grid"><label class="span-2">Titre<input name="title" value="${escapeHtml(event?.title ?? '')}" required></label><label>Date<input name="date" type="date" value="${event?.date ?? selectedDate}" required></label><label>Heure<input name="time" type="time" value="${event?.time ?? ''}"></label><label>Durée<input name="duration" type="number" min="0" value="${event?.durationMinutes ?? 60}"></label><label>Catégorie<select name="category"><option value="personal">Personnel</option><option value="work" ${event?.category === 'work' ? 'selected' : ''}>Travail</option><option value="health" ${event?.category === 'health' ? 'selected' : ''}>Santé</option><option value="other" ${event?.category === 'other' ? 'selected' : ''}>Autre</option></select></label><label>Lieu<input name="location" value="${escapeHtml(event?.location ?? '')}"></label><label>URL<input name="url" type="url" value="${escapeHtml(event?.url ?? '')}"></label><label>Couleur<input name="color" type="color" value="${event?.color ?? '#2d6cdf'}"></label><label>Rappel<select name="reminder"><option value="">Aucun</option><option value="0">À l’heure</option><option value="10">10 min avant</option><option value="30" selected>30 min avant</option><option value="60">1 h avant</option><option value="1440">1 jour avant</option></select></label><label>Récurrence<select name="recurrence"><option value="">Jamais</option><option value="daily" ${event?.recurrence === 'daily' ? 'selected' : ''}>Chaque jour</option><option value="weekly" ${event?.recurrence === 'weekly' ? 'selected' : ''}>Chaque semaine</option><option value="monthly" ${event?.recurrence === 'monthly' ? 'selected' : ''}>Chaque mois</option></select></label><label class="checkbox"><input name="countdown" type="checkbox" ${event?.countdown ? 'checked' : ''}> Compte à rebours</label><label class="checkbox"><input name="allDay" type="checkbox" ${event?.allDay ? 'checked' : ''}> Toute la journée</label><label class="span-2">Notes<textarea name="notes">${escapeHtml(event?.notes ?? '')}</textarea></label></div>`, async (form) => { const d = new FormData(form); const patch = { title: String(d.get('title') ?? ''), date: String(d.get('date') ?? selectedDate), time: nullable(d.get('time')), durationMinutes: num(d.get('duration'), 60), category: String(d.get('category') ?? 'personal'), location: String(d.get('location') ?? ''), url: String(d.get('url') ?? ''), color: String(d.get('color') ?? '#2d6cdf'), reminderMinutes: nullableNumber(d.get('reminder')), recurrence: String(d.get('recurrence') ?? ''), countdown: d.has('countdown'), allDay: d.has('allDay'), notes: String(d.get('notes') ?? '') }; if (event)
+    await store.updateEvent(event.id, patch);
+else
+    await store.addEvent({ title: patch.title ?? '', date: patch.date ?? selectedDate, ...patch }); }); }
+function openBlock(block) { openModal(block ? 'Modifier le bloc' : 'Nouveau bloc de temps', `<div class="form-grid"><label class="span-2">Titre<input name="title" value="${escapeHtml(block?.title ?? '')}" required></label><label>Date<input name="date" type="date" value="${block?.date ?? selectedDate}" required></label><label>Type<select name="type">${Object.entries(BLOCK_LABEL).map(([value, label]) => `<option value="${value}" ${value === (block?.type ?? 'focus') ? 'selected' : ''}>${label}</option>`).join('')}</select></label><label>Début<input name="start" type="time" value="${block?.start ?? '09:00'}" required></label><label>Fin<input name="end" type="time" value="${block?.end ?? '10:00'}" required></label><label class="span-2">Tâches liées<select name="tasks" multiple size="6">${active(state.tasks).filter(task => !task.completed).map(task => `<option value="${task.id}" ${(block?.linkedTaskIds ?? []).includes(task.id) ? 'selected' : ''}>${escapeHtml(task.title)}</option>`).join('')}</select></label><label class="span-2">Notes<textarea name="notes">${escapeHtml(block?.notes ?? '')}</textarea></label></div>`, async (form) => { const d = new FormData(form); const patch = { title: String(d.get('title') ?? ''), date: String(d.get('date') ?? selectedDate), type: String(d.get('type') ?? 'focus'), start: String(d.get('start') ?? '09:00'), end: String(d.get('end') ?? '10:00'), linkedTaskIds: d.getAll('tasks').map(String), notes: String(d.get('notes') ?? '') }; if (block)
+    await store.updateTimeBlock(block.id, patch);
+else
+    await store.addTimeBlock({ title: patch.title ?? '', date: patch.date ?? selectedDate, start: patch.start ?? '09:00', end: patch.end ?? '10:00', ...patch }); }); }
+function openGoal(goal) { openModal(goal ? 'Modifier l’objectif' : 'Nouvel objectif', `<div class="form-grid"><label class="span-2">Objectif<input name="title" value="${escapeHtml(goal?.title ?? '')}" required></label><label>Domaine<select name="area"><option value="personal">Personnel</option><option value="work" ${goal?.area === 'work' ? 'selected' : ''}>Travail</option><option value="health" ${goal?.area === 'health' ? 'selected' : ''}>Santé</option><option value="finance" ${goal?.area === 'finance' ? 'selected' : ''}>Finances</option><option value="learning" ${goal?.area === 'learning' ? 'selected' : ''}>Apprentissage</option><option value="other" ${goal?.area === 'other' ? 'selected' : ''}>Autre</option></select></label><label>Statut<select name="status"><option value="active">Actif</option><option value="paused" ${goal?.status === 'paused' ? 'selected' : ''}>En pause</option><option value="completed" ${goal?.status === 'completed' ? 'selected' : ''}>Atteint</option><option value="abandoned" ${goal?.status === 'abandoned' ? 'selected' : ''}>Abandonné</option></select></label><label>Date cible<input name="targetDate" type="date" value="${goal?.targetDate ?? ''}"></label><label>Progression<input name="progress" type="number" min="0" max="100" value="${goal?.progress ?? 0}"></label><label>Projet<input name="project" value="${escapeHtml(goal?.project ?? '')}"></label><label>Couleur<input name="color" type="color" value="${goal?.color ?? '#2d6cdf'}"></label><label class="span-2">Pourquoi / résultat attendu<textarea name="notes">${escapeHtml(goal?.notes ?? '')}</textarea></label></div>`, async (form) => { const d = new FormData(form); const patch = { title: String(d.get('title') ?? ''), area: String(d.get('area') ?? 'personal'), status: String(d.get('status') ?? 'active'), targetDate: nullable(d.get('targetDate')), progress: num(d.get('progress')), project: String(d.get('project') ?? ''), color: String(d.get('color') ?? '#2d6cdf'), notes: String(d.get('notes') ?? '') }; if (goal)
+    await store.updateGoal(goal.id, patch);
+else
+    await store.addGoal({ title: patch.title ?? '', ...patch }); }); }
+function openNote(note) { openModal(note ? 'Modifier la note' : 'Nouvelle note', `<div class="form-grid"><label class="span-2">Titre<input name="title" value="${escapeHtml(note?.title ?? '')}" required></label><label>Dossier<input name="folder" value="${escapeHtml(note?.folder ?? 'Notes')}"></label><label>Tags<input name="tags" value="${escapeHtml(note?.tags.join(', ') ?? '')}"></label><label class="span-2">Source<input name="sourceUrl" type="url" value="${escapeHtml(note?.sourceUrl ?? '')}"></label><label class="span-2">Contenu Markdown<textarea class="large" name="body">${escapeHtml(note?.body ?? '')}</textarea></label><label class="checkbox"><input name="pinned" type="checkbox" ${note?.pinned ? 'checked' : ''}> Épinglée</label><label class="checkbox"><input name="favorite" type="checkbox" ${note?.favorite ? 'checked' : ''}> Favorite</label><label class="checkbox"><input name="archived" type="checkbox" ${note?.archived ? 'checked' : ''}> Archivée</label></div>`, async (form) => { const d = new FormData(form); const patch = { title: String(d.get('title') ?? ''), folder: String(d.get('folder') ?? 'Notes'), tags: csv(d.get('tags')), sourceUrl: String(d.get('sourceUrl') ?? ''), body: String(d.get('body') ?? ''), pinned: d.has('pinned'), favorite: d.has('favorite'), archived: d.has('archived') }; if (note)
+    await store.updateNote(note.id, patch);
+else
+    await store.addNote(patch); }); }
+function openHabit(habit) { openModal(habit ? 'Modifier l’habitude' : 'Nouvelle habitude', `<div class="form-grid"><label class="span-2">Nom<input name="name" value="${escapeHtml(habit?.name ?? '')}" required></label><label>Icône<input name="icon" value="${escapeHtml(habit?.icon ?? '✓')}" maxlength="3"></label><label>Couleur<input name="color" type="color" value="${habit?.color ?? '#11a4b7'}"></label><label>Cible quotidienne<input name="target" type="number" min="1" value="${habit?.target ?? 1}"></label><label>Unité<input name="unit" value="${escapeHtml(habit?.unit ?? 'fois')}"></label><label>Objectif hebdo<input name="weeklyGoal" type="number" min="1" max="7" value="${habit?.weeklyGoal ?? 7}"></label><label>Rappel<input name="reminderTime" type="time" value="${habit?.reminderTime ?? ''}"></label><fieldset class="span-2"><legend>Jours</legend><div class="day-picker">${WEEK_LABELS.map((label, index) => `<label class="day-check"><input name="days" type="checkbox" value="${index}" ${(habit?.days ?? [0, 1, 2, 3, 4, 5, 6]).includes(index) ? 'checked' : ''}><span>${label}</span></label>`).join('')}</div></fieldset></div>`, async (form) => { const d = new FormData(form); const patch = { name: String(d.get('name') ?? ''), icon: String(d.get('icon') ?? '✓'), color: String(d.get('color') ?? '#11a4b7'), target: num(d.get('target'), 1), unit: String(d.get('unit') ?? 'fois'), weeklyGoal: num(d.get('weeklyGoal'), 7), reminderTime: nullable(d.get('reminderTime')), days: d.getAll('days').map(Number) }; if (habit)
+    await store.updateHabit(habit.id, patch);
+else
+    await store.addHabit({ name: patch.name ?? '', ...patch }); }); }
+function openRoutine(routine) { openModal(routine ? 'Modifier la routine' : 'Nouvelle routine', `<div class="form-grid"><label class="span-2">Nom<input name="name" value="${escapeHtml(routine?.name ?? '')}" required></label><label>Heure<input name="time" type="time" value="${routine?.time ?? ''}"></label><label>Durée<input name="duration" type="number" min="1" value="${routine?.durationMinutes ?? 15}"></label><label>Couleur<input name="color" type="color" value="${routine?.color ?? '#9b51cf'}"></label><fieldset class="span-2"><legend>Jours</legend><div class="day-picker">${WEEK_LABELS.map((label, index) => `<label class="day-check"><input name="days" type="checkbox" value="${index}" ${(routine?.days ?? [0, 1, 2, 3, 4, 5, 6]).includes(index) ? 'checked' : ''}><span>${label}</span></label>`).join('')}</div></fieldset><label class="span-2">Étapes<textarea name="steps" placeholder="Une étape par ligne">${escapeHtml((routine?.steps ?? []).map(step => step.label).join('\n'))}</textarea></label></div>`, async (form) => { const d = new FormData(form); const lines = String(d.get('steps') ?? '').split('\n').map(value => value.trim()).filter(Boolean); const patch = { name: String(d.get('name') ?? ''), time: nullable(d.get('time')), durationMinutes: num(d.get('duration'), 15), color: String(d.get('color') ?? '#9b51cf'), days: d.getAll('days').map(Number), steps: lines.map((label, index) => ({ id: routine?.steps[index]?.id ?? uid(), label })) }; if (routine)
+    await store.updateRoutine(routine.id, patch);
+else
+    await store.addRoutine({ name: patch.name ?? '', ...patch }); }); }
+function openMood() { const entry = active(state.moods).find(item => item.date === today()); openModal('Check-in du jour', `<div class="form-grid"><label>Humeur (1–5)<input name="mood" type="range" min="1" max="5" value="${entry?.mood ?? 3}"></label><label>Énergie (1–5)<input name="energy" type="range" min="1" max="5" value="${entry?.energy ?? 3}"></label><label>Stress (1–5)<input name="stress" type="range" min="1" max="5" value="${entry?.stress ?? 3}"></label><label class="span-2">Note<textarea name="note" placeholder="Qu’est-ce qui influence ta journée ?">${escapeHtml(entry?.note ?? '')}</textarea></label></div>`, async (form) => { const d = new FormData(form); await store.addMood(num(d.get('mood'), 3), num(d.get('energy'), 3), num(d.get('stress'), 3), String(d.get('note') ?? '')); }); }
+function openPlanDay() { const tasks = active(state.tasks).filter(task => !task.completed).sort(taskSort); const selected = new Set(state.preferences.top3[today()] ?? []); openModal('Planifier ma journée', `<p class="modal-intro">Sélectionne jusqu’à trois priorités. Tu peux ensuite créer des blocs de temps dans l’agenda.</p><div class="select-list">${tasks.map(task => `<label><input name="tasks" type="checkbox" value="${task.id}" ${selected.has(task.id) ? 'checked' : ''}><span><strong>${escapeHtml(task.title)}</strong><small>${escapeHtml(task.project)} · ${task.estimatedMinutes || 0} min</small></span></label>`).join('')}</div>`, async (form) => { const ids = new FormData(form).getAll('tasks').map(String).slice(0, 3); await store.setTop3(today(), ids); }); }
+function openFocus(task) { if (!task)
+    return; const total = (state.preferences.defaultFocusMinutes ?? 25) * 60; focusRuntime = { taskId: task.id, title: task.title, total, remaining: total, running: false, interval: null }; openModal(`Focus · ${task.title}`, `<div class="focus-mode"><span>SESSION DE CONCENTRATION</span><strong id="focus-clock">${clock(total)}</strong><p>Notifications visuelles réduites. Le temps sera ajouté à la tâche.</p><div class="actions"><button type="button" class="btn" data-action="focus-toggle">Démarrer</button><button type="button" class="btn ghost" data-action="focus-finish">Terminer</button></div></div>`, () => { }); }
+function toggleFocus() { if (!focusRuntime)
+    return; focusRuntime.running = !focusRuntime.running; const button = root.querySelector('[data-action="focus-toggle"]'); if (button)
+    button.textContent = focusRuntime.running ? 'Pause' : 'Reprendre'; if (focusRuntime.running) {
+    focusRuntime.interval = window.setInterval(() => { if (!focusRuntime)
+        return; focusRuntime.remaining = Math.max(0, focusRuntime.remaining - 1); const clockEl = root.querySelector('#focus-clock'); if (clockEl)
+        clockEl.textContent = clock(focusRuntime.remaining); if (focusRuntime.remaining === 0)
+        void finishFocus(); }, 1000);
+}
+else if (focusRuntime.interval) {
+    clearInterval(focusRuntime.interval);
+    focusRuntime.interval = null;
+} }
+async function finishFocus() { if (!focusRuntime)
+    return; const elapsed = Math.max(1, Math.round((focusRuntime.total - focusRuntime.remaining) / 60)); await store.addFocusSession(focusRuntime.taskId, focusRuntime.title, elapsed); if (focusRuntime.interval)
+    clearInterval(focusRuntime.interval); focusRuntime = null; closeModal(); showToast(`${elapsed} min de focus enregistrées.`); }
+function openTaskMenu(id) { const task = state.tasks.find(item => item.id === id); if (!task)
+    return; openModal('Actions sur la tâche', `<div class="menu-list"><button type="button" id="menu-duplicate">Dupliquer</button><button type="button" id="menu-tomorrow">Reporter à demain</button><button type="button" id="menu-wait">Mettre en attente</button><button type="button" id="menu-delete" class="danger">Supprimer</button></div>`, () => { }); setTimeout(() => { root.querySelector('#menu-duplicate')?.addEventListener('click', async () => { await store.duplicateTask(id); closeModal(); }); root.querySelector('#menu-tomorrow')?.addEventListener('click', async () => { await store.updateTask(id, { dueDate: shiftDate(today(), 1), status: 'next' }); closeModal(); }); root.querySelector('#menu-wait')?.addEventListener('click', async () => { await store.updateTask(id, { status: 'waiting' }); closeModal(); }); root.querySelector('#menu-delete')?.addEventListener('click', async () => { await store.deleteTask(id); closeModal(); }); }, 0); }
+function openGoalMenu(id) { openModal('Actions sur l’objectif', `<div class="menu-list"><button type="button" id="goal-complete">Marquer atteint</button><button type="button" id="goal-pause">Mettre en pause</button><button type="button" id="goal-delete" class="danger">Supprimer</button></div>`, () => { }); setTimeout(() => { root.querySelector('#goal-complete')?.addEventListener('click', async () => { await store.updateGoal(id, { status: 'completed', progress: 100 }); closeModal(); }); root.querySelector('#goal-pause')?.addEventListener('click', async () => { await store.updateGoal(id, { status: 'paused' }); closeModal(); }); root.querySelector('#goal-delete')?.addEventListener('click', async () => { await store.deleteGoal(id); closeModal(); }); }, 0); }
+function openNoteMenu(id) { const note = state.notes.find(item => item.id === id); if (!note)
+    return; openModal('Actions sur la note', `<div class="menu-list"><button type="button" id="note-favorite">${note.favorite ? 'Retirer des favorites' : 'Ajouter aux favorites'}</button><button type="button" id="note-pin">${note.pinned ? 'Désépingler' : 'Épingler'}</button><button type="button" id="note-duplicate">Dupliquer</button><button type="button" id="note-archive">${note.archived ? 'Désarchiver' : 'Archiver'}</button><button type="button" id="note-delete" class="danger">Supprimer</button></div>`, () => { }); setTimeout(() => { root.querySelector('#note-favorite')?.addEventListener('click', async () => { await store.updateNote(id, { favorite: !note.favorite }); closeModal(); }); root.querySelector('#note-pin')?.addEventListener('click', async () => { await store.updateNote(id, { pinned: !note.pinned }); closeModal(); }); root.querySelector('#note-duplicate')?.addEventListener('click', async () => { await store.duplicateNote(id); closeModal(); }); root.querySelector('#note-archive')?.addEventListener('click', async () => { await store.updateNote(id, { archived: !note.archived }); closeModal(); }); root.querySelector('#note-delete')?.addEventListener('click', async () => { await store.deleteNote(id); closeModal(); }); }, 0); }
+function openSessionMenu(id) { openModal('Actions sur la séance', `<div class="menu-list"><button type="button" id="session-delete" class="danger">Supprimer</button></div>`, () => { }); setTimeout(() => root.querySelector('#session-delete')?.addEventListener('click', async () => { await store.deleteSession(id); closeModal(); }), 0); }
+function openProgram() { openModal('Nouveau programme', `<div class="form-grid"><label class="span-2">Nom<input name="name" required></label><label>Catégorie<input name="category" value="Musculation"></label><label>Objectif<input name="goal" placeholder="Force, endurance…"></label><label class="span-2">Exercices<textarea name="exercises" placeholder="Squat,3,10,40\nDéveloppé couché,4,8,50"></textarea></label></div>`, async (form) => { const d = new FormData(form); const exercises = String(d.get('exercises') ?? '').split('\n').map(line => line.split(',')).filter(parts => parts[0]?.trim()).map(parts => ({ id: uid(), name: parts[0].trim(), sets: Number(parts[1] ?? 3), reps: Number(parts[2] ?? 10), weight: Number(parts[3] ?? 0) })); await store.addProgram(String(d.get('name') ?? ''), exercises, String(d.get('category') ?? 'Personnalisé'), String(d.get('goal') ?? '')); }); }
+function useProgram(id) { const program = state.programs.find(item => item.id === id); if (!program)
+    return; openModal(`Lancer · ${program.name}`, `<div class="form-grid"><label>Durée<input name="duration" type="number" min="1" value="45"></label><label>Effort<input name="effort" type="number" min="1" max="10" value="6"></label><label class="span-2">Notes<textarea name="notes">${escapeHtml(program.exercises.map(ex => `${ex.name} ${ex.sets}×${ex.reps}${ex.weight ? ` @ ${ex.weight} kg` : ''}`).join('\n'))}</textarea></label></div>`, async (form) => { const d = new FormData(form); await store.addSession({ type: program.category ?? 'Entraînement', durationMinutes: num(d.get('duration'), 45), effort: num(d.get('effort'), 6), notes: String(d.get('notes') ?? ''), exercises: program.exercises }); }); }
+function openDailyJournal() { const title = `Journal — ${formatDate(today(), { day: 'numeric', month: 'long', year: 'numeric' })}`; const existing = active(state.notes).find(note => note.title === title); if (existing)
+    return openNote(existing); openNote(); setTimeout(() => { const form = root.querySelector('#modal-form'); const titleInput = form?.elements.namedItem('title'); const folderInput = form?.elements.namedItem('folder'); const body = form?.elements.namedItem('body'); if (titleInput)
+    titleInput.value = title; if (folderInput)
+    folderInput.value = 'Journal'; if (body)
+    body.value = `# Journal\n\n## Faits marquants\n\n## Ce que j’ai appris\n\n## Gratitude\n\n## Demain`; }, 0); }
+function openSearch() { const items = [...active(state.tasks).map(item => ({ kind: 'Tâche', title: item.title, meta: item.project, action: 'edit-task', id: item.id })), ...active(state.events).map(item => ({ kind: 'Événement', title: item.title, meta: item.date, action: 'edit-event', id: item.id })), ...active(state.notes).map(item => ({ kind: 'Note', title: item.title, meta: item.folder ?? 'Notes', action: 'edit-note', id: item.id })), ...active(state.goals).map(item => ({ kind: 'Objectif', title: item.title, meta: item.area, action: 'edit-goal', id: item.id }))]; openModal('Recherche universelle', `<div class="search-field"><span>⌕</span><input id="universal-search" placeholder="Tâches, événements, notes, objectifs…"></div><div id="search-results" class="search-results">${items.slice(0, 12).map(searchRow).join('')}</div>`, () => { }); setTimeout(() => { const input = root.querySelector('#universal-search'); input?.addEventListener('input', () => { const q = input.value.toLowerCase(); const filtered = items.filter(item => `${item.kind} ${item.title} ${item.meta}`.toLowerCase().includes(q)).slice(0, 30); const results = root.querySelector('#search-results'); if (results)
+    results.innerHTML = filtered.map(searchRow).join('') || empty('Aucun résultat.'); }); }, 0); }
+function searchRow(item) { return `<button type="button" class="search-result" data-action="${item.action}" data-id="${item.id}"><span>${item.kind}</span><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.meta)}</small></button>`; }
+function openNoteGraph() { const notes = active(state.notes); const links = notes.flatMap(note => [...note.body.matchAll(/\[\[([^\]]+)\]\]/g)].map(match => ({ from: note.title, to: match[1] ?? '' }))); openModal('Graphe des connaissances', `<div class="knowledge-graph"><p>${notes.length} notes · ${links.length} liens</p>${notes.map(note => `<button type="button" data-action="edit-note" data-id="${note.id}">${escapeHtml(note.title)}<span>${links.filter(link => link.from === note.title || link.to === note.title).length} liens</span></button>`).join('')}</div>`, () => { }); }
+function openSettings() { openModal('Réglages', `<div class="settings-list"><label>Thème<select name="theme"><option value="system">Système</option><option value="light" ${state.preferences.theme === 'light' ? 'selected' : ''}>Clair</option><option value="dark" ${state.preferences.theme === 'dark' ? 'selected' : ''}>Sombre</option></select></label><label>Durée Focus par défaut<input name="focus" type="number" min="5" max="120" value="${state.preferences.defaultFocusMinutes ?? 25}"></label><label>Début de journée<input name="start" type="time" value="${state.preferences.workingDayStart ?? '08:00'}"></label><label>Fin de journée<input name="end" type="time" value="${state.preferences.workingDayEnd ?? '19:00'}"></label><label class="checkbox"><input name="compact" type="checkbox" ${state.preferences.compactMode ? 'checked' : ''}> Interface compacte</label><label class="checkbox"><input name="notifications" type="checkbox" ${state.preferences.notificationsEnabled ? 'checked' : ''}> Notifications locales</label><div class="setting-actions"><button type="button" class="btn ghost" data-action="export-json">Exporter JSON</button><button type="button" class="btn ghost" data-action="import-json">Importer JSON</button><button type="button" class="btn ghost" data-action="install">Installer</button><button type="button" class="btn ghost" data-action="purge">Nettoyer la corbeille</button></div></div>`, async (form) => { const d = new FormData(form); await store.setPreference('theme', String(d.get('theme') ?? 'system')); await store.setPreference('defaultFocusMinutes', num(d.get('focus'), 25)); await store.setPreference('workingDayStart', String(d.get('start') ?? '08:00')); await store.setPreference('workingDayEnd', String(d.get('end') ?? '19:00')); await store.setPreference('compactMode', d.has('compact')); let notifications = d.has('notifications'); if (notifications && 'Notification' in window && Notification.permission === 'default')
+    await Notification.requestPermission(); notifications = notifications && 'Notification' in window && Notification.permission === 'granted'; await store.setPreference('notificationsEnabled', notifications); }); }
+function exportJson() { download(new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' }), `quotidien-${today()}.json`); }
+function importJson() { const input = document.createElement('input'); input.type = 'file'; input.accept = 'application/json'; input.onchange = async () => { const file = input.files?.[0]; if (!file)
+    return; try {
+    const parsed = JSON.parse(await file.text());
+    if (parsed.schemaVersion !== 6)
+        throw new Error('Version incompatible');
+    await store.replace(parsed);
+    showToast('Sauvegarde importée.');
+}
+catch {
+    showToast('Import impossible : fichier invalide.');
+} }; input.click(); }
+function exportMarkdown() { const text = active(state.notes).map(note => `# ${note.title}\n\n${note.body}\n\n${note.tags.map(tag => `#${tag}`).join(' ')}`).join('\n\n---\n\n'); download(new Blob([text], { type: 'text/markdown' }), `quotidien-notes-${today()}.md`); }
+function exportIcs() { const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Quotidien//V6.1//FR', ...active(state.events).flatMap(event => ['BEGIN:VEVENT', `UID:${event.id}@quotidien`, `DTSTART:${event.date.replaceAll('-', '')}${event.time ? `T${event.time.replace(':', '')}00` : ''}`, `SUMMARY:${ics(event.title)}`, event.location ? `LOCATION:${ics(event.location)}` : '', event.notes ? `DESCRIPTION:${ics(event.notes)}` : '', 'END:VEVENT'].filter(Boolean)), 'END:VCALENDAR']; download(new Blob([lines.join('\r\n')], { type: 'text/calendar' }), `quotidien-${today()}.ics`); }
+function importIcs() { const input = document.createElement('input'); input.type = 'file'; input.accept = '.ics,text/calendar'; input.onchange = async () => { const file = input.files?.[0]; if (!file)
+    return; const text = await file.text(); const events = text.split('BEGIN:VEVENT').slice(1); for (const chunk of events) {
+    const summary = /SUMMARY:(.*)/.exec(chunk)?.[1]?.trim() ?? 'Événement importé';
+    const raw = /DTSTART[^:]*:(\d{8})(?:T(\d{4}))?/.exec(chunk);
+    if (!raw)
+        continue;
+    const date = `${raw[1].slice(0, 4)}-${raw[1].slice(4, 6)}-${raw[1].slice(6, 8)}`;
+    const time = raw[2] ? `${raw[2].slice(0, 2)}:${raw[2].slice(2, 4)}` : null;
+    await store.addEvent({ title: summary, date, time, durationMinutes: 60 });
+} showToast(`${events.length} événement(s) importé(s).`); }; input.click(); }
+function eventsOn(date) { return active(state.events).filter(event => occursOn(event.date, event.recurrence, date)).sort((a, b) => (a.time ?? '').localeCompare(b.time ?? '')); }
+function upcomingEvents(days) { const result = []; for (let i = 0; i <= days; i += 1) {
+    const date = shiftDate(today(), i);
+    eventsOn(date).forEach(event => result.push({ event, date }));
+} return result.slice(0, 40); }
+function taskSort(a, b) { const score = (task) => (task.urgent ? 6 : 0) + (task.important ? 3 : 0) + (task.dueDate && task.dueDate <= today() ? 2 : 0) + (task.status === 'inbox' ? 1 : 0); return score(b) - score(a) || (a.dueDate ?? '9999').localeCompare(b.dueDate ?? '9999') || a.order - b.order; }
+function taskFilterButton(value, label) { return `<button class="chip ${taskFilter === value ? 'active' : ''}" data-task-filter="${value}">${label}</button>`; }
+function stat(value, label) { return `<div class="stat"><strong>${value}</strong><span>${label}</span></div>`; }
+function empty(message) { return `<p class="empty">${escapeHtml(message)}</p>`; }
+function nullable(value) { const text = String(value ?? '').trim(); return text || null; }
+function num(value, fallback = 0) { const parsed = Number(value); return Number.isFinite(parsed) ? parsed : fallback; }
+function nullableNumber(value) { const text = String(value ?? '').trim(); return text === '' ? null : num(value); }
+function csv(value) { return String(value ?? '').split(',').map(item => item.trim()).filter(Boolean); }
+function currentTime() { return new Date().toTimeString().slice(0, 5); }
+function minutesBetween(start, end) { const [sh = 0, sm = 0] = start.split(':').map(Number); const [eh = 0, em = 0] = end.split(':').map(Number); return Math.max(0, eh * 60 + em - sh * 60 - sm); }
+function clock(seconds) { return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`; }
+function moodEmoji(value) { return ['', '😞', '😕', '😐', '🙂', '😄'][value] ?? '😐'; }
+function habitStreak(habit) { let date = today(); let streak = 0; if ((habit.completions[date] ?? 0) < habit.target && !habit.skipped?.[date])
+    date = shiftDate(date, -1); while ((habit.completions[date] ?? 0) >= habit.target || habit.skipped?.[date]) {
+    streak += 1;
+    date = shiftDate(date, -1);
+} return streak; }
+function sparkline(values, unit) { if (!values.length)
+    return empty('Pas encore de données.'); const min = Math.min(...values), max = Math.max(...values), range = max - min || 1; const pts = values.map((value, index) => `${values.length === 1 ? 50 : index / (values.length - 1) * 100},${38 - (value - min) / range * 30}`).join(' '); return `<svg class="spark" viewBox="0 0 100 45"><polyline points="${pts}" fill="none" stroke="currentColor" stroke-width="2"/><text x="98" y="12" text-anchor="end">${values.at(-1)} ${unit}</text></svg>`; }
+function barChart(values) { if (!values.length)
+    return empty('Pas encore de données.'); const max = Math.max(...values, 1); return `<div class="bars">${values.map(value => `<i style="height:${Math.max(5, value / max * 100)}%"><span>${value}</span></i>`).join('')}</div>`; }
+function insights(completion, habits, mood, sessions) { const result = []; if (completion < 60)
+    result.push('Réduis le nombre de tâches datées et protège trois priorités maximum.');
+else
+    result.push('Ton rythme d’exécution est solide : conserve une marge de 20 % dans le planning.'); if (habits < 50)
+    result.push('Simplifie une habitude difficile jusqu’à la rendre presque impossible à manquer.'); if (mood && mood < 3)
+    result.push('Ton humeur moyenne est basse : allège la charge et programme une activité récupératrice.'); if (sessions < 4)
+    result.push('Planifie tes séances comme des rendez-vous dans l’agenda.'); return result; }
+function ics(value) { return value.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;'); }
+function showToast(message) { const toast = root.querySelector('#toast'); if (!toast)
+    return; toast.textContent = message; toast.hidden = false; setTimeout(() => { toast.hidden = true; }, 2600); }
+async function checkReminders() { if (!state.preferences.notificationsEnabled || Notification.permission !== 'granted')
+    return; const now = Date.now(); for (const event of active(state.events)) {
+    if (!event.time || event.reminderMinutes === null)
+        continue;
+    const trigger = new Date(`${event.date}T${event.time}`).getTime() - event.reminderMinutes * 60000;
+    const key = `event:${event.id}:${event.date}`;
+    if (trigger <= now && trigger > now - 90000 && !state.notificationLog[key]) {
+        new Notification(event.title, { body: event.location || `Dans ${event.reminderMinutes} min`, tag: key });
+        await store.markNotification(key);
+    }
+} }
+function handleInitialUrl() { const params = new URLSearchParams(location.search); const date = params.get('date'); if (date)
+    selectedDate = date; const requested = params.get('screen'); if (requested === 'today' || requested === 'plan' || requested === 'notes' || requested === 'tracking')
+    screen = requested; const capture = params.get('capture'); if (capture === 'task')
+    openTask();
+else if (capture === 'event')
+    openEvent();
+else if (capture === 'note')
+    openNote();
+else if (capture === 'goal')
+    openGoal();
+else if (capture === 'block')
+    openBlock(); if (params.toString())
+    history.replaceState({}, '', location.pathname + location.hash); render(); }
+function registerServiceWorker() { if ('serviceWorker' in navigator)
+    window.addEventListener('load', () => void navigator.serviceWorker.register('./sw.js').then(registration => { if (registration.waiting)
+        registration.waiting.postMessage({ type: 'SKIP_WAITING' }); registration.addEventListener('updatefound', () => { const worker = registration.installing; worker?.addEventListener('statechange', () => { if (worker.state === 'installed' && navigator.serviceWorker.controller)
+        showToast('Une mise à jour de Quotidien est prête.'); }); }); })); }
+//# sourceMappingURL=app-v61.js.map

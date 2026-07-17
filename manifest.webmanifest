@@ -1,0 +1,24 @@
+{
+  "id": "./",
+  "name": "Quotidien Life OS",
+  "short_name": "Quotidien",
+  "description": "Un système d’exploitation personnel local-first avec 20 espaces de vie.",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#10243f",
+  "theme_color": "#10243f",
+  "categories": ["productivity", "lifestyle", "health", "finance", "education"],
+  "icons": [
+    {"src":"./icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},
+    {"src":"./icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+  ],
+  "shortcuts": [
+    {"name":"Ouvrir les 20 espaces","short_name":"Life OS","url":"./?lifeos=1","icons":[{"src":"./icon-192.png","sizes":"192x192"}]},
+    {"name":"Nouvelle tâche","short_name":"Tâche","url":"./?capture=task","icons":[{"src":"./icon-192.png","sizes":"192x192"}]},
+    {"name":"Nouvelle note","short_name":"Note","url":"./?capture=note","icons":[{"src":"./icon-192.png","sizes":"192x192"}]},
+    {"name":"Nouvel objectif","short_name":"Objectif","url":"./?capture=goal","icons":[{"src":"./icon-192.png","sizes":"192x192"}]}
+  ]
+}
