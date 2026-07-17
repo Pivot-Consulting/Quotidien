@@ -1,0 +1,36 @@
+name: Corriger import V6.1
+
+on:
+  push:
+    branches: [v6-ultra]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v6-ultra
+      - name: Normaliser l’état après import
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('src/store.ts')
+          text = path.read_text()
+          old = "async replace(next: AppState): Promise<void> { this.state = next; await replaceState(next); this.listeners.forEach(listener => listener(this.snapshot)); }"
+          new = "async replace(next: AppState): Promise<void> { await replaceState(next); this.state = await loadState(); this.listeners.forEach(listener => listener(this.snapshot)); }"
+          if old not in text:
+              raise SystemExit('Motif introuvable')
+          path.write_text(text.replace(old, new))
+          PY
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/store.ts
+          git commit -m "fix(v6.1): normaliser les sauvegardes importées"
+          git push origin HEAD:v6-ultra
