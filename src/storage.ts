@@ -1,5 +1,6 @@
 import type { AppState } from './types.js';
 import { migrateV5 } from './migration.js';
+import { normalizeState } from './normalization.js';
 
 const DB_NAME = 'quotidien-v6';
 const STORE = 'state';
@@ -29,24 +30,25 @@ async function fromIndexedDb(): Promise<AppState | null> {
 export async function loadState(): Promise<AppState> {
   try {
     const state = await fromIndexedDb();
-    if (state?.schemaVersion === 6) return state;
+    if (state?.schemaVersion === 6) return normalizeState(state);
   } catch { /* fallback below */ }
 
   try {
     const raw = localStorage.getItem(FALLBACK_KEY);
-    if (raw) return JSON.parse(raw) as AppState;
+    if (raw) return normalizeState(JSON.parse(raw) as AppState);
   } catch { /* migration below */ }
 
-  return migrateV5();
+  return normalizeState(migrateV5());
 }
 
 export async function saveState(state: AppState): Promise<void> {
-  localStorage.setItem(FALLBACK_KEY, JSON.stringify(state));
+  const normalized = normalizeState(state);
+  localStorage.setItem(FALLBACK_KEY, JSON.stringify(normalized));
   try {
     const db = await openDb();
     await new Promise<void>((resolve, reject) => {
       const tx = db.transaction(STORE, 'readwrite');
-      tx.objectStore(STORE).put(state, KEY);
+      tx.objectStore(STORE).put(normalized, KEY);
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
     });
@@ -54,5 +56,5 @@ export async function saveState(state: AppState): Promise<void> {
 }
 
 export async function replaceState(state: AppState): Promise<void> {
-  await saveState(state);
+  await saveState(normalizeState(state));
 }
