@@ -1,6 +1,6 @@
-const VERSION='v6.1.0';
+const VERSION='v7.0.0-alpha.1';
 const CACHE=`quotidien-${VERSION}`;
-const SHELL=['./','./index.html','./assets/main.js','./assets/app-v61.js','./assets/store.js','./assets/storage.js','./assets/normalization.js','./assets/migration.js','./assets/types.js','./assets/utils.js','./assets/styles.css','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png'];
+const SHELL=['./','./index.html','./assets/main.js','./assets/app-v61.js','./assets/store.js','./assets/storage.js','./assets/normalization.js','./assets/migration.js','./assets/types.js','./assets/utils.js','./assets/life-os/hub.js','./assets/life-os/catalog.js','./assets/life-os/store.js','./assets/styles.css','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener('message',event=>{if(event.data?.type==='SKIP_WAITING')self.skipWaiting();});
