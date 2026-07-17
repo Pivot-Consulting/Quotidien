@@ -11,11 +11,12 @@ test('le manifeste identifie Quotidien Life OS comme PWA installable', async () 
   assert.ok(manifest.shortcuts.some(shortcut => shortcut.url.includes('lifeos=1')));
 });
 
-test('le service worker précharge le shell V7.1', async () => {
+test('le service worker précharge le shell V7.1.1', async () => {
   const worker = await readFile('public/sw.js', 'utf8');
-  assert.match(worker, /v7\.1\.0/);
+  assert.match(worker, /v7\.1\.1/);
   assert.match(worker, /assets\/main\.js/);
   assert.match(worker, /assets\/app-v61\.js/);
+  assert.match(worker, /assets\/version-brand\.js/);
   assert.match(worker, /assets\/normalization\.js/);
   assert.match(worker, /assets\/life-os\/hub\.js/);
   assert.match(worker, /assets\/wave-a\/app\.js/);
