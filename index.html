@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#12233B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Mon Quotidien</title>
+<style>
+/* ============ Système de design — inspiration plan de métro ============ */
+:root{
+  --encre:#12233B;        /* bleu encre profond */
+  --papier:#F4F6F8;       /* gris-bleu papier */
+  --carte:#FFFFFF;
+  --ligne1:#F2B705;       /* jaune ligne 1 — Aujourd'hui */
+  --ligne2:#2E6FE0;       /* bleu — Tâches */
+  --ligne3:#0FA36B;       /* vert — Agenda */
+  --ligne4:#B04BD9;       /* violet — Notes */
+  --ligne5:#E85D3A;       /* orange — Sport */
+  --texte:#1D2733;
+  --texte2:#5A6B7E;
+  --trait:#DDE4EB;
+  --danger:#D63B3B;
+  --rayon:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:"Avenir Next","Avenir",Futura,-apple-system,"Segoe UI",Roboto,sans-serif;
+  background:var(--papier);color:var(--texte);
+  padding-bottom:calc(74px + env(safe-area-inset-bottom));
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input,textarea,select{font-family:inherit;font-size:16px;color:var(--texte)}
+
+/* ---- En-tête ---- */
+header{
+  background:var(--encre);color:#fff;
+  padding:calc(14px + env(safe-area-inset-top)) 18px 14px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  position:sticky;top:0;z-index:20;
+}
+header h1{font-size:17px;font-weight:600;letter-spacing:.3px}
+header .date{font-size:12.5px;opacity:.75;margin-top:2px;text-transform:capitalize}
+.btn-menu{color:#fff;font-size:13px;border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:6px 12px}
+
+/* ---- Pastilles de ligne (signature) ---- */
+.pastille{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:26px;height:26px;border-radius:50%;
+  color:#fff;font-weight:700;font-size:13px;flex:none;
+}
+
+/* ---- Sections ---- */
+main{padding:16px 14px 20px;max-width:640px;margin:0 auto}
+.ecran{display:none}
+.ecran.actif{display:block;animation:app .18s ease}
+@keyframes app{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.ecran.actif{animation:none}}
+
+.titre-section{display:flex;align-items:center;gap:10px;margin:6px 0 14px}
+.titre-section h2{font-size:20px;font-weight:700}
+
+.carte{background:var(--carte);border:1px solid var(--trait);border-radius:var(--rayon);padding:14px;margin-bottom:12px}
+.carte h3{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--texte2);margin-bottom:10px}
+.vide{color:var(--texte2);font-size:14px;padding:6px 0}
+
+/* ---- Formulaires ---- */
+.ligne-ajout{display:flex;gap:8px;margin-bottom:12px}
+.ligne-ajout input[type=text]{flex:1}
+input[type=text],input[type=date],input[type=time],input[type=number],textarea,select{
+  width:100%;background:var(--carte);border:1px solid var(--trait);
+  border-radius:10px;padding:10px 12px;outline:none;
+}
+input:focus,textarea:focus,select:focus{border-color:var(--ligne2);box-shadow:0 0 0 3px rgba(46,111,224,.12)}
+textarea{resize:vertical;min-height:80px}
+.btn{background:var(--encre);color:#fff;border-radius:10px;padding:10px 16px;font-weight:600;font-size:15px;flex:none}
+.btn.secondaire{background:#E9EEF3;color:var(--texte)}
+.btn.petit{padding:6px 12px;font-size:13px;border-radius:8px}
+.champ{margin-bottom:10px}
+.champ label{display:block;font-size:12.5px;font-weight:600;color:var(--texte2);margin-bottom:4px}
+.deux-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ---- Tâches ---- */
+.item{display:flex;align-items:flex-start;gap:10px;padding:11px 2px;border-bottom:1px solid var(--trait)}
+.item:last-child{border-bottom:none}
+.coche{
+  width:22px;height:22px;border-radius:50%;border:2px solid var(--ligne2);
+  flex:none;margin-top:1px;display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:13px;
+}
+.coche.fait{background:var(--ligne2);border-color:var(--ligne2)}
+.item .contenu{flex:1;min-width:0}
+.item .libelle{font-size:15px;line-height:1.35;word-wrap:break-word}
+.item.fait .libelle{text-decoration:line-through;color:var(--texte2)}
+.item .meta{font-size:12px;color:var(--texte2);margin-top:2px;display:flex;gap:8px;flex-wrap:wrap}
+.badge{font-size:11px;font-weight:700;border-radius:6px;padding:2px 6px}
+.badge.haute{background:#FCE3E3;color:var(--danger)}
+.badge.moyenne{background:#FFF1D6;color:#9A6B00}
+.badge.basse{background:#E3EDFB;color:var(--ligne2)}
+.badge.retard{background:var(--danger);color:#fff}
+.btn-suppr{color:var(--texte2);font-size:17px;padding:2px 6px;flex:none}
+.filtres{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.filtres button{border:1px solid var(--trait);background:var(--carte);border-radius:20px;padding:6px 12px;font-size:13px;color:var(--texte2)}
+.filtres button.actif{background:var(--encre);color:#fff;border-color:var(--encre)}
+
+/* ---- Agenda ---- */
+.cal-tete{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.cal-tete .mois{font-weight:700;font-size:15px;text-transform:capitalize}
+.cal-tete button{font-size:18px;padding:4px 12px;color:var(--encre)}
+.cal-grille{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+.cal-grille .jour-nom{font-size:11px;font-weight:700;color:var(--texte2);padding:4px 0}
+.cal-case{
+  aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border-radius:8px;font-size:13px;position:relative;color:var(--texte);
+}
+.cal-case:not(:empty):hover{background:#EDF1F5}
+.cal-case.aujourdhui{background:var(--encre);color:#fff;font-weight:700}
+.cal-case.choisi{outline:2px solid var(--ligne3)}
+.cal-case .point{width:5px;height:5px;border-radius:50%;background:var(--ligne3);position:absolute;bottom:5px}
+.cal-case.aujourdhui .point{background:var(--ligne1)}
+.evenement{display:flex;gap:10px;align-items:flex-start;padding:10px 2px;border-bottom:1px solid var(--trait)}
+.evenement:last-child{border-bottom:none}
+.evenement .heure{font-weight:700;font-size:13px;color:var(--ligne3);flex:none;width:52px;margin-top:1px}
+.evenement .contenu{flex:1;min-width:0}
+.evenement .titre{font-size:15px}
+.evenement .lieu{font-size:12.5px;color:var(--texte2)}
+
+/* ---- Notes ---- */
+.note{background:var(--carte);border:1px solid var(--trait);border-radius:var(--rayon);padding:13px;margin-bottom:10px}
+.note .titre{font-weight:700;font-size:15px;margin-bottom:4px;display:flex;justify-content:space-between;gap:8px}
+.note .corps{font-size:14px;color:var(--texte);white-space:pre-wrap;line-height:1.45;word-wrap:break-word}
+.note .corps.replie{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.note .tags{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}
+.tag{background:#F1E6F8;color:var(--ligne4);font-size:11.5px;font-weight:600;border-radius:6px;padding:2px 8px}
+.note .pied{font-size:11.5px;color:var(--texte2);margin-top:6px}
+
+/* ---- Sport ---- */
+.habitude{display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid var(--trait)}
+.habitude:last-child{border-bottom:none}
+.habitude .nom{flex:1;font-size:15px}
+.habitude .serie{font-size:12px;color:var(--texte2);white-space:nowrap}
+.coche-hab{width:26px;height:26px;border-radius:8px;border:2px solid var(--ligne5);flex:none;color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center}
+.coche-hab.fait{background:var(--ligne5);border-color:var(--ligne5)}
+.seance{padding:10px 2px;border-bottom:1px solid var(--trait);display:flex;gap:10px;align-items:flex-start}
+.seance:last-child{border-bottom:none}
+.seance .type{font-weight:700;font-size:14px}
+.seance .details{font-size:12.5px;color:var(--texte2);margin-top:2px}
+.stat-ligne{display:flex;gap:10px}
+.stat{flex:1;background:#FBEFE9;border-radius:10px;padding:10px;text-align:center}
+.stat .valeur{font-size:20px;font-weight:800;color:var(--ligne5)}
+.stat .libelle{font-size:11.5px;color:var(--texte2);margin-top:2px}
+
+/* ---- Barre d'onglets (plan de ligne) ---- */
+nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:30;
+  background:var(--carte);border-top:1px solid var(--trait);
+  padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+}
+.nav-int{max-width:640px;margin:0 auto;display:flex;position:relative}
+.nav-int::before{ /* la "ligne" qui relie les stations */
+  content:"";position:absolute;top:17px;left:10%;right:10%;height:3px;
+  background:var(--trait);border-radius:2px;
+}
+nav button{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:4px 0;color:var(--texte2);font-size:10.5px;font-weight:600;position:relative;
+}
+nav .station{
+  width:22px;height:22px;border-radius:50%;background:var(--carte);
+  border:3px solid var(--trait);transition:border-color .15s,transform .15s;
+}
+nav button.actif{color:var(--texte)}
+nav button[data-ecran=auj].actif .station{border-color:var(--ligne1);transform:scale(1.15)}
+nav button[data-ecran=taches].actif .station{border-color:var(--ligne2);transform:scale(1.15)}
+nav button[data-ecran=agenda].actif .station{border-color:var(--ligne3);transform:scale(1.15)}
+nav button[data-ecran=notes].actif .station{border-color:var(--ligne4);transform:scale(1.15)}
+nav button[data-ecran=sport].actif .station{border-color:var(--ligne5);transform:scale(1.15)}
+
+/* ---- Divers ---- */
+.bandeau{background:#FFF6DD;border:1px solid #F0DFA8;color:#7A5E00;font-size:13px;border-radius:10px;padding:10px 12px;margin-bottom:12px;display:none}
+.dialogue-fond{position:fixed;inset:0;background:rgba(18,35,59,.45);z-index:40;display:none;align-items:flex-end;justify-content:center}
+.dialogue-fond.ouvert{display:flex}
+.dialogue{background:var(--carte);border-radius:16px 16px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));width:100%;max-width:640px;max-height:85vh;overflow:auto}
+.dialogue h3{font-size:17px;margin-bottom:12px}
+.actions{display:flex;gap:8px;margin-top:12px}
+.actions .btn{flex:1}
+details.formulaire{margin-bottom:12px}
+details.formulaire summary{list-style:none;cursor:pointer}
+details.formulaire summary::-webkit-details-marker{display:none}
+:focus-visible{outline:2px solid var(--ligne2);outline-offset:2px}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Mon Quotidien</h1>
+    <div class="date" id="date-tete"></div>
+  </div>
+  <button class="btn-menu" id="btn-donnees">Données</button>
+</header>
+
+<main>
+  <div class="bandeau" id="bandeau-memoire">
+    ⚠️ Le stockage n'est pas disponible ici : les données seront perdues à la fermeture. Une fois l'app installée sur ton téléphone, tout sera sauvegardé automatiquement.
+  </div>
+
+  <!-- ================= AUJOURD'HUI ================= -->
+  <section class="ecran" id="ecran-auj">
+    <div class="titre-section"><span class="pastille" style="background:var(--ligne1)">A</span><h2>Aujourd'hui</h2></div>
+
+    <div class="carte">
+      <h3>Note rapide</h3>
+      <div class="ligne-ajout">
+        <input type="text" id="capture-rapide" placeholder="Une idée dans le métro ? Capture-la…">
+        <button class="btn" onclick="captureRapide()">＋</button>
+      </div>
+      <div style="font-size:12px;color:var(--texte2)">Envoyée directement dans tes Notes avec le tag « boîte de réception ».</div>
+    </div>
+
+    <div class="carte">
+      <h3>Tâches du jour</h3>
+      <div id="auj-taches"></div>
+    </div>
+
+    <div class="carte">
+      <h3>Agenda du jour</h3>
+      <div id="auj-agenda"></div>
+    </div>
+
+    <div class="carte">
+      <h3>Habitudes</h3>
+      <div id="auj-habitudes"></div>
+    </div>
+  </section>
+
+  <!-- ================= TÂCHES ================= -->
+  <section class="ecran" id="ecran-taches">
+    <div class="titre-section"><span class="pastille" style="background:var(--ligne2)">T</span><h2>Tâches</h2></div>
+
+    <div class="carte">
+      <div class="ligne-ajout">
+        <input type="text" id="tache-libelle" placeholder="Nouvelle tâche…">
+        <button class="btn" onclick="ajouterTache()">＋</button>
+      </div>
+      <div class="deux-cols">
+        <div class="champ"><label for="tache-date">Échéance (optionnel)</label><input type="date" id="tache-date"></div>
+        <div class="champ"><label for="tache-prio">Priorité</label>
+          <select id="tache-prio">
+            <option value="moyenne">Moyenne</option>
+            <option value="haute">Haute</option>
+            <option value="basse">Basse</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="filtres" id="filtres-taches">
+      <button data-f="actives" class="actif">À faire</button>
+      <button data-f="auj">Aujourd'hui</button>
+      <button data-f="faites">Terminées</button>
+      <button data-f="toutes">Toutes</button>
+    </div>
+
+    <div class="carte"><div id="liste-taches"></div></div>
+  </section>
+
+  <!-- ================= AGENDA ================= -->
+  <section class="ecran" id="ecran-agenda">
+    <div class="titre-section"><span class="pastille" style="background:var(--ligne3)">C</span><h2>Agenda</h2></div>
+
+    <div class="carte">
+      <div class="cal-tete">
+        <button onclick="changerMois(-1)" aria-label="Mois précédent">‹</button>
+        <div class="mois" id="cal-mois"></div>
+        <button onclick="changerMois(1)" aria-label="Mois suivant">›</button>
+      </div>
+      <div class="cal-grille" id="cal-grille"></div>
+    </div>
+
+    <div class="carte">
+      <h3 id="titre-jour-choisi">Événements</h3>
+      <div id="liste-evenements-jour"></div>
+      <details class="formulaire" id="form-evt">
+        <summary><span class="btn secondaire petit" style="display:inline-block;margin-top:8px">＋ Ajouter un événement</span></summary>
+        <div style="margin-top:10px">
+          <div class="champ"><label for="evt-titre">Titre</label><input type="text" id="evt-titre" placeholder="Rendez-vous, cours, sortie…"></div>
+          <div class="deux-cols">
+            <div class="champ"><label for="evt-date">Date</label><input type="date" id="evt-date"></div>
+            <div class="champ"><label for="evt-heure">Heure</label><input type="time" id="evt-heure"></div>
+          </div>
+          <div class="champ"><label for="evt-lieu">Lieu (optionnel)</label><input type="text" id="evt-lieu"></div>
+          <button class="btn" onclick="ajouterEvenement()">Ajouter à l'agenda</button>
+        </div>
+      </details>
+    </div>
+
+    <div class="carte">
+      <h3>À venir (7 jours)</h3>
+      <div id="liste-a-venir"></div>
+    </div>
+  </section>
+
+  <!-- ================= NOTES ================= -->
+  <section class="ecran" id="ecran-notes">
+    <div class="titre-section"><span class="pastille" style="background:var(--ligne4)">N</span><h2>Notes</h2></div>
+
+    <div class="carte">
+      <div class="champ"><input type="text" id="note-titre" placeholder="Titre de la note"></div>
+      <div class="champ"><textarea id="note-corps" placeholder="Écris librement : idées, apprentissages, réflexions…"></textarea></div>
+      <div class="champ"><input type="text" id="note-tags" placeholder="Tags séparés par des virgules (ex : idées, travail, lecture)"></div>
+      <button class="btn" onclick="ajouterNote()">Enregistrer la note</button>
+    </div>
+
+    <div class="champ"><input type="text" id="recherche-notes" placeholder="🔍 Rechercher dans le second cerveau…" oninput="afficherNotes()"></div>
+    <div class="filtres" id="filtres-tags"></div>
+    <div id="liste-notes"></div>
+  </section>
+
+  <!-- ================= SPORT ================= -->
+  <section class="ecran" id="ecran-sport">
+    <div class="titre-section"><span class="pastille" style="background:var(--ligne5)">S</span><h2>Sport</h2></div>
+
+    <div class="carte">
+      <h3>Cette semaine</h3>
+      <div class="stat-ligne">
+        <div class="stat"><div class="valeur" id="stat-seances">0</div><div class="libelle">séances</div></div>
+        <div class="stat"><div class="valeur" id="stat-minutes">0</div><div class="libelle">minutes</div></div>
+        <div class="stat"><div class="valeur" id="stat-habitudes">0%</div><div class="libelle">habitudes tenues</div></div>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h3>Habitudes quotidiennes</h3>
+      <div id="liste-habitudes"></div>
+      <div class="ligne-ajout" style="margin-top:10px;margin-bottom:0">
+        <input type="text" id="habitude-nom" placeholder="Nouvelle habitude (ex : étirements, 10 min de marche)">
+        <button class="btn" onclick="ajouterHabitude()">＋</button>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h3>Enregistrer une séance</h3>
+      <div class="deux-cols">
+        <div class="champ"><label for="seance-type">Type</label>
+          <select id="seance-type">
+            <option>Musculation</option><option>Course</option><option>Vélo</option>
+            <option>Natation</option><option>Yoga</option><option>Marche</option><option>Autre</option>
+          </select>
+        </div>
+        <div class="champ"><label for="seance-duree">Durée (min)</label><input type="number" id="seance-duree" min="1" placeholder="45"></div>
+      </div>
+      <div class="champ"><label for="seance-notes">Détails (exercices, distance, ressenti…)</label><textarea id="seance-notes" style="min-height:60px"></textarea></div>
+      <button class="btn" onclick="ajouterSeance()">Enregistrer</button>
+    </div>
+
+    <div class="carte">
+      <h3>Historique</h3>
+      <div id="liste-seances"></div>
+    </div>
+  </section>
+</main>
+
+<!-- ---- Barre d'onglets ---- -->
+<nav aria-label="Navigation principale">
+  <div class="nav-int">
+    <button data-ecran="auj" class="actif"><span class="station"></span>Aujourd'hui</button>
+    <button data-ecran="taches"><span class="station"></span>Tâches</button>
+    <button data-ecran="agenda"><span class="station"></span>Agenda</button>
+    <button data-ecran="notes"><span class="station"></span>Notes</button>
+    <button data-ecran="sport"><span class="station"></span>Sport</button>
+  </div>
+</nav>
+
+<!-- ---- Dialogue données ---- -->
+<div class="dialogue-fond" id="dlg-donnees">
+  <div class="dialogue">
+    <h3>Mes données</h3>
+    <p style="font-size:13.5px;color:var(--texte2);line-height:1.5">
+      Tout est stocké uniquement sur cet appareil. Pense à exporter une sauvegarde de temps en temps
+      (le fichier peut être réimporté ici ou sur un autre appareil).
+    </p>
+    <div class="actions">
+      <button class="btn" onclick="exporterDonnees()">Exporter</button>
+      <button class="btn secondaire" onclick="document.getElementById('import-fichier').click()">Importer</button>
+    </div>
+    <input type="file" id="import-fichier" accept=".json" style="display:none" onchange="importerDonnees(event)">
+    <div class="actions">
+      <button class="btn secondaire" onclick="fermerDialogue()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =====================================================
+   Mon Quotidien — app hors-ligne de gestion du quotidien
+   Données : localStorage (avec repli mémoire)
+===================================================== */
+
+// ---------- Stockage ----------
+const CLE = "mon-quotidien-v1";
+let memoireSeule = false;
+let etat = chargerEtat();
+
+function etatVide(){
+  return { taches:[], evenements:[], notes:[], habitudes:[], seances:[] };
+}
+function chargerEtat(){
+  try{
+    const brut = localStorage.getItem(CLE);
+    return brut ? Object.assign(etatVide(), JSON.parse(brut)) : etatVide();
+  }catch(e){
+    memoireSeule = true;
+    return etatVide();
+  }
+}
+function sauver(){
+  if(memoireSeule) return;
+  try{ localStorage.setItem(CLE, JSON.stringify(etat)); }
+  catch(e){ memoireSeule = true; document.getElementById("bandeau-memoire").style.display="block"; }
+}
+
+// ---------- Utilitaires ----------
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const auj = () => { const d=new Date(); return d.toISOString().slice(0,10); };
+function cleDate(d){ // date locale -> "AAAA-MM-JJ"
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+const AUJ = cleDate(new Date());
+function dateLisible(iso){
+  const [a,m,j] = iso.split("-").map(Number);
+  return new Date(a,m-1,j).toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"});
+}
+function echap(s){ return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+// ---------- Navigation ----------
+document.querySelectorAll("nav button").forEach(b=>{
+  b.addEventListener("click", ()=> montrerEcran(b.dataset.ecran));
+});
+function montrerEcran(nom){
+  document.querySelectorAll(".ecran").forEach(e=>e.classList.remove("actif"));
+  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("actif", b.dataset.ecran===nom));
+  document.getElementById("ecran-"+nom).classList.add("actif");
+  toutAfficher();
+}
+
+// ---------- Aujourd'hui ----------
+function captureRapide(){
+  const champ = document.getElementById("capture-rapide");
+  const texte = champ.value.trim();
+  if(!texte) return;
+  etat.notes.unshift({ id:uid(), titre:texte.slice(0,60), corps:texte, tags:["boîte de réception"], date:AUJ });
+  champ.value = "";
+  sauver(); toutAfficher();
+}
+function afficherAujourdhui(){
+  // Tâches du jour : échues aujourd'hui ou en retard, non faites
+  const zone = document.getElementById("auj-taches");
+  const dj = etat.taches.filter(t => !t.fait && t.echeance && t.echeance <= AUJ);
+  zone.innerHTML = dj.length ? dj.map(ligneTacheHTML).join("")
+    : '<div class="vide">Rien d\'urgent aujourd\'hui ✨ Ajoute des tâches avec une échéance pour les voir ici.</div>';
+
+  // Agenda du jour
+  const za = document.getElementById("auj-agenda");
+  const evts = etat.evenements.filter(e => e.date===AUJ).sort((a,b)=>(a.heure||"").localeCompare(b.heure||""));
+  za.innerHTML = evts.length ? evts.map(evenementHTML).join("")
+    : '<div class="vide">Aucun événement prévu aujourd\'hui.</div>';
+
+  // Habitudes
+  const zh = document.getElementById("auj-habitudes");
+  zh.innerHTML = etat.habitudes.length ? etat.habitudes.map(habitudeHTML).join("")
+    : '<div class="vide">Crée tes habitudes dans l\'onglet Sport pour les cocher chaque jour ici.</div>';
+}
+
+// ---------- Tâches ----------
+let filtreTaches = "actives";
+document.getElementById("filtres-taches").addEventListener("click", e=>{
+  if(e.target.dataset.f){
+    filtreTaches = e.target.dataset.f;
+    document.querySelectorAll("#filtres-taches button").forEach(b=>b.classList.toggle("actif", b===e.target));
+    afficherTaches();
+  }
+});
+function ajouterTache(){
+  const champ = document.getElementById("tache-libelle");
+  const libelle = champ.value.trim();
+  if(!libelle) return;
+  etat.taches.unshift({
+    id:uid(), libelle,
+    echeance: document.getElementById("tache-date").value || null,
+    priorite: document.getElementById("tache-prio").value,
+    fait:false
+  });
+  champ.value=""; document.getElementById("tache-date").value="";
+  sauver(); toutAfficher();
+}
+function basculerTache(id){
+  const t = etat.taches.find(t=>t.id===id);
+  if(t){ t.fait = !t.fait; sauver(); toutAfficher(); }
+}
+function supprimerTache(id){
+  etat.taches = etat.taches.filter(t=>t.id!==id);
+  sauver(); toutAfficher();
+}
+function ligneTacheHTML(t){
+  const retard = !t.fait && t.echeance && t.echeance < AUJ;
+  return `<div class="item ${t.fait?"fait":""}">
+    <button class="coche ${t.fait?"fait":""}" onclick="basculerTache('${t.id}')" aria-label="${t.fait?"Marquer à faire":"Marquer terminée"}">${t.fait?"✓":""}</button>
+    <div class="contenu">
+      <div class="libelle">${echap(t.libelle)}</div>
+      <div class="meta">
+        <span class="badge ${t.priorite}">${t.priorite}</span>
+        ${t.echeance ? (retard ? `<span class="badge retard">en retard · ${dateLisible(t.echeance)}</span>` : `<span>📅 ${dateLisible(t.echeance)}</span>`) : ""}
+      </div>
+    </div>
+    <button class="btn-suppr" onclick="supprimerTache('${t.id}')" aria-label="Supprimer">×</button>
+  </div>`;
+}
+function afficherTaches(){
+  let liste = etat.taches;
+  if(filtreTaches==="actives") liste = liste.filter(t=>!t.fait);
+  if(filtreTaches==="faites")  liste = liste.filter(t=>t.fait);
+  if(filtreTaches==="auj")     liste = liste.filter(t=>!t.fait && t.echeance && t.echeance<=AUJ);
+  // tri : en retard puis échéance puis priorité
+  const poids = {haute:0, moyenne:1, basse:2};
+  liste = [...liste].sort((a,b)=>{
+    const ea = a.echeance||"9999", eb = b.echeance||"9999";
+    if(ea!==eb) return ea.localeCompare(eb);
+    return poids[a.priorite]-poids[b.priorite];
+  });
+  document.getElementById("liste-taches").innerHTML =
+    liste.length ? liste.map(ligneTacheHTML).join("") : '<div class="vide">Aucune tâche ici.</div>';
+}
+
+// ---------- Agenda ----------
+let moisAffiche = new Date(); moisAffiche.setDate(1);
+let jourChoisi = AUJ;
+function changerMois(delta){
+  moisAffiche.setMonth(moisAffiche.getMonth()+delta);
+  afficherCalendrier();
+}
+function choisirJour(iso){
+  jourChoisi = iso;
+  document.getElementById("evt-date").value = iso;
+  afficherCalendrier(); afficherEvenementsJour();
+}
+function afficherCalendrier(){
+  document.getElementById("cal-mois").textContent =
+    moisAffiche.toLocaleDateString("fr-FR",{month:"long",year:"numeric"});
+  const g = document.getElementById("cal-grille");
+  const noms = ["L","M","M","J","V","S","D"];
+  let html = noms.map(n=>`<div class="jour-nom">${n}</div>`).join("");
+  const premier = new Date(moisAffiche);
+  let decalage = (premier.getDay()+6)%7; // lundi = 0
+  for(let i=0;i<decalage;i++) html += `<div class="cal-case"></div>`;
+  const nbJours = new Date(moisAffiche.getFullYear(), moisAffiche.getMonth()+1, 0).getDate();
+  for(let j=1;j<=nbJours;j++){
+    const iso = cleDate(new Date(moisAffiche.getFullYear(), moisAffiche.getMonth(), j));
+    const aEvt = etat.evenements.some(e=>e.date===iso);
+    const cls = ["cal-case", iso===AUJ?"aujourdhui":"", iso===jourChoisi?"choisi":""].join(" ");
+    html += `<button class="${cls}" onclick="choisirJour('${iso}')">${j}${aEvt?'<span class="point"></span>':""}</button>`;
+  }
+  g.innerHTML = html;
+}
+function ajouterEvenement(){
+  const titre = document.getElementById("evt-titre").value.trim();
+  const date = document.getElementById("evt-date").value;
+  if(!titre || !date) return;
+  etat.evenements.push({
+    id:uid(), titre, date,
+    heure: document.getElementById("evt-heure").value || "",
+    lieu: document.getElementById("evt-lieu").value.trim()
+  });
+  document.getElementById("evt-titre").value="";
+  document.getElementById("evt-heure").value="";
+  document.getElementById("evt-lieu").value="";
+  document.getElementById("form-evt").open = false;
+  jourChoisi = date;
+  sauver(); toutAfficher();
+}
+function supprimerEvenement(id){
+  etat.evenements = etat.evenements.filter(e=>e.id!==id);
+  sauver(); toutAfficher();
+}
+function evenementHTML(e){
+  return `<div class="evenement">
+    <div class="heure">${e.heure||"—"}</div>
+    <div class="contenu">
+      <div class="titre">${echap(e.titre)}</div>
+      ${e.lieu?`<div class="lieu">📍 ${echap(e.lieu)}</div>`:""}
+    </div>
+    <button class="btn-suppr" onclick="supprimerEvenement('${e.id}')" aria-label="Supprimer">×</button>
+  </div>`;
+}
+function afficherEvenementsJour(){
+  document.getElementById("titre-jour-choisi").textContent =
+    jourChoisi===AUJ ? "Aujourd'hui" : dateLisible(jourChoisi);
+  const evts = etat.evenements.filter(e=>e.date===jourChoisi).sort((a,b)=>(a.heure||"").localeCompare(b.heure||""));
+  document.getElementById("liste-evenements-jour").innerHTML =
+    evts.length ? evts.map(evenementHTML).join("") : '<div class="vide">Rien de prévu ce jour-là.</div>';
+}
+function afficherAVenir(){
+  const limite = cleDate(new Date(Date.now()+7*864e5));
+  const evts = etat.evenements
+    .filter(e=>e.date>=AUJ && e.date<=limite)
+    .sort((a,b)=> (a.date+a.heure).localeCompare(b.date+b.heure));
+  document.getElementById("liste-a-venir").innerHTML = evts.length
+    ? evts.map(e=>`<div class="evenement">
+        <div class="heure" style="width:auto;min-width:52px">${dateLisible(e.date)}</div>
+        <div class="contenu"><div class="titre">${e.heure?e.heure+" · ":""}${echap(e.titre)}</div>
+        ${e.lieu?`<div class="lieu">📍 ${echap(e.lieu)}</div>`:""}</div>
+      </div>`).join("")
+    : '<div class="vide">Semaine calme pour l\'instant.</div>';
+}
+
+// ---------- Notes ----------
+let tagFiltre = null;
+function ajouterNote(){
+  const titre = document.getElementById("note-titre").value.trim();
+  const corps = document.getElementById("note-corps").value.trim();
+  if(!titre && !corps) return;
+  const tags = document.getElementById("note-tags").value.split(",").map(t=>t.trim()).filter(Boolean);
+  etat.notes.unshift({ id:uid(), titre: titre || corps.slice(0,60), corps, tags, date:AUJ });
+  ["note-titre","note-corps","note-tags"].forEach(i=>document.getElementById(i).value="");
+  sauver(); toutAfficher();
+}
+function supprimerNote(id){
+  etat.notes = etat.notes.filter(n=>n.id!==id);
+  sauver(); toutAfficher();
+}
+function basculerNote(id){
+  document.querySelector(`#note-${id} .corps`)?.classList.toggle("replie");
+}
+function filtrerTag(tag){
+  tagFiltre = (tagFiltre===tag) ? null : tag;
+  afficherNotes();
+}
+function afficherNotes(){
+  const q = document.getElementById("recherche-notes").value.trim().toLowerCase();
+  // nuage de tags
+  const tousTags = [...new Set(etat.notes.flatMap(n=>n.tags))];
+  document.getElementById("filtres-tags").innerHTML = tousTags.map(t=>
+    `<button class="${tagFiltre===t?"actif":""}" onclick="filtrerTag('${echap(t).replace(/'/g,"\\'")}')">#${echap(t)}</button>`
+  ).join("");
+  let liste = etat.notes;
+  if(tagFiltre) liste = liste.filter(n=>n.tags.includes(tagFiltre));
+  if(q) liste = liste.filter(n=> (n.titre+" "+n.corps+" "+n.tags.join(" ")).toLowerCase().includes(q));
+  document.getElementById("liste-notes").innerHTML = liste.length ? liste.map(n=>`
+    <div class="note" id="note-${n.id}">
+      <div class="titre"><span>${echap(n.titre)}</span>
+        <button class="btn-suppr" onclick="supprimerNote('${n.id}')" aria-label="Supprimer">×</button></div>
+      ${n.corps?`<div class="corps replie" onclick="basculerNote('${n.id}')">${echap(n.corps)}</div>`:""}
+      ${n.tags.length?`<div class="tags">${n.tags.map(t=>`<span class="tag">#${echap(t)}</span>`).join("")}</div>`:""}
+      <div class="pied">${dateLisible(n.date)}</div>
+    </div>`).join("")
+    : '<div class="vide" style="padding:10px 4px">Aucune note. Ton second cerveau attend sa première idée 🧠</div>';
+}
+
+// ---------- Sport ----------
+function ajouterHabitude(){
+  const champ = document.getElementById("habitude-nom");
+  const nom = champ.value.trim();
+  if(!nom) return;
+  etat.habitudes.push({ id:uid(), nom, jours:{} });
+  champ.value = "";
+  sauver(); toutAfficher();
+}
+function supprimerHabitude(id){
+  etat.habitudes = etat.habitudes.filter(h=>h.id!==id);
+  sauver(); toutAfficher();
+}
+function basculerHabitude(id){
+  const h = etat.habitudes.find(h=>h.id===id);
+  if(!h) return;
+  if(h.jours[AUJ]) delete h.jours[AUJ]; else h.jours[AUJ] = true;
+  sauver(); toutAfficher();
+}
+function serieHabitude(h){
+  let n = 0; const d = new Date();
+  if(!h.jours[cleDate(d)]) d.setDate(d.getDate()-1); // la série tient si hier est coché
+  while(h.jours[cleDate(d)]){ n++; d.setDate(d.getDate()-1); }
+  return n;
+}
+function habitudeHTML(h){
+  const fait = !!h.jours[AUJ];
+  const serie = serieHabitude(h);
+  return `<div class="habitude">
+    <button class="coche-hab ${fait?"fait":""}" onclick="basculerHabitude('${h.id}')" aria-label="${fait?"Décocher":"Cocher"} ${echap(h.nom)}">${fait?"✓":""}</button>
+    <div class="nom">${echap(h.nom)}</div>
+    <div class="serie">${serie>0 ? "🔥 "+serie+" j" : ""}</div>
+    <button class="btn-suppr" onclick="supprimerHabitude('${h.id}')" aria-label="Supprimer">×</button>
+  </div>`;
+}
+function ajouterSeance(){
+  const duree = parseInt(document.getElementById("seance-duree").value,10);
+  if(!duree || duree<1) return;
+  etat.seances.unshift({
+    id:uid(),
+    type: document.getElementById("seance-type").value,
+    duree,
+    notes: document.getElementById("seance-notes").value.trim(),
+    date: AUJ
+  });
+  document.getElementById("seance-duree").value="";
+  document.getElementById("seance-notes").value="";
+  sauver(); toutAfficher();
+}
+function supprimerSeance(id){
+  etat.seances = etat.seances.filter(s=>s.id!==id);
+  sauver(); toutAfficher();
+}
+function afficherSport(){
+  // habitudes
+  document.getElementById("liste-habitudes").innerHTML =
+    etat.habitudes.length ? etat.habitudes.map(habitudeHTML).join("")
+    : '<div class="vide">Ajoute une première habitude ci-dessous.</div>';
+  // historique
+  document.getElementById("liste-seances").innerHTML = etat.seances.length
+    ? etat.seances.slice(0,30).map(s=>`<div class="seance">
+        <div class="contenu" style="flex:1">
+          <div class="type">${echap(s.type)} · ${s.duree} min</div>
+          <div class="details">${dateLisible(s.date)}${s.notes?" — "+echap(s.notes):""}</div>
+        </div>
+        <button class="btn-suppr" onclick="supprimerSeance('${s.id}')" aria-label="Supprimer">×</button>
+      </div>`).join("")
+    : '<div class="vide">Aucune séance enregistrée pour l\'instant.</div>';
+  // stats semaine (lundi -> aujourd'hui)
+  const d = new Date(); const lundi = new Date(d); lundi.setDate(d.getDate()-((d.getDay()+6)%7));
+  const debut = cleDate(lundi);
+  const seancesSem = etat.seances.filter(s=>s.date>=debut);
+  document.getElementById("stat-seances").textContent = seancesSem.length;
+  document.getElementById("stat-minutes").textContent = seancesSem.reduce((a,s)=>a+s.duree,0);
+  let coches=0, total=0;
+  const nbJoursEcoules = ((d.getDay()+6)%7)+1;
+  etat.habitudes.forEach(h=>{
+    for(let i=0;i<nbJoursEcoules;i++){
+      const dd = new Date(lundi); dd.setDate(lundi.getDate()+i);
+      total++; if(h.jours[cleDate(dd)]) coches++;
+    }
+  });
+  document.getElementById("stat-habitudes").textContent = total? Math.round(coches/total*100)+"%" : "—";
+}
+
+// ---------- Export / import ----------
+document.getElementById("btn-donnees").addEventListener("click", ()=>{
+  document.getElementById("dlg-donnees").classList.add("ouvert");
+});
+function fermerDialogue(){ document.getElementById("dlg-donnees").classList.remove("ouvert"); }
+document.getElementById("dlg-donnees").addEventListener("click", e=>{
+  if(e.target.id==="dlg-donnees") fermerDialogue();
+});
+function exporterDonnees(){
+  const blob = new Blob([JSON.stringify(etat,null,2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "mon-quotidien-sauvegarde-"+AUJ+".json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+function importerDonnees(ev){
+  const fichier = ev.target.files[0];
+  if(!fichier) return;
+  const lecteur = new FileReader();
+  lecteur.onload = () => {
+    try{
+      const donnees = JSON.parse(lecteur.result);
+      etat = Object.assign(etatVide(), donnees);
+      sauver(); toutAfficher(); fermerDialogue();
+    }catch(e){ alert("Fichier invalide : impossible de lire cette sauvegarde."); }
+  };
+  lecteur.readAsText(fichier);
+  ev.target.value = "";
+}
+
+// ---------- Rendu global ----------
+function toutAfficher(){
+  afficherAujourdhui();
+  afficherTaches();
+  afficherCalendrier();
+  afficherEvenementsJour();
+  afficherAVenir();
+  afficherNotes();
+  afficherSport();
+}
+document.getElementById("date-tete").textContent =
+  new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
+document.getElementById("evt-date").value = AUJ;
+if(memoireSeule) document.getElementById("bandeau-memoire").style.display="block";
+// Entrée = ajout rapide
+document.getElementById("capture-rapide").addEventListener("keydown",e=>{ if(e.key==="Enter") captureRapide(); });
+document.getElementById("tache-libelle").addEventListener("keydown",e=>{ if(e.key==="Enter") ajouterTache(); });
+document.getElementById("habitude-nom").addEventListener("keydown",e=>{ if(e.key==="Enter") ajouterHabitude(); });
+toutAfficher();
+</script>
+</body>
+</html>
