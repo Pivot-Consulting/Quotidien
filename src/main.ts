@@ -10,6 +10,7 @@ const watchdog = window.setTimeout(() => showRecovery('Délai de démarrage dép
 
 void (async () => {
   try {
+    await import('./mobile-interactions.js');
     await import('./app-v61.js');
     window.clearTimeout(watchdog);
     void import('./life-os/hub.js').catch(error => console.error('Life OS indisponible', error));
