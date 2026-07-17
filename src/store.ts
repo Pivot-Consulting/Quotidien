@@ -128,6 +128,7 @@ export class Store {
   }
 
   async setTop3(date: string, ids: Id[]): Promise<void> { this.state.preferences.top3[date] = ids.slice(0, 3); await this.commit(); }
+  async markNotification(key: string): Promise<void> { this.state.notificationLog[key] = nowIso(); await this.commit(); }
   async setPreference<K extends keyof AppState['preferences']>(key: K, value: AppState['preferences'][K]): Promise<void> { this.state.preferences[key] = value; await this.commit(); }
   async addProject(name: string): Promise<void> { const clean = name.trim(); if (!clean || this.state.projects.includes(clean)) return; this.state.projects.push(clean); await this.commit(); }
   async replace(next: AppState): Promise<void> { await replaceState(next); this.state = await loadState(); this.listeners.forEach(listener => listener(this.snapshot)); }
