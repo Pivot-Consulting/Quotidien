@@ -10,7 +10,20 @@ for (const [source, name] of [
   ["app.js", "app.js"],
   ["app.css", "app.css"],
 ]) {
-  const content = fs.readFileSync(source);
+  const content =
+    source === ".build/core.js"
+      ? Buffer.concat([
+          fs.readFileSync(source),
+          Buffer.from("\n"),
+          fs.readFileSync(".build/os.js"),
+        ])
+      : source === "app.js"
+        ? Buffer.concat([
+            fs.readFileSync("modules/os-ui.js"),
+            Buffer.from("\n"),
+            fs.readFileSync(source),
+          ])
+        : fs.readFileSync(source);
   const hash = crypto
     .createHash("sha256")
     .update(content)
