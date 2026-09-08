@@ -1,5 +1,17 @@
 # Historique
 
+## 2.2.0 — 2026-09-08
+
+- Vingt espaces Life OS spécialisés et 48 modèles typés, avec formulaires, relations, filtres et synthèses.
+- Budgets, comptes, patrimoine, abonnements ; import CSV prévisualisé et dédoublonné.
+- Projets et jalons pondérés ; parcours et révision espacée ; documents et entretien ; nutrition et carnet de santé.
+- Contacts, voyages, carrière, décisions pondérées, journal, vie numérique, risques, impact, foyer, indicateurs et équilibre.
+- Répartition et remboursement des dépenses au centime ; tâches récurrentes et avancement des abonnements.
+- Automatisations locales à lancement manuel, assistant de planification sous contrainte de temps et bilan hebdomadaire.
+- Exports CSV, recherche globale spécialisée et tâches liées ; imports validant les références.
+- Données 2.x et archives conservées, UI extraite, aucun nouveau service distant.
+- 44 tests, dont création/édition des 48 modèles ; parcours Chrome et aperçu mobile vérifiés.
+
 ## 2.1.0 — 2026-09-08
 
 - Reprise de la reconstruction 2.0 ; conservation de V6/V7 dans `legacy/v7` et leurs branches.

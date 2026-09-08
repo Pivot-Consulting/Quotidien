@@ -37,6 +37,23 @@
   } catch (error) {
     bootError = error;
   }
+  var os = createLifeOS({
+    state: () => state,
+    esc,
+    id,
+    save,
+    modal,
+    close: closeModal,
+    render,
+    toast,
+    error: showError,
+    download,
+    listLife,
+    openForm,
+    get kinds() {
+      return kinds;
+    },
+  });
   function id() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   }
@@ -144,7 +161,7 @@
   }
   function shell(content) {
     return (
-      '<div class="shell"><header class="topbar"><div><div class="brand">QUOTIDIEN <span>2.1</span></div><div class="date">' +
+      '<div class="shell"><header class="topbar"><div><div class="brand">QUOTIDIEN <span>2.2</span></div><div class="date">' +
       esc(
         new Intl.DateTimeFormat("fr-FR", {
           weekday: "long",
@@ -355,30 +372,7 @@
     );
   }
   function lifeView() {
-    return (
-      '<div class="page-title"><div><span class="eyebrow">20 THÉMATIQUES</span><h1>Life OS</h1></div><button class="primary" data-action="life-entry">＋ Capturer</button></div><section class="life-grid">' +
-      LIFE.map(function (name) {
-        var count = active(state.life).filter(function (x) {
-          return x.domain === name;
-        }).length;
-        return (
-          '<article class="life-card"><strong>' +
-          esc(name) +
-          "</strong><p>" +
-          count +
-          " élément" +
-          (count > 1 ? "s" : "") +
-          " suivi" +
-          (count > 1 ? "s" : "") +
-          '</p><button class="mini" data-life="' +
-          esc(name) +
-          '">Ouvrir</button></article>'
-        );
-      }).join("") +
-      '</section><section class="card" style="margin-top:12px"><div class="section-head"><div><span class="eyebrow">CAPTURES RÉCENTES</span><h2>Tous les domaines</h2></div></div>' +
-      listLife(active(state.life)) +
-      "</section>"
-    );
+    return os.view();
   }
   function waveView() {
     return (
@@ -801,6 +795,7 @@
         : "");
   }
   var collectionLabels = {
+    os: "Life OS spécialisé",
     tasks: "Tâches",
     events: "Événements",
     notes: "Notes",
@@ -948,6 +943,31 @@
         '<input name="title" placeholder="Nom de la règle" required><input name="category" placeholder="Déclencheur"><textarea name="details" class="full" placeholder="Décrire une idée (aucune exécution automatique)"></textarea>',
       ],
     };
+    if (kind === "task")
+      map.task[1] +=
+        '<label>Durée estimée (min)<input name="estimate" type="number" min="1" value="25"></label><label>Fiche Life OS liée<select name="osSourceId"><option value="">Aucune</option>' +
+        state.os
+          .filter((x) => !x.deleted || x.id === extra?.osSourceId)
+          .map(
+            (x) =>
+              '<option value="' + esc(x.id) + '">' + esc(x.title) + "</option>",
+          )
+          .join("") +
+        "</select></label>";
+    if (kind === "finance")
+      map.finance[1] +=
+        '<label>Compte<select name="accountId"><option value="">Non affecté</option>' +
+        state.os
+          .filter(
+            (x) =>
+              x.kind === "account" && (!x.deleted || x.id === extra?.accountId),
+          )
+          .map(
+            (x) =>
+              '<option value="' + esc(x.id) + '">' + esc(x.title) + "</option>",
+          )
+          .join("") +
+        "</select></label>";
     var m = map[kind];
     if (!m) return;
     modal(extra ? "Modifier · " + m[0] : m[0], form(m[1], kind + "-form"));
@@ -995,6 +1015,12 @@
         var select = document.querySelector(".modal [name=domain]");
         if (select) select.value = t.dataset.domain;
       }
+      return;
+    }
+    if (os.handleClick(t)) return;
+    if (t.dataset.edit === "os") {
+      var osRecord = state.os.find((x) => x.id === t.dataset.id);
+      if (osRecord) os.edit(osRecord.kind, osRecord);
       return;
     }
     if (t.dataset.edit) {
@@ -1053,17 +1079,7 @@
       return;
     }
     if (t.dataset.life) {
-      modal(
-        t.dataset.life,
-        '<button class="primary" data-create="life" data-domain="' +
-          esc(t.dataset.life) +
-          '">＋ Capturer</button>' +
-          listLife(
-            active(state.life).filter(function (x) {
-              return x.domain === t.dataset.life;
-            }),
-          ),
-      );
+      os.open(t.dataset.life);
       return;
     }
     var a = t.dataset.action;
@@ -1154,6 +1170,7 @@
     e.preventDefault();
     var f = e.target;
     if (!(f instanceof HTMLFormElement) || !f.reportValidity()) return;
+    if (os.submit(f)) return;
     var d = Object.fromEntries(new FormData(f).entries());
     Object.keys(d).forEach(function (key) {
       if (typeof d[key] === "string") d[key] = d[key].trim();
@@ -1201,7 +1218,11 @@
     }
   });
   root.addEventListener("input", function (e) {
+    os.inputEvent(e.target);
     if (e.target.id === "global-search") searchResults(e.target.value);
+  });
+  root.addEventListener("change", function (e) {
+    os.changeEvent(e.target);
   });
   function navigate(screen) {
     if (!Q.screens.includes(screen)) screen = "today";
@@ -1213,6 +1234,12 @@
   }
   window.addEventListener("hashchange", function () {
     if (bootError) return;
+    if (os.route(location.hash)) {
+      state.screen = "life";
+      closeModal();
+      render();
+      return;
+    }
     var screen = Q.screens.includes(location.hash.slice(1))
       ? location.hash.slice(1)
       : "today";
@@ -1292,6 +1319,7 @@
       state.screen = Q.screens.includes(location.hash.slice(1))
         ? location.hash.slice(1)
         : "today";
+    if (os.route(location.hash)) state.screen = "life";
     render();
   }
 })();

@@ -3,8 +3,9 @@ namespace Q {
   export const KEY = "quotidien-rebuild-2";
   export const BACKUP_KEY = KEY + "-previous";
   export const CHECKPOINT_KEY = KEY + "-before-restore";
-  export const RELEASE = "2.1.0";
+  export const RELEASE = "2.2.0";
   export const collections = [
+    "os",
     "tasks",
     "events",
     "notes",
@@ -118,6 +119,7 @@ namespace Q {
         )
           throw new Error("Horaire invalide.");
         for (const field of [
+          "estimate",
           "amount",
           "progress",
           "minutes",
@@ -142,6 +144,8 @@ namespace Q {
           (Number(record.progress) < 0 || Number(record.progress) > 100)
         )
           throw new Error("Progression attendue entre 0 et 100.");
+        if (record.estimate !== undefined && Number(record.estimate) <= 0)
+          throw new Error("Durée estimée positive attendue.");
         if (record.minutes !== undefined && Number(record.minutes) < 0)
           throw new Error("Durée négative.");
         if (record.target !== undefined && Number(record.target) <= 0)
@@ -160,6 +164,7 @@ namespace Q {
           )
             throw new Error("Historique d’habitude invalide.");
         }
+        if (key === "os") OS.validate(record);
         return record;
       });
     }
@@ -169,6 +174,7 @@ namespace Q {
     if (!["light", "dark"].includes(next.settings.theme))
       next.settings.theme = "dark";
     next.screen = screens.includes(next.screen) ? next.screen : "today";
+    OS.validateLinks(next);
     return next;
   }
   export function parseBackup(raw: string): State {
