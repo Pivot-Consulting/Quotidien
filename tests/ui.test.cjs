@@ -17,11 +17,15 @@ function app(seed) {
       typeof seed === "string" ? seed : JSON.stringify(seed),
     );
   vm.runInContext(
-    fs.readFileSync(".build/core.js", "utf8"),
+    fs.readFileSync(".build/core.js", "utf8") +
+      "\n" +
+      fs.readFileSync(".build/os.js", "utf8"),
     dom.getInternalVMContext(),
   );
   vm.runInContext(
-    fs.readFileSync("app.js", "utf8"),
+    fs.readFileSync("modules/os-ui.js", "utf8") +
+      "\n" +
+      fs.readFileSync("app.js", "utf8"),
     dom.getInternalVMContext(),
   );
   return {
@@ -213,5 +217,162 @@ test("deleted entries can be restored without replacing other data", () => {
   a.click("[data-restore=tasks]");
   assert.equal(a.saved().tasks[0].deleted, false);
   assert.equal(a.saved().notes[0].title, "Other");
+  a.dom.window.close();
+});
+
+test("all 20 workspaces create, reopen, edit and restore their specialized records", () => {
+  const a = app();
+  a.click("[data-screen=life]");
+  assert.equal(a.doc.querySelectorAll("[data-os=open]").length, 20);
+  const definitions = a.w.Q.OS.domains;
+  const errors = [];
+  a.w.addEventListener("error", (ev) => errors.push(ev.error));
+  for (const d of definitions) {
+    a.click(`[data-os=open][data-domain=${d.id}]`);
+    assert.equal(a.doc.querySelector("h1").textContent, d.name);
+    for (const m of d.models) {
+      a.click(`[data-os=type][data-type=${m.id}]`);
+      a.click("[data-os=new]");
+      a.fill("#os-form [name=title]", "Essai " + m.id);
+      for (const f of m.fields) {
+        const input = a.doc.querySelector(`#os-form [name="${f.key}"]`);
+        if (f.type === "ref") {
+          const reference = a
+            .saved()
+            ?.os.find(
+              (r) =>
+                r.kind === f.ref &&
+                (f.key !== "toId" ||
+                  r.id !== a.doc.querySelector("#os-form [name=fromId]").value),
+            );
+          if (reference) input.value = reference.id;
+        } else if (f.type === "refs") {
+          if (input) input.checked = true;
+        } else if (f.type === "number")
+          input.value = String(Math.max(f.min || 0, 1));
+        else if (f.type === "date") input.value = "2026-09-08";
+        else if (f.type === "month") input.value = "2026-09";
+        else if (f.type === "time") input.value = "14:30";
+        else if (f.type === "url") input.value = "https://example.com/";
+        else if (f.type !== "select") input.value = "Essai";
+      }
+      a.submit("#os-form");
+      assert.equal(
+        a.doc.querySelector("[role=alert]"),
+        null,
+        m.id + ": " + a.doc.querySelector("[role=alert]")?.textContent,
+      );
+      const record = a.saved().os.find((r) => r.kind === m.id);
+      assert.ok(record, m.id);
+      a.click(`[data-os=edit][data-id="${record.id}"]`);
+      a.fill("#os-form [name=details]", "Contexte conservé " + m.id);
+      a.submit("#os-form");
+      assert.equal(
+        a.saved().os.find((r) => r.id === record.id).details,
+        "Contexte conservé " + m.id,
+      );
+      if (m.id === "member")
+        a.click(`[data-os=duplicate][data-id="${record.id}"]`);
+    }
+    a.click("[data-os=home]");
+  }
+  assert.equal(errors.length, 0, errors.map(String).join("\n"));
+  const b = app(a.saved());
+  b.click("[data-screen=life]");
+  b.click("[data-os=open][data-domain=travel]");
+  assert.match(b.doc.body.textContent, /Essai trip/);
+  a.dom.window.close();
+  b.dom.window.close();
+});
+test("specialized data participates in search, soft deletion and backup roundtrip", () => {
+  const a = app({
+    version: 2,
+    os: [
+      {
+        id: "m",
+        kind: "member",
+        title: "Élodie",
+        status: "En cours",
+        role: "Maison",
+      },
+    ],
+  });
+  a.click("[data-action=search]");
+  a.fill("#global-search", "elodie");
+  a.doc
+    .querySelector("#global-search")
+    .dispatchEvent(new a.w.Event("input", { bubbles: true }));
+  a.click("[data-edit=os]");
+  assert.equal(a.doc.querySelector("#os-form [name=title]").value, "Élodie");
+  a.click("[data-close]");
+  a.click("[data-screen=life]");
+  a.click("[data-os=open][data-domain=household]");
+  a.click("[data-del=os]");
+  assert.equal(a.saved().os[0].deleted, true);
+  a.click("[data-action=settings]");
+  a.click("[data-action=trash]");
+  a.click("[data-restore=os]");
+  assert.equal(a.saved().os[0].deleted, false);
+  assert.equal(
+    a.w.Q.parseBackup(a.w.Q.backup(a.saved())).os[0].title,
+    "Élodie",
+  );
+  a.dom.window.close();
+});
+test("OS quota errors retain edit content and a retry does not duplicate records", () => {
+  const a = app();
+  a.click("[data-screen=life]");
+  a.click("[data-os=open][data-domain=household]");
+  a.click("[data-os=new]");
+  a.fill("#os-form [name=title]", "Membre test");
+  const original = a.w.Storage.prototype.setItem;
+  a.w.Storage.prototype.setItem = () => {
+    throw new Error("QuotaExceededError");
+  };
+  a.submit("#os-form");
+  assert.equal(
+    a.doc.querySelector("#os-form [name=title]").value,
+    "Membre test",
+  );
+  assert.match(
+    a.doc.querySelector("[role=alert]").textContent,
+    /Sauvegarde impossible/,
+  );
+  a.w.Storage.prototype.setItem = original;
+  a.submit("#os-form");
+  assert.equal(a.saved().os.length, 1);
+  a.dom.window.close();
+});
+test("rules preview does not write, applying twice cannot duplicate generated tasks", () => {
+  const a = app({
+    version: 2,
+    os: [
+      {
+        id: "r",
+        kind: "rule",
+        title: "Règle",
+        status: "En cours",
+        source: "Échéances OS",
+        enabled: "Active",
+        horizon: 7,
+        prefix: "Faire",
+      },
+      {
+        id: "doc",
+        kind: "document",
+        title: "Contrat",
+        status: "En cours",
+        due: "2020-01-01",
+      },
+    ],
+  });
+  a.click("[data-screen=life]");
+  a.click("[data-os=open][data-domain=automation]");
+  a.click("[data-os=rules-preview]");
+  assert.equal(a.saved().tasks, undefined);
+  a.click("[data-os=rules-apply]");
+  assert.equal(a.saved().tasks.length, 1);
+  a.click("[data-os=rules-preview]");
+  assert.equal(a.doc.querySelector("[data-os=rules-apply]"), null);
   a.dom.window.close();
 });
