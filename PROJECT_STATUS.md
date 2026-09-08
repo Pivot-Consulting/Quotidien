@@ -1,134 +1,73 @@
-# Quotidien — état du projet au 8 septembre 2026
+# Quotidien — version 2.2.0
 
-## Livraison actuelle
+## Livraison
 
-**2.1.0 : vagues 0 et 1, avec les fondations nécessaires de la vague 2.**
-Base réelle : reconstruction 2.0 de `gh-pages` au commit `8cbfd84`.
-Le code et les corrections sont préparés sur `fix/stabilisation-quotidien-2`.
-La fusion et le déploiement de cette branche ne sont pas effectués par cette mission.
-Les vingt modules spécialisés de la vision produit ne sont pas déclarés terminés.
+Les vingt Life OS disposent maintenant de **48 types de fiches structurées**, de synthèses calculées et d’actions utilisables. Cette version étend le socle 2.1 déployé via la PR #10 ; elle conserve les données 2.x et les archives V6/V7. Les statuts ci-dessous décrivent le périmètre réellement implémenté, pas l’intégralité de la vision à long terme.
 
-## Architecture
+## Fonctionnalités des vingt espaces
 
-- Application statique sans framework, issue de la reconstruction existante : `app.js` pour les vues et interactions, `app.css` pour le style.
-- `src/core.ts` : schéma de sauvegarde, validation, dates locales, recherche, calcul Focus et repository de persistance. TypeScript strict, compilé en script classique sans import dynamique.
-- État local conservé sous `quotidien-rebuild-2`, schéma 2 compatible avec les exports 2.0. Pas d’API, de compte utilisateur ou de synchronisation active.
-- Repository : validation avant écriture, copie précédente, checkpoint avant restauration/réinitialisation, détection d’état modifié par un autre onglet, erreur visible en cas de quota/accès refusé. Une erreur de chargement ouvre la récupération sans remplacer l’état par des listes vides.
-- Suppression logique, liste des éléments retirés et restauration individuelle. Export JSON complet incluant les éléments retirés ; import de l’enveloppe actuelle et du format brut 2.0 après aperçu.
-- Navigation par hash et délégation de clics. Recherche sur 13 collections, raccourci Ctrl/Cmd+K, ajout rapide de six types d’éléments.
-- Build de fichiers statiques à empreinte SHA-256, sans dépendance chargée depuis un CDN. `dist/` exclut les archives, sources, outils et tests.
-- Manifest et icônes de l’ancien projet réutilisés. Aucun nouveau service worker enregistré. L’endpoint `sw.js` retire les anciens workers et uniquement leurs caches `quotidien-v6.*` / `quotidien-v7.*`. Le nettoyage ne bloque pas le démarrage.
-- `legacy/v7/` conserve à l’identique les 48 fichiers de l’ancien `main` (`42d7b14`), dont V6.1, migration, hub, vague A et ébauche Cloudflare Worker/D1. Ces fichiers ne sont ni compilés ni publiés dans la 2.1.
-
-## Branches et backups inspectés
-
-| Branche | Commit observé | Rôle |
+| Life OS | Fonctions opérationnelles en 2.2 | Limites / suite possible |
 |---|---|---|
-| main | 42d7b14 | Ancien code V7.1.4, identique au backup avant redémarrage |
-| backup-before-clean-restart-2026-07-17 | 42d7b14 | Sauvegarde préservée |
-| gh-pages | 8cbfd84 | Reconstruction 2.0, cinq fichiers statiques, retenue comme base |
-| clean-reset-source | 92b1188 | Ancien socle + fichiers préparatoires `clean-*`, pas la reconstruction finale |
-| v6-app | 3bf30e1 | V6, TypeScript/Vite à l’origine, IndexedDB et modèles structurés |
-| v6-ultra | da9ab7c | Socle enrichi V6.1 et anciens outils |
-| v7-life-os | f9e85e3 | Catalogue et capture générique des vingt domaines |
-| v7-wave-a | 0a77a6f | Première spécialisation : projets, transactions, documents, équipements, règles |
-| fix-pages-v71 | f41e136 | Correctifs d’exposition de la version |
-| fix-ios-boot | b7568ca | Correctifs de démarrage |
-| fix-interactions-v713 | 946fd40 | Correctifs d’interactions |
-| fix-v714-no-cache | 852fa4f | Correctifs de cache et préparation du redémarrage |
+| Finances | ✅ Comptes et mouvements affectés ; budgets mensuels par catégorie ; import CSV avec aperçu et détection des doublons ; flux sur six mois ; abonnements annualisés et avancement des échéances ; actifs, dettes et patrimoine net déclaré | 🟡 Pas de connexion bancaire, virements ou cours de marché ; patrimoine saisi séparément des comptes ; pas de prévisionnel de trésorerie |
+| Projets de vie | ✅ Projets, priorité, budget et dépenses saisis ; jalons pondérés ; tâches liées et taux de réalisation | 🟡 Pas de Gantt ni de dépendances entre jalons |
+| Apprentissage | ✅ Parcours, compétences, ressources, sessions minutées ; cartes avec réponse masquée et révision espacée selon difficulté | 🟡 Algorithme local simple, sans synchronisation de plateforme |
+| Documents | ✅ Liens HTTP(S), emplacement, catégorie, version déclarée, expiration et démarches ; association aux projets | 🟡 Références de fichiers uniquement, sans stockage de pièces jointes ni OCR |
+| Maison | ✅ Inventaire, pièces, achat et valorisation, garanties, factures référencées ; entretien récurrent, coût et prestataire | 🟡 Pas de commande de prestataire |
+| Nutrition | ✅ Repas, calories, protéines, glucides, lipides, eau ; totaux quotidiens et objectifs datés ; recettes, portions et préparation | 🟡 Apports saisis manuellement, sans base d’aliments, scanner ou prescription |
+| Santé avancée | ✅ Observations, intensité, contexte ; sommeil et moyenne sur sept jours ; rendez-vous et questions à préparer ; accès aux mesures et séances existantes | 🟡 Carnet descriptif sans diagnostic, traitement ou connexion à une montre |
+| Relations | ✅ Contacts, coordonnées, anniversaires du mois ; échanges, fréquence de contact et relances | 🟡 Aucun message envoyé ni carnet d’adresses distant |
+| Voyages | ✅ Voyages, dates, destinations ; réservations, adresses, horaires, annulations ; itinéraire chronologique ; budget restant ; préparatifs | 🟡 Aucun achat, carte ou connexion à une agence |
+| Carrière | ✅ Candidatures par étape, salaire et relances ; réalisations et preuves ; écarts de compétences reliés aux formations | 🟡 Pas de candidature ou CV envoyé |
+| Décisions | ✅ Décisions et options ; comparaison pondérée bénéfice/coût faible/risque faible ; classement ; choix et bilan lié | 🟡 Trois critères fixes, scores définis par l’utilisateur |
+| Journal | ✅ Entrées datées, humeur, énergie, gratitude, victoires, enseignements, intention ; série et moyenne mensuelle | 🟡 Pas de photos ni d’analyse psychologique |
+| Automatisations | ✅ Règles sur échéances OS, documents existants et tâches en retard ; aperçu puis création de tâches ; dédoublonnage par règle/source/échéance | 🟡 Exécution manuelle uniquement, sans moteur en arrière-plan ni notification push |
+| Assistant | ✅ Plan du jour selon capacité, échéances, importance et durées estimées ; briefs ; note de bilan sur sept jours | 🟡 Calcul déterministe local, aucune IA conversationnelle connectée |
+| Vie numérique | ✅ Registre des services, état MFA, revues d’accès, abonnements liés ; temps d’écran et limites saisies | 🟡 Aucune surveillance de l’appareil ni collecte automatique |
+| Sécurité | ✅ Registre de risques, probabilité × impact, mesures de réduction ; sauvegardes et dates de test/restauration | 🟡 Registre uniquement, sans scan, coffre-fort ni stockage chiffré |
+| Impact | ✅ Engagements et contributions reliées ; suivi quantitatif dans l’unité de chaque engagement | 🟡 Aucun facteur carbone estimé ni comparaison entre unités différentes |
+| Foyer | ✅ Membres, tâches assignées et récurrentes ; charges en minutes ; dépenses à parts égales ; soldes au centime ; remboursements proposés et enregistrés | 🟡 Usage local sur un navigateur, pas de partage multi-utilisateur ; aucun virement exécuté |
+| Progression | ✅ Indicateurs avec valeur initiale/cible ; historique daté ; progression croissante ou décroissante et atteinte des cibles | 🟡 Historique textuel, sans éditeur de graphiques |
+| Équilibre | ✅ Satisfaction par domaine, dernières évaluations ; capacité, engagements, récupération et marge quotidienne | 🟡 Bilan déclaratif, sans évaluation médicale |
 
-Aucun AGENTS.md ou manifeste Sites présent dans ces arbres. Aucun changement de plateforme d’hébergement.
-Une archive V5 `mon-quotidien-v5.zip` est également retrouvée parmi les fichiers disponibles ; elle n’a pas été extraite, les références V6/V7 étant déjà présentes dans Git.
+## Fonctions communes
 
-## Fonctionnalités
+- Ajout, édition, duplication, statut, notes et liens entre fiches via sélecteurs.
+- Filtres par statut, recherche locale, tri chronologique, export CSV des résultats ; formules de tableur neutralisées.
+- Recherche globale ouvrant les fiches OS ; création d’une tâche liée depuis une fiche, détection d’une action ouverte déjà liée.
+- Retrait logique et récupération individuelle ; liens vers les éléments retirés conservés.
+- Navigation directe `#life/<domaine>/<type>`, rechargement et retour navigateur.
+- Date de référence pour les calculs journaliers et mensuels qui la nécessitent. Les vues d’inventaire et soldes cumulés restent sur l’ensemble des données actives.
+- Captures libres, documents, équipements, séances et objectifs antérieurs accessibles dans leurs espaces. Aucun contenu ancien n’est transformé ou supprimé silencieusement.
 
-Les statuts concernent le périmètre indiqué, pas la totalité de la vision cible.
+## Architecture et données
 
-| Domaine | État de la 2.1 | Référence / restant |
-|---|---|---|
-| Dashboard | ✅ Synthèse tâches, agenda du jour, habitudes, objectifs, sport et Focus | 🟡 Personnalisation, finances du jour et analytics avancés |
-| Tâches | ✅ Création, édition, échéance, liste/projet texte, important/urgent, complétion, retrait/récupération | 🟡 Sous-tâches, récurrence, estimations, kanban et liens d’objectifs présents dans V6.1 à réintégrer |
-| Calendrier | ✅ Agenda chronologique, création/édition d’événements, navigation correcte des onglets | 🟡 Vues jour/semaine/mois, ICS, récurrence et time blocking à récupérer |
-| Habitudes/routines | ✅ Saisie, édition et coche journalière des habitudes ; conservation des routines | 🟡 Compteurs vers cible >1, fréquence, streaks et exécution des étapes |
-| Objectifs | ✅ Saisie/édition de progression, domaine et échéance | 🟡 Hiérarchie, KPI, milestones et relations |
-| Projets | 🟡 Catégorie texte des tâches et captures Life OS | Projets structurés et relations transverses à construire |
-| Finances | ✅ Registre de mouvements signés, solde, édition et récupération | 🟡 Comptes, budgets, CSV, récurrences, prévisionnel et catégories hiérarchiques |
-| Patrimoine | ⚪ Aucun modèle financier spécialisé | À développer |
-| Abonnements | ⚪ Aucun modèle spécialisé | À développer |
-| Sport | ✅ Historique de séances avec date, sport, durée et effort | 🟡 Programmes et exercices V6.1 à réintégrer |
-| Musculation | ⚪ Aucun outil spécialisé dans la 2.1 | Ancien modèle exercices/séries/répétitions/charge disponible dans l’archive |
-| Tennis | 🟡 Séances saisissables comme sport libre | Matchs, scores, surfaces, adversaires à développer |
-| Nutrition | 🟡 Captures génériques, mesures libres | Ancien suivi repas/eau/poids à récupérer ; macros et aliments à développer |
-| Apprentissage | 🟡 Captures génériques Life OS | Compétences, cours, temps et ressources à structurer |
-| Notes / connaissances | ✅ Création, édition, tags texte, recherche, contenu conservé | 🟡 Markdown rendu, backlinks, favoris, pièces jointes et export Obsidian à récupérer |
-| Journal | 🟡 Notes libres et domaine Life OS | Modèle quotidien, humeur et gratitude à réintégrer |
-| Voyages | 🟡 Captures de domaine consultables et modifiables | Itinéraire, réservations et budget à développer |
-| Inventaire/documents | ✅ Fiches texte, catégorie, échéance et détails | 🟡 Fichiers joints, garanties, valorisation et relations |
-| Relations | 🟡 Captures génériques | Contacts, anniversaires, historique et rappels à structurer |
-| Analytics | 🟡 Compteurs élémentaires | Tendances et graphiques à récupérer / développer |
-| Automatisations | 🟡 Notes décrivant des idées de règles | Aucune règle exécutée ; interface explicite sur cette limite |
-| Recherche / ajout rapide | ✅ Résultats ouvrables sur 13 collections, accents ignorés ; six formulaires rapides | Index spécialisé et recherche de pièces jointes futurs |
-| Sauvegarde / restauration | ✅ Format 2.x vérifié, aperçu, checkpoints et erreurs visibles | Migration V5/V6/V7 volontairement refusée sans convertisseur dédié |
-
-## P0/P1 et corrections
-
-| Priorité | Constat reproductible | Correction |
-|---|---|---|
-| P0 | Import brut non validé : état incompatible, attributs HTML non échappés | Schéma contrôlé et échappement des identifiants / dates / textes ; import refusé avant mutation |
-| P0 | Erreur JSON interprétée comme état vide, écrasement possible au prochain enregistrement | Écran de récupération avec exports bruts, aucune écriture automatique |
-| P0 | Risque de republier l’ancien main au-dessus de la reconstruction | PR réconcilie la source avec la 2.0 ; workflow prépare uniquement le build 2.1 et conserve l’historique gh-pages |
-| P1 | Clic dans un champ modal ferme la fenêtre via `closest('[data-close]')` | Fond cliquable seulement lorsqu’il est la cible directe, fermeture explicite et Échap |
-| P1 | Bouton + Note inerte et édition absente | Création et édition reliées aux données, identifiants de formulaires uniques |
-| P1 | Échec localStorage non géré | Message visible, formulaire et brouillon conservés, pas de toast de réussite |
-| P1 | Import remplace immédiatement les données | Aperçu + action de restauration, copie indépendante avant remplacement |
-| P1 | Agenda/Objectifs/Routines ouvrent des créations au lieu de changer la vue | Onglets affichant réellement chaque section |
-| P1 | Recherche renvoie seulement un nombre | Liste de résultats filtrés et accès à l’édition |
-| P1 | Jour dérivé d’UTC, erreur autour de minuit français | Date calendaire locale testée en hiver/été Europe/Paris |
-| P1 | Focus saisi en `Focus` mais calcul filtré sur `focus` | Calcul insensible à la casse et excluant les éléments retirés |
+- `src/core.ts` : schéma, imports/exports, recherche et repository local ; `src/os.ts` : catalogue typé des modèles, validation et calculs métier purs.
+- `modules/os-ui.js` : vues, formulaires et interactions spécialisés ; `app.js` : application existante et points d’intégration. L’interface est du JavaScript vérifié par syntaxe et tests DOM ; le TypeScript strict couvre les règles et la persistance.
+- Le build assemble `core.ts` + `os.ts` puis le module UI + l’application en deux scripts classiques à empreinte de contenu. Aucune dépendance supplémentaire ni CDN.
+- Même clé `quotidien-rebuild-2`, schéma 2 enrichi de la collection `os`. Une sauvegarde 2.0/2.1 sans `os` reçoit une liste vide à la lecture, sans écriture automatique. Les champs inconnus existants restent préservés.
+- Validation avant sauvegarde/import : champs, bornes, dates, URL HTTP(S), identifiants uniques, références typées et cohérence décision/option.
+- Copie précédente, checkpoint avant restauration, erreur de quota visible, brouillon conservé et refus d’écrasement depuis un onglet devenu obsolète.
+- Stockage local au navigateur, non chiffré et limité en capacité. Un export externe reste nécessaire pour sauvegarder hors de l’appareil. Pas de synchronisation serveur.
+- Les archives `legacy/v7/` et les branches historiques restent intactes, hors compilation et publication. Les formats V5/V6/V7 nécessitent toujours une migration dédiée.
 
 ## Vérifications
 
-- Ancien `main` exécuté dans une copie séparée : TypeScript, 10 tests et build passent. Ces tests sont essentiellement structurels et ne prouvent pas le bon fonctionnement de l’interface.
-- Reproduction sur code 2.0 original, sans modification : clic sur un champ ferme le formulaire ; bouton + Note ne crée aucune modale.
-- Version corrigée : `npm run verify` passe : syntaxe JavaScript + formatage, TypeScript strict du noyau, build, **26 tests** de règles métier, persistance, interactions DOM et packaging.
-- Tests : sauvegardes compatibles/incompatibles, corruption, quota, identifiants dupliqués, dates, HTML injecté, conflit entre onglets, checkpoint, récupération individuelle, recherche, saisie/édition, conservation après rechargement et six ajouts rapides.
-- Chrome réel : démarrage, création d’événement, saisie dans les champs et conservation après rechargement vérifiés.
-- Format 390 × 844 dans une iframe Chrome : rendu, navigation, capture et enregistrement d’une note vérifiés visuellement. Il s’agit d’un viewport réduit, pas d’un véritable téléphone ni d’une émulation de clavier Android/iOS.
-- Installabilité sur appareil, mode autonome mobile et ouverture offline non validés. Le shell ne garantit pas un démarrage sans réseau ; aucune promesse d’offline n’est affichée.
-- Le code UI JavaScript hérité n’est pas couvert par le typecheck TypeScript ; il est couvert par syntaxe et tests DOM. L’archive historique est exclue des nouvelles vérifications.
+- `npm run verify` : formatage, syntaxe des deux fichiers UI, TypeScript strict, build et **44 tests réussis**.
+- Parcours DOM pour les 48 modèles des 20 domaines : création, sauvegarde, réouverture et modification ; rechargement d’un état complet ; recherche, retrait, récupération, quota et reprise de saisie.
+- Règles testées : jalons pondérés, classement des décisions, progression décroissante, répartition et remboursement au centime, révision espacée, dates récurrentes dont fin de mois, plan sous contrainte de durée, parsing CSV et rejet des imports incohérents, dédoublonnage des automatisations.
+- Chrome réel : création de projet, budget restant calculé, données conservées après rechargement, jalon lié terminé et progression à 100 %.
+- Aperçu Chrome 390 × 844 : navigation et rendu des Life OS inspectés. Ce viewport n’est pas un appareil physique ; installation PWA, clavier Android/iOS, synchronisation et démarrage hors ligne ne sont pas validés.
+- Seuls des exemples synthétiques ont été saisis dans l’aperçu ; ils ne font pas partie de la distribution.
 
-## Dette technique et limites connues
+## Publication
 
-- `app.js` reste un grand renderer hérité ; extraction progressive par module à effectuer pendant les prochaines vagues. Le repository et les règles critiques sont déjà séparés.
-- localStorage reste limité en capacité, propre au navigateur, non chiffré et effaçable par l’utilisateur. Les copies sur le même appareil ne remplacent pas un export externe. Aucun stockage distant actif.
-- Détection de conflit entre onglets par comparaison de la valeur persistée, sans verrou distribué : une simultanéité exacte entre processus reste une limite. Travailler dans un seul onglet pour les écritures critiques jusqu’à l’introduction d’une transaction IndexedDB ou Web Locks.
-- Les anciens espaces V5/V6/V7 sont préservés mais non migrés automatiquement. Leurs bases IndexedDB et clés localStorage restent intactes. Préparer un convertisseur avec rapport de correspondance avant restauration.
-- Pas de moteur de notifications, synchronisation, traitement financier automatique ou d’automatisation. Le worker archivé est un prototype, pas un service actif.
-- Listes UI complètes non virtualisées, recherche limitée à 100 résultats visibles avec demande d’affiner. Mesures : huit dernières visibles, toutes recherchables.
-- La publication conserve les anciennes ressources à empreinte pour les pages déjà en cache ; prévoir une politique de rétention ultérieure.
-- La publication GitHub Pages et ses paramètres réels ne sont pas exécutés/vérifiés ici. La fusion de la PR dans `main` déclenchera le workflow prévu.
+Le workflow existant vérifie le code sur `main`, construit uniquement `dist/` et pousse un commit normal vers `gh-pages`, sans force-push. GitHub Pages reste configuré depuis cette branche. Les ressources précédentes à empreinte sont conservées. Aucun nouveau service worker ni changement de plateforme.
 
-## Roadmap
+## Dette et prochaines évolutions
 
-1. Vague 2 : extraire le layout et les vues, navigation groupée, dashboard configurable, préférences et états vides uniformes.
-2. Vague 3 : réintégrer tâches avancées, calendrier, projets reliés, objectifs et habitudes depuis `legacy/v7`, avec migration non destructive testée.
-3. Vague 4 : comptes, catégories, budgets, CSV, abonnements et patrimoine.
-4. Vague 5 : programmes sportifs, musculation, tennis, nutrition et routines.
-5. Vague 6 : notes enrichies, journal, apprentissage et relations de connaissances.
-6. Vague 7 : voyages, inventaire, contacts, pièces jointes et documents.
-7. Vague 8 : indicateurs cohérents calculés sur les données reliées.
-8. Vague 9 : téléphone réel, accessibilité complète, performance, modèle de stockage/synchronisation, audit sécurité et PWA.
-
-## Dernières modifications et journal
-
-### Vague 0 — analyse
-
-Douze branches inventoriées. La source `main` n’était pas la reconstruction publiée sur la branche de distribution. Version 2.0 retenue, sources antérieures archivées sans modifier leurs branches.
-
-### Vague 1 — modifications
-
-Protection des données et des imports, correction des interactions et formulaires, édition, récupération, dates, recherche, navigation et styles tactiles. Build reproductible et publication sans force-push préparés.
-
-### Résultat
-
-Socle 2.1 utilisable et vérifié dans le périmètre décrit. Aucun ancien module spécialisé déclaré livré sans implémentation. Le travail suivant peut repartir de cette branche et du présent inventaire.
+- Harmoniser progressivement les anciens registres et fiches spécialisées avec des conversions explicites et réversibles ; ne pas migrer les contenus libres en devinant leur sens.
+- Ajouter pièces jointes, recherche de contenu de fichiers et stockage transactionnel plus volumineux.
+- Approfondir les vues de calendrier et kanban, les programmes sportifs et le suivi tennis/musculation de l’archive.
+- Introduire une synchronisation et un partage authentifiés avant tout usage réellement collaboratif.
+- Ajouter des critères de décision personnalisables, une base d’aliments et des graphiques historiques, sans présenter ces fonctions comme déjà livrées.
+- Les listes ne sont pas virtualisées. La concurrence exacte entre onglets reste une limite du repository localStorage.
