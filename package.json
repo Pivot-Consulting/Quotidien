@@ -1,15 +1,18 @@
 {
-  "name": "quotidien-life-os",
-  "version": "7.1.0",
+  "name": "quotidien",
+  "version": "2.1.0",
   "private": true,
-  "type": "module",
   "scripts": {
-    "check": "tsc --noEmit -p tsconfig.json",
-    "build": "node scripts/build.mjs",
-    "test": "node --test tests/*.test.mjs",
-    "verify": "npm run check && npm run test && npm run build"
+    "dev": "npm run build && node scripts/serve.cjs",
+    "lint": "node --check app.js && prettier --check app.js app.css src tests scripts index.html",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc && node scripts/build.cjs",
+    "test": "npm run build && node --test tests/*.test.cjs",
+    "verify": "npm run lint && npm run typecheck && npm test"
   },
   "devDependencies": {
-    "typescript": "^5.8.3"
+    "typescript": "5.8.3",
+    "jsdom": "26.1.0",
+    "prettier": "3.5.3"
   }
 }

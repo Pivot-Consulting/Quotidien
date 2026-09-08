@@ -1,29 +1,18 @@
 # Historique
 
-## 6.1.0
+## 2.1.0 — 2026-09-08
 
-- nouveau tableau de bord avec chronologie, priorités, humeur, habitudes et objectifs ;
-- tâches enrichies : description, tags, statut GTD, contexte, énergie, temps estimé/réel, date de démarrage et objectif lié ;
-- agenda avec blocs de temps, tâches liées, catégories, couleurs, URL et navigation quotidienne ;
-- objectifs avec domaine, statut, échéance, progression et tâches associées ;
-- notes avec dossiers, favorites, sources, recherche universelle, journal et graphe ;
-- habitudes avec icône, couleur, rappel, jours neutralisés et séries ;
-- routines avec durée, couleur et édition complète ;
-- sport avec effort perçu, calories et programmes personnalisés ;
-- santé avec humeur, énergie, stress, sommeil, hydratation, poids, repas et mensurations ;
-- analyses sur 28 jours et recommandations automatiques ;
-- capture universelle, raccourcis clavier, recherche globale et mode Focus ;
-- normalisation automatique des sauvegardes V6 existantes.
+- Reprise de la reconstruction 2.0 ; conservation de V6/V7 dans `legacy/v7` et leurs branches.
+- Correction des formulaires qui se fermaient au clic, du bouton Note et des identifiants de formulaires dupliqués.
+- Édition des fiches, vraie recherche globale et six ajouts rapides.
+- Persistance validée, messages d’erreur, exports, imports avec aperçu et copies avant restauration.
+- Éléments retirés récupérables individuellement.
+- Dates locales, compteur Focus corrigé, onglets de planification fonctionnels.
+- Navigation par hash, focus clavier, labels, tailles tactiles, clair/sombre et sidebar desktop.
+- Manifest et icônes, ressources à empreinte et retrait ciblé des anciens service workers.
+- 26 tests métier, stockage, DOM et packaging ; CI et publication sans réécriture d’historique.
 
-## 6.0.0
+## 2.0 — 2026-07-17
 
-- remplacement complet de la V5 par une application TypeScript local-first ;
-- migration automatique de toutes les données historiques et de la corbeille ;
-- stockage IndexedDB et sauvegarde JSON ;
-- tableau de bord, planification et mode concentration ;
-- agenda mois/semaine et intégration `.ics` Apple ;
-- second cerveau avec journal, liens, graphe et export Obsidian ;
-- habitudes, routines, sport et suivi santé ;
-- PWA hors connexion, notifications locales et rappels matin/soir ;
-- tests et déploiement automatique GitHub Pages ;
-- socle Cloudflare Worker/D1 pour la future synchronisation.
+Reconstruction statique initiale, promue à la racine de `gh-pages` (`8cbfd84`).
+L’historique antérieur est conservé dans Git et `legacy/v7/CHANGELOG.md`.
