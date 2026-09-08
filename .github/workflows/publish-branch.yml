@@ -1,0 +1,40 @@
+name: Publier Quotidien 2 sur GitHub Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: publication-gh-pages
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run verify
+      - name: Publier sans réécrire l’historique
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin gh-pages
+          git worktree add /tmp/quotidien-pages origin/gh-pages
+          # Preserve hashed resources for HTML already cached by a client.
+          # Publish only the build allowlist; archives and sources never leave the source branch.
+          find /tmp/quotidien-pages -mindepth 1 -maxdepth 1 ! -name .git ! -name assets ! -name CNAME -exec rm -rf -- {} +
+          cp -R dist/. /tmp/quotidien-pages/
+          git -C /tmp/quotidien-pages add -A
+          if git -C /tmp/quotidien-pages diff --cached --quiet; then exit 0; fi
+          git -C /tmp/quotidien-pages commit -m "deploy: Quotidien 2.1.0 ${GITHUB_SHA}"
+          git -C /tmp/quotidien-pages push origin HEAD:gh-pages
