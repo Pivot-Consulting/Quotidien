@@ -977,7 +977,7 @@ namespace Q.OS {
       state.tasks.map((t) => String(t.automationToken || "")),
     );
     for (const rule of rows(state, "rule").filter(
-      (r) => r.enabled === "Active" && !done(r),
+      (r) => Personal.visible(r) && r.enabled === "Active" && !done(r),
     )) {
       const key =
         rule.source === "Documents existants"
@@ -987,7 +987,7 @@ namespace Q.OS {
             : "os";
       const records = state[key].filter(
         (r) =>
-          !r.deleted &&
+          Personal.visible(r) &&
           !r.done &&
           !done(r) &&
           r.id !== rule.id &&
@@ -1031,7 +1031,11 @@ namespace Q.OS {
     const pref = rows(state, "planning").find((r) => r.date === today);
     const capacity = pref ? n(pref, "capacity") : 120;
     const pool = state.tasks.filter(
-      (r) => !r.deleted && !r.done && (!r.due || String(r.due) <= today),
+      (r) =>
+        Personal.visible(r) &&
+        !r.done &&
+        !Personal.blockers(state, { key: "tasks", id: r.id }).length &&
+        (!r.due || String(r.due) <= today),
     );
     pool.sort((a, b) =>
       pref?.priority === "Importance"

@@ -50,8 +50,32 @@
     download,
     listLife,
     openForm,
+    commonFields: (r) => personal.fields(r),
+    commonRead: (f, r) => personal.readFields(f, r),
+    commonFooter: (ref) => personal.footer(ref),
+    markClean: () => personal.markClean(),
     get kinds() {
       return kinds;
+    },
+  });
+  var personal = createPersonalOS({
+    state: () => state,
+    esc,
+    id,
+    save,
+    modal,
+    close: closeModal,
+    render,
+    toast,
+    error: showError,
+    navigate,
+    quick,
+    edit: (ref) => {
+      const r = Q.Personal.resolve(state, ref);
+      if (r) {
+        if (ref.key === "os") os.edit(r.kind, r);
+        else openForm(kinds[ref.key], r);
+      }
     },
   });
   function id() {
@@ -156,12 +180,12 @@
   }
   function active(arr) {
     return arr.filter(function (x) {
-      return !x.deleted;
+      return Q.Personal.visible(x);
     });
   }
   function shell(content) {
     return (
-      '<div class="shell"><header class="topbar"><div><div class="brand">QUOTIDIEN <span>2.2</span></div><div class="date">' +
+      '<div class="shell"><header class="topbar"><div><div class="brand">QUOTIDIEN <span>2.3</span></div><div class="date">' +
       esc(
         new Intl.DateTimeFormat("fr-FR", {
           weekday: "long",
@@ -208,17 +232,19 @@
   function render() {
     document.documentElement.dataset.theme = state.settings.theme;
     var c =
-      state.screen === "today"
-        ? todayView()
-        : state.screen === "plan"
-          ? planView()
-          : state.screen === "notes"
-            ? notesView()
-            : state.screen === "tracking"
-              ? trackingView()
-              : state.screen === "life"
-                ? lifeView()
-                : waveView();
+      state.screen === "explore"
+        ? personal.searchView()
+        : state.screen === "today"
+          ? todayView()
+          : state.screen === "plan"
+            ? planView()
+            : state.screen === "notes"
+              ? notesView()
+              : state.screen === "tracking"
+                ? trackingView()
+                : state.screen === "life"
+                  ? lifeView()
+                  : waveView();
     document.body.classList.remove("modal-open");
     root.innerHTML = shell(c);
     decorateForms();
@@ -248,17 +274,6 @@
     var due = open.filter(function (t) {
       return t.due === day();
     });
-    var top = open
-      .slice()
-      .sort(function (a, b) {
-        return (
-          (b.important || 0) +
-          (b.urgent || 0) -
-          (a.important || 0) -
-          (a.urgent || 0)
-        );
-      })
-      .slice(0, 3);
     var ev = active(state.events)
       .filter(function (e) {
         return e.date === day();
@@ -278,8 +293,10 @@
           " · " +
           esc(ev[0].title) +
           "</strong>"
-        : "Ta journée est libre : choisis une prochaine action.") +
-      '</p><button class="primary" data-screen="plan">Planifier</button></section><section class="grid stat-grid"><article class="card stat"><strong>' +
+        : "Aucun événement prévu aujourd’hui.") +
+      '</p><button class="primary" data-screen="plan">Planifier</button></section>' +
+      personal.today() +
+      '<section class="grid stat-grid"><article class="card stat"><strong>' +
       doneWeek +
       '</strong><span>tâches terminées</span></article><article class="card stat"><strong>' +
       focus +
@@ -289,8 +306,6 @@
       due.length +
       '</strong><span>échéances aujourd’hui</span></article><article class="card wide"><div class="section-head"><div><span class="eyebrow">CHRONOLOGIE</span><h2>Ma journée</h2></div><button class="mini" data-action="add-event">＋ Événement</button></div>' +
       listEvents(ev) +
-      '</article><article class="card"><div class="section-head"><div><span class="eyebrow">TOP 3</span><h2>Priorités</h2></div></div>' +
-      listTasks(top) +
       '</article><article class="card"><div class="section-head"><div><span class="eyebrow">HABITUDES</span><h2>À cocher</h2></div></div>' +
       listHabits(active(state.habits)) +
       '</article><article class="card wide"><div class="section-head"><div><span class="eyebrow">OBJECTIFS</span><h2>Cap</h2></div><button class="mini" data-action="add-goal">＋</button></div>' +
@@ -634,9 +649,11 @@
     );
   }
   function balance() {
-    return active(state.finances).reduce(function (s, x) {
-      return s + (+x.amount || 0);
-    }, 0);
+    return state.finances
+      .filter((x) => !x.deleted)
+      .reduce(function (s, x) {
+        return s + (+x.amount || 0);
+      }, 0);
   }
   function money(v) {
     return new Intl.NumberFormat("fr-FR", {
@@ -691,6 +708,10 @@
           ["note", "Note"],
           ["workout", "Séance"],
           ["habit", "Habitude"],
+          ["goal", "Objectif"],
+          ["routine", "Routine"],
+          ["document", "Document"],
+          ["life", "Idée / capture libre"],
         ]
           .map(function (x) {
             return (
@@ -702,7 +723,7 @@
             );
           })
           .join("") +
-        "</div>",
+        '</div><h3>Fiches spécialisées</h3><div class="quick-grid"><button class="mini" data-os="new" data-type="project">Projet</button><button class="mini" data-os="new" data-type="contact">Contact</button><button class="mini" data-os="new" data-type="journal">Journal</button><button class="mini" data-os="new" data-type="trip">Voyage</button></div>',
     );
   }
   function settings() {
@@ -759,40 +780,7 @@
     );
   }
   function search() {
-    modal(
-      "Recherche globale",
-      '<label>Rechercher<input id="global-search" type="search" placeholder="Tâches, notes, dépenses, objectifs…"></label><div id="search-results" class="list" aria-live="polite"></div>',
-    );
-    searchResults("");
-  }
-  function searchResults(query) {
-    var items = Q.matches(state, query);
-    document.getElementById("search-results").innerHTML =
-      '<p class="meta">' +
-      items.length +
-      " résultat(s)</p>" +
-      items
-        .slice(0, 100)
-        .map(function (hit) {
-          var x = hit.record;
-          return (
-            '<button class="search-result" data-edit="' +
-            hit.key +
-            '" data-id="' +
-            esc(x.id) +
-            '"><strong>' +
-            esc(x.title || x.name || x.label || x.type || x.kind || "Élément") +
-            "</strong><span>" +
-            esc(collectionLabels[hit.key]) +
-            " · " +
-            esc(x.date || x.due || x.domain || "") +
-            "</span></button>"
-          );
-        })
-        .join("") +
-      (items.length > 100
-        ? "<p>Précise la recherche pour voir les autres résultats.</p>"
-        : "");
+    personal.search();
   }
   var collectionLabels = {
     os: "Life OS spécialisé",
@@ -970,7 +958,12 @@
         "</select></label>";
     var m = map[kind];
     if (!m) return;
-    modal(extra ? "Modifier · " + m[0] : m[0], form(m[1], kind + "-form"));
+    const collection = Object.keys(kinds).find((key) => kinds[key] === kind);
+    modal(
+      extra ? "Modifier · " + m[0] : m[0],
+      form(m[1] + personal.fields(extra || {}, collection), kind + "-form") +
+        (extra ? personal.footer({ key: collection, id: extra.id }) : ""),
+    );
     if (extra) {
       editing = {
         key: Object.keys(kinds).find(function (key) {
@@ -986,6 +979,7 @@
         else input.value = extra[key] == null ? "" : String(extra[key]);
       });
     }
+    personal.markClean();
   }
   root.addEventListener("click", function (e) {
     if (!(e.target instanceof Element)) return;
@@ -1017,6 +1011,7 @@
       }
       return;
     }
+    if (personal.handleClick(t)) return;
     if (os.handleClick(t)) return;
     if (t.dataset.edit === "os") {
       var osRecord = state.os.find((x) => x.id === t.dataset.id);
@@ -1170,6 +1165,7 @@
     e.preventDefault();
     var f = e.target;
     if (!(f instanceof HTMLFormElement) || !f.reportValidity()) return;
+    if (personal.submit(f)) return;
     if (os.submit(f)) return;
     var d = Object.fromEntries(new FormData(f).entries());
     Object.keys(d).forEach(function (key) {
@@ -1205,6 +1201,7 @@
       obj.urgent = !!f.elements.namedItem("urgent").checked;
       obj.done = original ? original.done : false;
     }
+    personal.readFields(f, obj);
     if (kind === "habit") obj.days = original ? original.days || {} : {};
     if (original)
       state[key] = state[key].map(function (x) {
@@ -1219,10 +1216,11 @@
   });
   root.addEventListener("input", function (e) {
     os.inputEvent(e.target);
-    if (e.target.id === "global-search") searchResults(e.target.value);
+    personal.inputEvent(e.target);
   });
   root.addEventListener("change", function (e) {
     os.changeEvent(e.target);
+    personal.changeEvent(e.target);
   });
   function navigate(screen) {
     if (!Q.screens.includes(screen)) screen = "today";
@@ -1260,9 +1258,18 @@
     }
     if (e.key === "Tab") {
       var controls = Array.from(
-        dialog.querySelectorAll('button,input,select,textarea,[tabindex="0"]'),
+        dialog.querySelectorAll(
+          'button,input,select,textarea,summary,[tabindex="0"]',
+        ),
       ).filter(function (el) {
-        return !el.disabled && !el.hidden;
+        return (
+          !el.disabled &&
+          !el.hidden &&
+          !el.closest("[hidden]") &&
+          !Array.from(dialog.querySelectorAll("details:not([open])")).some(
+            (d) => d.contains(el) && el.tagName !== "SUMMARY",
+          )
+        );
       });
       var first = controls[0],
         last = controls[controls.length - 1];

@@ -1,3 +1,13 @@
+# Version 2.3.0 — Fondations Personal OS
+
+- Socle partagé et propriétés avancées sur les formulaires existants.
+- Relations inter-collections, détection des cycles et récupération des liens métier.
+- Historique borné par fiche, restauration, favoris et archivage réversible.
+- Explorer avec recherche ciblée, filtres, vues et recherches persistées.
+- Today : actions expliquées, dépendances, échéances et capture étendue.
+- Correctifs de routes OS, transactions mobiles et navigation clavier.
+- 61 tests réussis ; données 2.x et archives conservées.
+
 # Historique
 
 ## 2.2.0 — 2026-09-08

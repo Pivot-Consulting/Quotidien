@@ -912,3 +912,225 @@ html[data-theme="light"] {
   cursor: pointer;
   padding: 12px 0;
 }
+
+/* Shared Personal OS components: disclosure, readable relations, reusable views. */
+.shared-fields {
+  margin-block: 18px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+  min-width: 0;
+}
+summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding-block: 12px;
+  font-weight: 650;
+}
+summary:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 2px;
+}
+.shared-fields > .form {
+  margin-top: 10px;
+}
+.shared-footer {
+  margin-top: 20px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.shared-result {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  margin-block: 10px;
+  overflow: hidden;
+  min-width: 0;
+}
+.shared-result .search-result {
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.shared-result-bottom {
+  padding: 0 14px 10px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.shared-kanban {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+.shared-kanban > section {
+  min-width: 0;
+}
+.shared-kanban h2 {
+  font-size: 17px;
+}
+.shared-timeline {
+  border-left: 2px solid var(--blue);
+  padding-left: 16px;
+  margin-block: 20px;
+}
+.shared-timeline h2 {
+  font-size: 17px;
+}
+.shared-views {
+  margin-top: 14px;
+}
+.shared-views button[aria-pressed="true"] {
+  border-color: var(--blue);
+  color: var(--blue);
+}
+.shared-edge {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+.shared-edge > div {
+  min-width: 0;
+  display: grid;
+}
+.shared-edge > button {
+  flex-shrink: 0;
+}
+.shared-check {
+  padding: 8px 0;
+  min-height: 44px;
+  overflow-wrap: anywhere;
+}
+.shared-prose {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.shared-revision {
+  border-bottom: 1px solid var(--line);
+  padding-block: 12px;
+}
+.shared-revision pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 280px;
+  overflow: auto;
+  font-size: 12px;
+}
+.shared-saved {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.shared-cockpit {
+  border-color: var(--blue);
+}
+.shared-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-block: 16px;
+}
+.shared-action {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+  min-width: 0;
+}
+.shared-action h3 {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.shared-action .section-head {
+  align-items: start;
+}
+.shared-action .tag {
+  flex-shrink: 0;
+}
+.shared-action details,
+.shared-action li {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.shared-action > button {
+  margin-top: 10px;
+}
+.modal .shared-edge .text-button {
+  width: 100%;
+  overflow-wrap: anywhere;
+}
+.modal .form > .primary {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  box-shadow: 0 -4px 14px var(--panel);
+}
+@media (max-width: 700px) {
+  .shared-actions,
+  .shared-kanban {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .shared-cockpit .section-head {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .shared-kanban > section {
+    border-top: 1px solid var(--line);
+  }
+  .shared-edge {
+    flex-wrap: wrap;
+  }
+  .shared-result-bottom .mini {
+    font-size: 12px;
+  }
+  .item:has([data-del="finances"]) {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .item:has([data-del="finances"]) > strong {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  .item:has([data-del="finances"]) > .danger {
+    grid-column: 3;
+    grid-row: 1 / 3;
+  }
+}
+.shared-search-form {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+}
+.shared-search-form label {
+  flex: 1;
+}
+@media (max-width: 380px) {
+  .shared-search-form {
+    flex-wrap: wrap;
+  }
+  .shared-search-form label {
+    flex-basis: 100%;
+  }
+}
+.shared-method {
+  color: var(--muted);
+  font-size: 13px;
+}
+@media (max-width: 700px) {
+  .hero {
+    padding: 18px 20px;
+  }
+  .hero h1 {
+    font-size: 28px;
+    margin-block: 8px;
+  }
+  .hero p {
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+}

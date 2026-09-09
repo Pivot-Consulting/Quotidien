@@ -16,10 +16,14 @@ for (const [source, name] of [
           fs.readFileSync(source),
           Buffer.from("\n"),
           fs.readFileSync(".build/os.js"),
+          Buffer.from("\n"),
+          fs.readFileSync(".build/personal.js"),
         ])
       : source === "app.js"
         ? Buffer.concat([
             fs.readFileSync("modules/os-ui.js"),
+            Buffer.from("\n"),
+            fs.readFileSync("modules/personal-ui.js"),
             Buffer.from("\n"),
             fs.readFileSync(source),
           ])

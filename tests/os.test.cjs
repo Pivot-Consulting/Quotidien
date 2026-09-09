@@ -6,7 +6,9 @@ const context = vm.createContext({ Date, Set, Map, URL });
 vm.runInContext(
   fs.readFileSync(".build/core.js", "utf8") +
     "\n" +
-    fs.readFileSync(".build/os.js", "utf8"),
+    fs.readFileSync(".build/os.js", "utf8") +
+    "\n" +
+    fs.readFileSync(".build/personal.js", "utf8"),
   context,
 );
 const Q = context.Q,

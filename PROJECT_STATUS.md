@@ -1,6 +1,26 @@
-# Quotidien — version 2.2.0
+# Quotidien — version 2.3.0
 
-## Livraison
+## Lot transversal du 9 septembre 2026
+
+La version 2.3 ajoute une première couche Personal OS à la base 2.2 existante. Ce lot n’implémente pas encore toute la vision en sept phases.
+
+- Explorer : recherche globale par mots et accents sur les champs utilisateur, filtres communs, liste/Kanban de consultation/chronologie, recherches nommées et historique de recherche effaçable.
+- Propriétés communes repliées dans les formulaires : tags, description, priorité, énergie, contexte, durée, responsable, lieu, favori, archivage et checklist.
+- Relations entre toutes les collections ; liens métier existants reconnus ; validation des références, doublons et cycles ; visualisation textuelle dans les deux sens.
+- Historique avant/après des fiches, restauration explicite d’une version, duplication sans reprendre l’exécution passée. Conservation bornée : 10 révisions par objet, 300 au total.
+- Today : prochaines actions expliquées, accès direct aux relations et checklists, actions terminer/retirer, échéances globales et favoris ; dépendances respectées aussi par le plan de l’Assistant.
+- Capture rapide étendue, routage OS fiabilisé, clavier des sections repliées et transactions adaptées aux écrans étroits.
+- Même clé et schéma 2. Les champs existants restent intacts à la lecture ; l’historique commence aux modifications effectuées en 2.3. Les bilans financiers conservent les montants archivés. Les règles et sources archivées ne génèrent plus de tâches.
+
+Sources nouvelles : `src/personal.ts` (modèles et règles pures), `modules/personal-ui.js` (parcours communs), `tests/personal.test.cjs`. La structure existante et les archives ne sont pas remplacées.
+
+**Validation du lot :** `npm run verify` réussit avec **61 tests**, dont les parcours de création et édition des 48 modèles existants. Les nouveaux tests couvrent relations inter-collections, collisions d’identifiants, cycles, quota, snapshots, archivage, restauration, recherche, filtres, historique et routes.
+
+**Contrôles Chrome :** Today et fiches communes inspectés à 320 × 844 ; création de projet, checklist persistante après rechargement et liaison tâche/projet vérifiées ; Explorer et changement de vue contrôlés. Today a aussi été contrôlé à 390 × 844 et 844 × 390, sans débordement horizontal constaté. Ces tests utilisent des cadres responsive, pas un iPhone physique : clavier natif, installation PWA et démarrage hors réseau restent à vérifier. Les exemples QA ne sont pas dans le dépôt.
+
+Le détail de l’audit et l’ordre des prochaines implémentations figurent dans [docs/PERSONAL_OS_ROADMAP.md](docs/PERSONAL_OS_ROADMAP.md). Le catalogue des routes figure dans [docs/ROUTES.md](docs/ROUTES.md).
+
+## Périmètre conservé de la livraison 2.2
 
 Les vingt Life OS disposent maintenant de **48 types de fiches structurées**, de synthèses calculées et d’actions utilisables. Cette version étend le socle 2.1 déployé via la PR #10 ; elle conserve les données 2.x et les archives V6/V7. Les statuts ci-dessous décrivent le périmètre réellement implémenté, pas l’intégralité de la vision à long terme.
 
@@ -39,7 +59,7 @@ Les vingt Life OS disposent maintenant de **48 types de fiches structurées**, d
 - Date de référence pour les calculs journaliers et mensuels qui la nécessitent. Les vues d’inventaire et soldes cumulés restent sur l’ensemble des données actives.
 - Captures libres, documents, équipements, séances et objectifs antérieurs accessibles dans leurs espaces. Aucun contenu ancien n’est transformé ou supprimé silencieusement.
 
-## Architecture et données
+## Architecture et données — base 2.2 préservée
 
 - `src/core.ts` : schéma, imports/exports, recherche et repository local ; `src/os.ts` : catalogue typé des modèles, validation et calculs métier purs.
 - `modules/os-ui.js` : vues, formulaires et interactions spécialisés ; `app.js` : application existante et points d’intégration. L’interface est du JavaScript vérifié par syntaxe et tests DOM ; le TypeScript strict couvre les règles et la persistance.
@@ -50,7 +70,7 @@ Les vingt Life OS disposent maintenant de **48 types de fiches structurées**, d
 - Stockage local au navigateur, non chiffré et limité en capacité. Un export externe reste nécessaire pour sauvegarder hors de l’appareil. Pas de synchronisation serveur.
 - Les archives `legacy/v7/` et les branches historiques restent intactes, hors compilation et publication. Les formats V5/V6/V7 nécessitent toujours une migration dédiée.
 
-## Vérifications
+## Vérifications de référence — 2.2
 
 - `npm run verify` : formatage, syntaxe des deux fichiers UI, TypeScript strict, build et **44 tests réussis**.
 - Parcours DOM pour les 48 modèles des 20 domaines : création, sauvegarde, réouverture et modification ; rechargement d’un état complet ; recherche, retrait, récupération, quota et reprise de saisie.
