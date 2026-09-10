@@ -45,7 +45,7 @@ function createCockpit(ctx) {
           );
         })
         .join("")}</div>
-      <section class="calendar-agenda" aria-live="polite"><h3>${e(new Intl.DateTimeFormat("fr-FR", { dateStyle: "full" }).format(new Date(selectedDay + "T12:00:00")))}</h3>${list.map((x) => `<article class="shared-result"><p class="meta">${e(x.time || "Sans heure")} · ${e(x.label)} · ${e(P.describe(x.hit))}${x.end !== x.start ? ` · ${e(x.start)} → ${e(x.end)}` : ""}${P.completed(x.hit.record) ? " · Terminé" : ""}</p>${refButton(x.hit, P.title(x.hit.record))}</article>`).join("") || '<p class="empty">Aucun élément pour cette journée avec ces filtres.</p>'}${button("create-event", "＋ Événement", "", "primary")}</section>
+      <section class="calendar-agenda" aria-live="polite"><h3>${e(new Intl.DateTimeFormat("fr-FR", { dateStyle: "full" }).format(new Date(selectedDay + "T12:00:00")))}</h3>${list.map((x) => `<article class="shared-result"><p class="meta">${e(x.time || "Sans heure")} · ${e(x.label)} · ${e(P.describe(x.hit))}${x.end !== x.start ? ` · ${e(x.start)} → ${e(x.end)}` : ""}${P.completed(x.hit.record, ctx.state()) ? " · Terminé" : ""}</p>${refButton(x.hit, P.title(x.hit.record))}</article>`).join("") || '<p class="empty">Aucun élément pour cette journée avec ces filtres.</p>'}${button("create-event", "＋ Événement", "", "primary")}</section>
     </section>`;
   }
   function summary() {
@@ -103,7 +103,7 @@ function createCockpit(ctx) {
           .join("") || '<p class="empty">Aucune décision enregistrée.</p>'
       }</details></section>`;
   }
-  function handleClick(t) {
+  async function handleClick(t) {
     const a = t.dataset.cockpit;
     if (!a) return false;
     if (a === "create-event") ctx.createEvent(selectedDay);
@@ -138,7 +138,7 @@ function createCockpit(ctx) {
           { accept: "accepted", snooze: "snoozed", ignore: "ignored" }[a],
           ctx.id(),
         );
-      if (ctx.save()) {
+      if (await ctx.save()) {
         ctx.render();
         ctx.toast("Suivi enregistré");
       }

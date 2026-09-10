@@ -1,6 +1,6 @@
 {
   "name": "quotidien",
-  "version": "2.4.0",
+  "version": "2.7.0",
   "private": true,
   "scripts": {
     "dev": "npm run build && node scripts/serve.cjs",
@@ -11,8 +11,9 @@
     "verify": "npm run lint && npm run typecheck && npm test"
   },
   "devDependencies": {
-    "typescript": "5.8.3",
+    "fake-indexeddb": "^6.2.5",
     "jsdom": "26.1.0",
-    "prettier": "3.5.3"
+    "prettier": "3.5.3",
+    "typescript": "5.8.3"
   }
 }

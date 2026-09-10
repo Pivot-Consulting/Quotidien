@@ -277,6 +277,46 @@ namespace Q.Intelligence {
       );
   };
   export const analyzers: { id: string; run: Analyzer }[] = [
+    {
+      id: "connected-finances",
+      run: (s, today) => [
+        ...live(s, "project")
+          .filter((r) => Connected.projectSpent(s, r) > Number(r.budget || 0))
+          .map((r) =>
+            finding(
+              "project-budget",
+              "Risque",
+              `Budget du projet dépassé · ${P.title(r)}`,
+              `${euro(Connected.projectSpent(s, r))} utilisés pour ${euro(Number(r.budget || 0))} prévus. Source : ${r.spendMode === "Transactions" ? "transactions liées, remboursements déduits" : "saisie manuelle"}.`,
+              [{ key: "os", id: r.id }],
+              `Revoir le budget · ${P.title(r)}`,
+            ),
+          ),
+        ...s.goals
+          .filter((g) => P.visible(g) && g.date && validDate(String(g.date)))
+          .flatMap((g) => {
+            const value = Connected.savings(s, g);
+            if (!value || !value.remaining) return [];
+            const days = OS.daysBetween(today, String(g.date));
+            if (
+              days >= 0 &&
+              (value.months === null || value.months * 30.44 <= days)
+            )
+              return [];
+            return [
+              finding(
+                "savings-gap",
+                "À surveiller",
+                `Épargne à ajuster · ${P.title(g)}`,
+                `${euro(value.remaining)} restent à constituer avant le ${g.date}. ${days < 0 ? "L’échéance est passée." : `À versement mensuel constant, environ ${value.months} mois seraient nécessaires (mois moyen de 30,44 jours, sans intérêts ni retraits).`}`,
+                [{ key: "goals", id: g.id }],
+                `Revoir le plan d’épargne · ${P.title(g)}`,
+                String(g.date),
+              ),
+            ];
+          }),
+      ],
+    },
     { id: "deadlines", run: deadlines },
     { id: "budgets", run: budgets },
     { id: "contacts", run: contacts },

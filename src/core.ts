@@ -3,7 +3,7 @@ namespace Q {
   export const KEY = "quotidien-rebuild-2";
   export const BACKUP_KEY = KEY + "-previous";
   export const CHECKPOINT_KEY = KEY + "-before-restore";
-  export const RELEASE = "2.4.0";
+  export const RELEASE = "2.7.0";
   export const collections = [
     "os",
     "tasks",
@@ -187,6 +187,8 @@ namespace Q {
     OS.validateLinks(next);
     Personal.validate(next);
     Intelligence.validate(next);
+    Connected.validate(next);
+    Focus.validate(next);
     return next;
   }
   export function parseBackup(raw: string): State {

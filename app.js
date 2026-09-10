@@ -1,4 +1,4 @@
-(function () {
+Q.ready = (async function () {
   "use strict";
   var KEY = "quotidien-rebuild-2";
   var LIFE = [
@@ -24,6 +24,7 @@
     "Équilibre",
   ];
   var state, repository, committed, bootError;
+  var lastExportRequested = null;
   var root = document.getElementById("app");
   var editing = null,
     planTab = "tasks",
@@ -32,8 +33,9 @@
     pendingImport = null,
     draft = null;
   try {
-    repository = new Q.Repository(localStorage);
-    state = repository.load();
+    repository = new Q.Durable.Repository(localStorage, window.indexedDB);
+    await repository.open();
+    state = await repository.load();
     committed = Q.clone(state);
   } catch (error) {
     bootError = error;
@@ -96,6 +98,47 @@
   function id() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   }
+  var editorDrafts = createDrafts({
+    repository,
+    state: () => committed,
+    dirty: () => personal.dirtyDialog(),
+    error: showError,
+    download,
+    open: (kind, recordId) => {
+      if (kind.startsWith("os:"))
+        os.edit(
+          kind.slice(3),
+          state.os.find((x) => x.id === recordId),
+        );
+      else {
+        const key = Object.keys(kinds).find((k) => kinds[k] === kind);
+        if (key)
+          openForm(
+            kind,
+            state[key].find((x) => x.id === recordId),
+          );
+      }
+    },
+  });
+  var focusUI = createFocus({
+    state: () => state,
+    esc,
+    id,
+    save,
+    modal,
+    close: closeModal,
+    render,
+    toast,
+    error: showError,
+    markClean: () => personal.markClean(),
+    review: (body, title) => {
+      openForm("note");
+      document.querySelector('#note-form [name="title"]').value =
+        title + " · " + day();
+      document.querySelector('#note-form [name="body"]').value = body;
+      editorDrafts.capture();
+    },
+  });
   function day() {
     return Q.day();
   }
@@ -110,11 +153,12 @@
       }[c];
     });
   }
-  function save(checkpoint) {
+  async function save(checkpoint) {
     try {
-      state = repository.commit(state, !!checkpoint);
+      state = await repository.commit(state, !!checkpoint);
       committed = Q.clone(state);
       draft = null;
+      if (submittingEditor) await editorDrafts.clear();
       return true;
     } catch (error) {
       draft = Q.clone(state);
@@ -159,12 +203,20 @@
     root.querySelector("#retry").onclick = function () {
       location.reload();
     };
-    ["raw-export", "previous-export"].forEach(function (name) {
-      root.querySelector("#" + name).onclick = function () {
+    var legacyButton = document.createElement("button");
+    legacyButton.id = "legacy-export";
+    legacyButton.className = "mini";
+    legacyButton.textContent = "Exporter la copie avant migration";
+    root.querySelector(".list").appendChild(legacyButton);
+    ["raw-export", "previous-export", "legacy-export"].forEach(function (name) {
+      root.querySelector("#" + name).onclick = async function () {
         try {
-          var raw = localStorage.getItem(
-            name === "raw-export" ? KEY : Q.BACKUP_KEY,
-          );
+          var raw =
+            name === "legacy-export"
+              ? localStorage.getItem(KEY)
+              : await repository.read(
+                  name === "raw-export" ? "current" : Q.BACKUP_KEY,
+                );
           if (raw === null) throw new Error("Aucune copie disponible.");
           download(raw, "quotidien-recuperation-" + name + ".json");
         } catch (err) {
@@ -200,7 +252,7 @@
   }
   function shell(content) {
     return (
-      '<div class="shell"><header class="topbar"><div><div class="brand">QUOTIDIEN <span>2.4</span></div><div class="date">' +
+      '<div class="shell"><header class="topbar"><div><div class="brand">QUOTIDIEN <span>2.7</span></div><div class="date">' +
       esc(
         new Intl.DateTimeFormat("fr-FR", {
           weekday: "long",
@@ -313,6 +365,11 @@
         : "Aucun événement prévu aujourd’hui.") +
       '</p><button class="primary" data-screen="plan">Planifier</button></section>' +
       personal.today() +
+      (!lastExportRequested ||
+      Date.now() - Date.parse(lastExportRequested) > 30 * 86400000
+        ? '<section class="card"><h2>Une copie hors du navigateur</h2><p class="meta">Aucun export demandé depuis 30 jours. Une sauvegarde externe protège contre la perte du stockage local.</p><button class="mini" data-action="export">Exporter mes données</button></section>'
+        : "") +
+      focusUI.panel() +
       cockpit.summary() +
       '<section class="grid stat-grid"><article class="card stat"><strong>' +
       doneWeek +
@@ -522,16 +579,17 @@
         .map(function (g) {
           return (
             '<article class="item"><div class="check">' +
-            Math.round(g.progress || 0) +
+            Math.round(Q.Connected.progress(state, g)) +
             '%</div><div><div class="title"><button class="text-button" data-edit="goals" data-id="' +
             esc(g.id) +
             '">' +
             esc(g.title) +
             '</button></div><div class="progress"><i style="width:' +
-            Math.max(0, Math.min(100, g.progress || 0)) +
+            Math.max(0, Math.min(100, Q.Connected.progress(state, g))) +
             '%"></i></div><div class="meta">' +
             esc(g.area || "Personnel") +
             (g.date ? " · " + fmt(g.date) : "") +
+            savingsSummary(g) +
             '</div></div><button class="danger" data-del="goals" data-id="' +
             esc(g.id) +
             '">×</button></article>'
@@ -563,6 +621,24 @@
         })
         .join("") +
       "</div>"
+    );
+  }
+  function savingsSummary(goal) {
+    const value = Q.Connected.savings(state, goal);
+    if (!value) return "";
+    return (
+      " · " +
+      esc(value.current.toFixed(2)) +
+      " / " +
+      esc(value.target.toFixed(2)) +
+      " € · " +
+      (value.months === 0
+        ? "Cible atteinte"
+        : value.months === null
+          ? "Renseigne un versement mensuel pour simuler la durée"
+          : "Simulation : " +
+            value.months +
+            " mois, à versements constants, sans intérêts ni retraits")
     );
   }
   function listWorkouts(arr) {
@@ -769,7 +845,9 @@
   function settings() {
     modal(
       "Réglages & données",
-      '<div class="list"><button class="primary" data-action="export">Exporter mes données</button><button class="mini" data-action="import">Importer une sauvegarde</button><button class="mini" data-action="trash">Éléments retirés</button><button class="mini" data-action="restore">Récupérer la copie précédente</button><button class="mini" data-action="checkpoint">Récupérer avant le dernier import</button><button class="mini" data-action="theme">Passer au thème ' +
+      '<div class="list">' +
+        editorDrafts.controls() +
+        '<button class="primary" data-action="export">Exporter mes données</button><button class="mini" data-action="import">Importer une sauvegarde</button><button class="mini" data-action="trash">Éléments retirés</button><button class="mini" data-action="restore">Récupérer la copie précédente</button><button class="mini" data-action="checkpoint">Récupérer avant le dernier import</button><button class="mini" data-action="theme">Passer au thème ' +
         (state.settings.theme === "dark" ? "clair" : "sombre") +
         "</button>" +
         (draft
@@ -777,7 +855,14 @@
           : "") +
         '<button class="mini" data-action="clear">Réinitialiser les données</button><p class="meta">Tes données restent dans ce navigateur. Exporte régulièrement une sauvegarde pour les conserver ailleurs. Version ' +
         Q.RELEASE +
-        ".</p></div>",
+        (lastExportRequested
+          ? " · Dernier téléchargement demandé : " +
+            esc(lastExportRequested.slice(0, 10)) +
+            " (vérifie le fichier téléchargé)"
+          : " · Aucun export demandé") +
+        '.</p><p class="meta">Stockage : ' +
+        esc(repository.mode) +
+        '. Une copie locale ne remplace pas une sauvegarde externe.</p><button class="mini" data-action="persist-storage">Demander la conservation du stockage local</button></div>',
     );
   }
   function importPreview(next) {
@@ -997,6 +1082,36 @@
           .join("") +
         "</select></label>";
     var m = map[kind];
+    function linkedSelect(name, label, type) {
+      return (
+        "<label>" +
+        label +
+        '<select name="' +
+        name +
+        '"><option value="">Non lié</option>' +
+        state.os
+          .filter(
+            (r) => r.kind === type && (!r.deleted || r.id === extra?.[name]),
+          )
+          .map(
+            (r) =>
+              '<option value="' + esc(r.id) + '">' + esc(r.title) + "</option>",
+          )
+          .join("") +
+        "</select></label>"
+      );
+    }
+    if (kind === "finance" || kind === "goal")
+      map[kind][1] += linkedSelect("projectId", "Projet lié", "project");
+    if (kind === "goal")
+      map.goal[1] +=
+        '<details class="full"><summary>Objectif d’épargne connecté</summary><p class="meta">Le solde total du compte détermine la progression. Un seul objectif actif par compte. Sans compte, la progression reste manuelle.</p>' +
+        linkedSelect(
+          "savingsAccountId",
+          "Compte réservé à cet objectif",
+          "account",
+        ) +
+        '<label>Cible (€)<input name="savingsTarget" type="number" min="0" step="0.01"></label><label>Versement mensuel simulé (€)<input name="monthlyContribution" type="number" min="0" step="0.01"></label></details>';
     if (!m) return;
     const collection = Object.keys(kinds).find((key) => kinds[key] === kind);
     modal(
@@ -1020,8 +1135,50 @@
       });
     }
     personal.markClean();
+    const draftForm = document.getElementById(kind + "-form");
+    draftForm.dataset.draftKind = kind;
+    draftForm.dataset.draftId = extra?.id || "";
   }
-  root.addEventListener("click", function (e) {
+  var busy = false;
+  var submittingEditor = false;
+  function on(type, handler) {
+    root.addEventListener(type, function (event) {
+      if (
+        type === "click" &&
+        !event.target.closest?.("button") &&
+        !event.target.classList?.contains("modal-wrap")
+      )
+        return;
+      if (type === "submit") event.preventDefault();
+      if (
+        type === "click" &&
+        event.target.closest?.("button")?.type === "submit" &&
+        event.target.closest("button").form
+      )
+        return;
+      if (busy) return;
+      busy = true;
+      root.setAttribute("aria-busy", "true");
+      const enabledButtons = Array.from(
+        root.querySelectorAll("button:not(:disabled)"),
+      );
+      enabledButtons.forEach((button) => {
+        button.disabled = true;
+      });
+      Q.pending = Promise.resolve()
+        .then(() => handler(event))
+        .catch((err) => showError(err.message))
+        .finally(() => {
+          submittingEditor = false;
+          busy = false;
+          enabledButtons.forEach((button) => {
+            if (button.isConnected) button.disabled = false;
+          });
+          root.removeAttribute("aria-busy");
+        });
+    });
+  }
+  on("click", async function (e) {
     if (!(e.target instanceof Element)) return;
     // The backdrop closes only when it is the direct target, never for an input inside it.
     if (e.target.classList.contains("modal-wrap")) {
@@ -1031,6 +1188,7 @@
     var t = e.target.closest("button");
     if (!t) return;
     if (t.dataset.discardDraft) {
+      await editorDrafts.clear();
       closeModal();
       return;
     }
@@ -1062,9 +1220,10 @@
       }
       return;
     }
-    if (cockpit.handleClick(t)) return;
-    if (personal.handleClick(t)) return;
-    if (os.handleClick(t)) return;
+    if (await cockpit.handleClick(t)) return;
+    if (await focusUI.click(t)) return;
+    if (await personal.handleClick(t)) return;
+    if (await os.handleClick(t)) return;
     if (t.dataset.edit === "os") {
       var osRecord = state.os.find((x) => x.id === t.dataset.id);
       if (osRecord) os.edit(osRecord.kind, osRecord);
@@ -1083,7 +1242,7 @@
       });
       if (removed) {
         removed.deleted = false;
-        if (save()) {
+        if (await save()) {
           render();
           trash();
           toast("Élément rétabli");
@@ -1097,7 +1256,7 @@
       });
       if (!item) return;
       item.deleted = true;
-      if (save()) {
+      if (await save()) {
         render();
         toast("Élément retiré. Retrouve-le dans les éléments retirés.");
       }
@@ -1110,7 +1269,7 @@
       if (task) {
         task.done = !task.done;
         task.completedAt = task.done ? new Date().toISOString() : null;
-        if (save()) render();
+        if (await save()) render();
       }
       return;
     }
@@ -1121,7 +1280,7 @@
       if (habit) {
         habit.days = Object.assign({}, habit.days || {});
         habit.days[day()] = !habit.days[day()];
-        if (save()) render();
+        if (await save()) render();
       }
       return;
     }
@@ -1144,22 +1303,53 @@
     else if (a === "life-entry") openForm("life");
     else if (["finance", "document", "asset", "automation"].includes(a))
       openForm(a);
-    else if (a === "export")
+    else if (a === "resume-editor") editorDrafts.resume();
+    else if (a === "export-editor") editorDrafts.export();
+    else if (a === "discard-editor") {
+      await editorDrafts.clear();
+      settings();
+    } else if (a === "persist-storage") {
+      if (!navigator.storage?.persist)
+        toast(
+          "Cette demande n’est pas disponible dans ce navigateur. Garde une sauvegarde externe.",
+        );
+      else
+        toast(
+          (await navigator.storage.persist())
+            ? "Conservation accordée ; les exports restent nécessaires"
+            : "Conservation non accordée par le navigateur",
+        );
+    } else if (a === "export") {
       download(Q.backup(state), "quotidien-backup-" + day() + ".json");
-    else if (a === "export-draft" && draft)
+      lastExportRequested = new Date().toISOString();
+      try {
+        await repository.auxiliary(
+          "last-export-requested",
+          lastExportRequested,
+        );
+      } catch (error) {
+        showError(
+          "Export demandé, mais sa date n’a pas pu être mémorisée : " +
+            error.message,
+        );
+      }
+      toast(
+        "Téléchargement demandé. Vérifie le fichier avant de supprimer une ancienne sauvegarde.",
+      );
+    } else if (a === "export-draft" && draft)
       download(
         Q.backup(draft),
         "quotidien-saisie-non-enregistree-" + day() + ".json",
       );
     else if (a === "theme") {
       state.settings.theme = state.settings.theme === "dark" ? "light" : "dark";
-      if (save()) {
+      if (await save()) {
         render();
         settings();
       }
     } else if (a === "restore" || a === "checkpoint") {
       try {
-        var raw = localStorage.getItem(
+        var raw = await repository.read(
           a === "restore" ? Q.BACKUP_KEY : Q.CHECKPOINT_KEY,
         );
         if (!raw) throw new Error("Aucune copie disponible.");
@@ -1194,7 +1384,7 @@
       i.click();
     } else if (a === "confirm-import" && pendingImport) {
       state = Q.clone(pendingImport);
-      if (save(true)) {
+      if (await save(true)) {
         closeModal();
         render();
         toast("Sauvegarde restaurée");
@@ -1206,19 +1396,22 @@
       );
     } else if (a === "confirm-clear") {
       state = Q.empty();
-      if (save(true)) {
+      if (await save(true)) {
         closeModal();
         render();
         toast("Données réinitialisées ; copie conservée");
       }
     }
   });
-  root.addEventListener("submit", function (e) {
+  on("submit", async function (e) {
     e.preventDefault();
     var f = e.target;
     if (!(f instanceof HTMLFormElement) || !f.reportValidity()) return;
-    if (personal.submit(f)) return;
-    if (os.submit(f)) return;
+    submittingEditor = editorDrafts.hasForm();
+    await editorDrafts.flush();
+    if (await focusUI.submit(f)) return;
+    if (await personal.submit(f)) return;
+    if (await os.submit(f)) return;
     var d = Object.fromEntries(new FormData(f).entries());
     Object.keys(d).forEach(function (key) {
       if (typeof d[key] === "string") d[key] = d[key].trim();
@@ -1260,19 +1453,21 @@
         return x.id === original.id ? obj : x;
       });
     else state[key].unshift(obj);
-    if (save()) {
+    if (await save()) {
       closeModal();
       render();
       toast("Enregistré");
     }
   });
   root.addEventListener("input", function (e) {
+    editorDrafts.capture();
     os.inputEvent(e.target);
     personal.inputEvent(e.target);
   });
-  root.addEventListener("change", function (e) {
+  on("change", async function (e) {
+    await editorDrafts.capture();
     os.changeEvent(e.target);
-    personal.changeEvent(e.target);
+    await personal.changeEvent(e.target);
     cockpit.changeEvent(e.target);
   });
   function navigate(screen) {
@@ -1285,6 +1480,7 @@
   }
   window.addEventListener("hashchange", function () {
     if (bootError) return;
+    if (busy) return;
     if (personal.dirtyDialog()) {
       history.replaceState(null, "", modalRoute || "#today");
       showError("Enregistre ou ferme cette saisie avant de changer de page.");
@@ -1302,6 +1498,7 @@
     if (screen !== state.screen) navigate(screen);
   });
   document.addEventListener("keydown", function (e) {
+    if (busy) return;
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
       e.preventDefault();
       if (!bootError) {
@@ -1356,12 +1553,11 @@
         "Données modifiées dans un autre onglet. Termine ou exporte ta saisie, puis recharge pour utiliser la dernière version.",
       );
   });
-  window.addEventListener("pageshow", function (e) {
+  window.addEventListener("pageshow", async function (e) {
     if (e.persisted && !bootError) {
       if (document.querySelector(".modal")) return;
       try {
-        repository = new Q.Repository(localStorage);
-        state = repository.load();
+        state = await repository.load();
         committed = Q.clone(state);
         if (os.route(location.hash)) state.screen = "life";
         else if (Q.screens.includes(location.hash.slice(1)))
@@ -1390,6 +1586,17 @@
       .catch(function () {
         /* Optional cleanup must never prevent opening the application. */
       });
+  }
+  if (!bootError) {
+    await editorDrafts.load();
+    try {
+      lastExportRequested = await repository.read(
+        "last-export-requested",
+        "drafts",
+      );
+    } catch (error) {
+      lastExportRequested = null;
+    }
   }
   if (bootError) recovery(bootError);
   else {

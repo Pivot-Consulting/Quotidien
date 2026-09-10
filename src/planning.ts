@@ -13,7 +13,7 @@ namespace Q.Planning {
     const result: Entry[] = [];
     for (const hit of Personal.all(s)) {
       const r = hit.record;
-      if (!Personal.visible(r) || (!includeDone && Personal.completed(r)))
+      if (!Personal.visible(r) || (!includeDone && Personal.completed(r, s)))
         continue;
       const add = (
         field: string,
@@ -37,6 +37,8 @@ namespace Q.Planning {
         });
       };
       add("due", "Échéance", true);
+      if (hit.key === "goals" && r.date !== r.due)
+        add("date", "Cible de l’objectif", true);
       if (
         ["events", "workouts"].includes(hit.key) ||
         (hit.key === "os" &&
