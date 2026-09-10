@@ -86,10 +86,12 @@ namespace Q.Personal {
     collections.flatMap((key) =>
       s[key].map((record) => ({ key, id: record.id, record })),
     );
-  export const completed = (r: RecordData): boolean =>
+  export const completed = (r: RecordData, s?: State): boolean =>
     r.done === true ||
     r.status === "Terminé" ||
-    (r.progress !== undefined && Number(r.progress) >= 100);
+    (s && s.goals.includes(r) && Connected.savings(s, r)
+      ? Connected.progress(s, r) >= 100
+      : r.progress !== undefined && Number(r.progress) >= 100);
   export const date = (r: RecordData): string => String(r.due || r.date || "");
   export const tags = (r: RecordData): string[] => [
     ...new Set(
@@ -298,6 +300,10 @@ namespace Q.Personal {
         }
       if (h.key === "tasks") add(h, "os", h.record.osSourceId, "Action liée");
       if (h.key === "finances") add(h, "os", h.record.accountId, "Compte");
+      if (h.key === "finances" || h.key === "goals")
+        add(h, "os", h.record.projectId, "Projet financé");
+      if (h.key === "goals")
+        add(h, "os", h.record.savingsAccountId, "Compte d’épargne");
     }
     return result;
   }
@@ -308,7 +314,7 @@ namespace Q.Personal {
     return connections(s)
       .filter((c) => !c.deleted && c.type === "depends" && same(c.from, ref))
       .map((c) => ({ ...c.to, record: resolve(s, c.to)! }))
-      .filter((h) => !completed(h.record));
+      .filter((h) => !completed(h.record, s));
   }
   /** Audit only changed user records. Navigation/search preferences create no record revisions. */
   export function stamp(
@@ -419,10 +425,10 @@ namespace Q.Personal {
           (!f.to || (!!d && d <= f.to)) &&
           (!f.status ||
             (f.status === "done"
-              ? completed(r)
+              ? completed(r, s)
               : f.status === "overdue"
-                ? !!r.due && String(r.due) < today && !completed(r)
-                : !completed(r))) &&
+                ? !!r.due && String(r.due) < today && !completed(r, s)
+                : !completed(r, s))) &&
           terms.every((t) => text(h).includes(t))
         );
       })
@@ -481,6 +487,10 @@ namespace Q.Personal {
     }
     if (ref.key === "tasks") copy.done = false;
     if (ref.key === "habits") copy.days = {};
+    if (ref.key === "goals") {
+      delete copy.savingsAccountId;
+      copy.progress = 0;
+    }
     return copy;
   }
   export type Action = {
@@ -522,6 +532,35 @@ namespace Q.Personal {
           reasons.push(`Priorité ${m.priority}/5`);
         }
         const duration = m.duration || Number(r.estimate || 25);
+        const context = s.settings.actionContext;
+        if (
+          context &&
+          m.context &&
+          textValue(m.context) === textValue(String(context))
+        ) {
+          score += 12;
+          reasons.push("Correspond au contexte choisi");
+        }
+        const available = Number(s.settings.availableMinutes || 0);
+        if (available > 0) {
+          score += duration <= available ? 8 : -12;
+          reasons.push(
+            duration <= available
+              ? "Tient dans le temps disponible"
+              : "Dépasse le temps disponible",
+          );
+        }
+        const energy = String(s.settings.availableEnergy || ""),
+          levels = ["low", "medium", "high"];
+        if (levels.includes(energy) && m.energy) {
+          const fits = levels.indexOf(m.energy) <= levels.indexOf(energy);
+          score += fits ? 5 : -15;
+          reasons.push(
+            fits
+              ? "Énergie demandée compatible"
+              : "Demande plus d’énergie que disponible",
+          );
+        }
         if (duration <= 15) {
           score += 5;
           reasons.push("Action courte, 15 min ou moins");
@@ -553,5 +592,8 @@ namespace Q.Personal {
           b.score - a.score ||
           title(a.hit.record).localeCompare(title(b.hit.record), "fr"),
       );
+  }
+  function textValue(value: string): string {
+    return value.trim().toLocaleLowerCase("fr");
   }
 }

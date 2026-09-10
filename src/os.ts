@@ -126,6 +126,10 @@ namespace Q.OS {
           choice("priority", "Priorité", ["Normale", "Haute", "Basse"]),
           num("budget", "Budget prévu (€)"),
           num("spent", "Dépenses cumulées (€)"),
+          choice("spendMode", "Source des dépenses", [
+            "Manuel",
+            "Transactions",
+          ]),
           date("due", "Échéance"),
           notes("outcome", "Résultat attendu"),
         ]),

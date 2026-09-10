@@ -157,7 +157,7 @@ function createPersonalOS(ctx) {
       ]
         .map(([v, l]) => {
           const list = shown.filter((h) =>
-            P.completed(h.record)
+            P.completed(h.record, state())
               ? v === "done"
               : P.blockers(state(), h).length
                 ? v === "blocked"
@@ -242,8 +242,8 @@ function createPersonalOS(ctx) {
         .join("")
     );
   }
-  function saveDetail() {
-    if (ctx.save()) {
+  async function saveDetail() {
+    if (await ctx.save()) {
       ctx.render();
       detail(current);
       return true;
@@ -258,13 +258,13 @@ function createPersonalOS(ctx) {
     const upcoming = P.all(state()).filter(
       (h) =>
         P.visible(h.record) &&
-        !P.completed(h.record) &&
+        !P.completed(h.record, state()) &&
         h.record.due &&
         String(h.record.due) >= Q.day() &&
         String(h.record.due) <= Q.OS.addDays(Q.day(), 7),
     );
     const fav = P.search(state(), { favorite: true }).slice(0, 4);
-    return `<section class="card shared-cockpit"><div class="section-head"><div><span class="eyebrow">TON FIL CONDUCTEUR</span><h2>Prochaines actions</h2></div>${button("explore", "Tout explorer")}</div><details class="shared-method"><summary>Comment sont choisies les actions ?</summary><p>Classement local selon les échéances, l’importance, la priorité et les liens. Les actions bloquées sont écartées.</p></details><div class="shared-actions">${actions.map((a) => `<article class="shared-action"><div class="section-head"><h3><button class="text-button" data-edit="tasks" data-id="${e(a.hit.id)}">${e(P.title(a.hit.record))}</button></h3><span class="tag">${a.score} pts</span></div><details><summary>Pourquoi cette action ?</summary><ul>${a.reasons.map((r) => `<li>${e(r)}</li>`).join("")}</ul></details><div class="os-actions"><button class="mini" data-toggle="task" data-id="${e(a.hit.id)}">Terminer</button>${button("detail", "Relations & checklist", attrs(a.hit))}<button class="danger" data-del="tasks" data-id="${e(a.hit.id)}" aria-label="Retirer cette tâche">×</button></div></article>`).join("") || `<p class="empty">Aucune action disponible. Capture une tâche ou consulte les dépendances dans Explorer.</p>`}</div><div class="os-actions">${button("late", `${late.length} échéance(s) en retard`)}${button("upcoming", `${upcoming.length} échéance(s) dans les 7 jours`)}${button("quick", "＋ Capture rapide", "", "primary")}</div>${fav.length ? `<details><summary>Mes favoris · ${fav.length}</summary>${fav.map(hitCard).join("")}</details>` : ""}</section>`;
+    return `<section class="card shared-cockpit"><div class="section-head"><div><span class="eyebrow">TON FIL CONDUCTEUR</span><h2>Prochaines actions</h2></div>${button("explore", "Tout explorer")}</div><details class="shared-method"><summary>Comment sont choisies les actions ?</summary><p>Classement local selon les échéances, l’importance, la priorité et les liens. Les actions bloquées sont écartées.</p></details><div class="shared-actions">${actions.map((a) => `<article class="shared-action"><div class="section-head"><h3><button class="text-button" data-edit="tasks" data-id="${e(a.hit.id)}">${e(P.title(a.hit.record))}</button></h3><span class="tag">${a.score} pts</span></div><details><summary>Pourquoi cette action ?</summary><ul>${a.reasons.map((r) => `<li>${e(r)}</li>`).join("")}</ul></details><div class="os-actions"><button class="mini" data-toggle="task" data-id="${e(a.hit.id)}">Terminer</button><button class="mini" data-focus="start" data-id="${e(a.hit.id)}">Focus</button>${button("detail", "Relations & checklist", attrs(a.hit))}<button class="danger" data-del="tasks" data-id="${e(a.hit.id)}" aria-label="Retirer cette tâche">×</button></div></article>`).join("") || `<p class="empty">Aucune action disponible. Capture une tâche ou consulte les dépendances dans Explorer.</p>`}</div><div class="os-actions">${button("late", `${late.length} échéance(s) en retard`)}${button("upcoming", `${upcoming.length} échéance(s) dans les 7 jours`)}${button("quick", "＋ Capture rapide", "", "primary")}</div>${fav.length ? `<details><summary>Mes favoris · ${fav.length}</summary>${fav.map(hitCard).join("")}</details>` : ""}</section>`;
   }
   function dirtyDialog() {
     const form = document.querySelector(".modal form");
@@ -272,6 +272,7 @@ function createPersonalOS(ctx) {
       !form ||
       ![
         "os-form",
+        "focus-form",
         "task-form",
         "event-form",
         "note-form",
@@ -304,7 +305,7 @@ function createPersonalOS(ctx) {
             x.type === "checkbox" ? String(x.checked) : x.value),
       );
   }
-  function handleClick(t) {
+  async function handleClick(t) {
     const a = t.dataset.personal;
     if (!a) return false;
     if (a === "detail") {
@@ -328,7 +329,7 @@ function createPersonalOS(ctx) {
       ctx.render();
     } else if (a === "clear-history") {
       state().settings.searchHistory = [];
-      if (ctx.save()) ctx.render();
+      if (await ctx.save()) ctx.render();
     } else if (a === "view") {
       view = t.dataset.view;
       ctx.render();
@@ -345,7 +346,7 @@ function createPersonalOS(ctx) {
       ctx.render();
     } else if (a === "remove-search") {
       state().settings.searches.splice(Number(t.dataset.index), 1);
-      if (ctx.save()) ctx.render();
+      if (await ctx.save()) ctx.render();
     } else if (a === "revision") {
       pendingRevision = P.revisions(state()).find(
         (h) => h.id === t.dataset.revision && P.same(h.ref, current),
@@ -359,7 +360,7 @@ function createPersonalOS(ctx) {
       state()[current.key] = state()[current.key].map((r) =>
         r.id === current.id ? Q.clone(pendingRevision.before) : r,
       );
-      saveDetail();
+      await saveDetail();
     } else if (current) {
       const r = P.resolve(state(), current);
       if (!r) return true;
@@ -370,11 +371,11 @@ function createPersonalOS(ctx) {
           [a === "favorite" ? "favorite" : "archived"]:
             !P.meta(r)[a === "favorite" ? "favorite" : "archived"],
         };
-        saveDetail();
+        await saveDetail();
       } else if (a === "duplicate") {
         const copy = P.duplicate(state(), current, ctx.id());
         state()[current.key].unshift(copy);
-        if (ctx.save()) {
+        if (await ctx.save()) {
           ctx.render();
           detail({ key: current.key, id: copy.id });
           ctx.toast("Copie créée ; relations globales non dupliquées");
@@ -383,16 +384,16 @@ function createPersonalOS(ctx) {
         const c = P.connections(state()).find((c) => c.id === t.dataset.edge);
         if (c) {
           c.deleted = true;
-          saveDetail();
+          await saveDetail();
         }
       }
     }
     return true;
   }
-  function submit(form) {
+  async function submit(form) {
     if (form.id === "global-search-form") {
       remember();
-      if (ctx.save()) ctx.render();
+      if (await ctx.save()) ctx.render();
       return true;
     }
     if (form.id === "saved-search-form") {
@@ -408,7 +409,7 @@ function createPersonalOS(ctx) {
       }
       state().settings.searches = [...list, { name, filter: { ...filter } }];
       remember();
-      if (ctx.save()) {
+      if (await ctx.save()) {
         ctx.close();
         ctx.render();
         ctx.toast("Recherche enregistrée");
@@ -431,7 +432,7 @@ function createPersonalOS(ctx) {
       };
       P.validate(next);
       state().connections = next.connections;
-      saveDetail();
+      await saveDetail();
     } catch (err) {
       ctx.error(err.message);
     }
@@ -452,7 +453,7 @@ function createPersonalOS(ctx) {
       refreshResults();
     }
   }
-  function changeEvent(target) {
+  async function changeEvent(target) {
     inputEvent(target);
     if (target.dataset.personalCheck !== undefined && current) {
       const r = P.resolve(state(), current),
@@ -463,7 +464,7 @@ function createPersonalOS(ctx) {
           i === index ? { ...x, done: target.checked } : x,
         ),
       };
-      saveDetail();
+      await saveDetail();
     }
   }
   return {

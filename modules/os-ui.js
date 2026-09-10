@@ -215,8 +215,8 @@ function createLifeOS(ctx) {
             progress(r.title, O.projectProgress(s, r.id)) +
             line(
               "Budget restant",
-              euro(num(r, "budget") - num(r, "spent")),
-              `${tasks.filter((t) => t.done).length}/${tasks.length} actions terminées · jalons pondérés`,
+              euro(num(r, "budget") - Q.Connected.projectSpent(s, r)),
+              `${r.spendMode === "Transactions" ? "Transactions liées, remboursements déduits" : "Dépenses manuelles"} : ${euro(Q.Connected.projectSpent(s, r))} / ${euro(num(r, "budget"))} · ${tasks.filter((t) => t.done).length}/${tasks.length} actions terminées${Q.Connected.projectSpent(s, r) > num(r, "budget") ? " · Budget dépassé" : ""}`,
             )
           );
         })
@@ -894,9 +894,12 @@ function createLifeOS(ctx) {
       `<form id="os-form" class="form">${fields.map((f) => input(f, r)).join("")}${ctx.commonFields(r)}<div class="full os-actions"><button class="primary" type="submit">Enregistrer</button>${urls}</div></form>${record ? ctx.commonFooter({ key: "os", id: record.id }) : ""}${related.length ? "<h3>Actions liées</h3>" + related.map((t) => `<p><button class="text-button" data-edit="tasks" data-id="${e(t.id)}">${t.done ? "✓ " : ""}${e(t.title)}</button></p>`).join("") : ""}`,
     );
     ctx.markClean();
+    const draftForm = document.getElementById("os-form");
+    draftForm.dataset.draftKind = "os:" + kind;
+    draftForm.dataset.draftId = record?.id || "";
   }
-  function persist() {
-    if (!ctx.save()) return false;
+  async function persist() {
+    if (!(await ctx.save())) return false;
     ctx.close();
     ctx.render();
     ctx.toast("Enregistré");
@@ -944,7 +947,7 @@ function createLifeOS(ctx) {
     ctx.render();
     history.pushState(null, "", "#life" + (selected ? "/" + selected : ""));
   }
-  function handleClick(t) {
+  async function handleClick(t) {
     const action = t.dataset.os;
     if (!action) return false;
     const r = lookup(t.dataset.id);
@@ -962,10 +965,10 @@ function createLifeOS(ctx) {
     else if (action === "review" && r) review(r);
     else if (action === "grade" && r) {
       Object.assign(r, O.reviewCard(r, t.dataset.grade));
-      persist();
+      await persist();
     } else if (action === "complete" && r) {
       Object.assign(r, O.completeRecord(r));
-      persist();
+      await persist();
     } else if (action === "duplicate" && r) {
       const copy = Q.Personal.duplicate(
         state(),
@@ -973,7 +976,7 @@ function createLifeOS(ctx) {
         ctx.id(),
       );
       state().os.unshift(copy);
-      persist();
+      await persist();
     } else if (action === "task" && r) {
       if (
         state().tasks.some(
@@ -994,7 +997,7 @@ function createLifeOS(ctx) {
         done: false,
         createdAt: new Date().toISOString(),
       });
-      persist();
+      await persist();
     } else if (action === "export") {
       const m = O.getModel(selectedType),
         fields = [
@@ -1031,7 +1034,7 @@ function createLifeOS(ctx) {
           sourceId: p.sourceId,
           createdAt: new Date().toISOString(),
         });
-      if (persist()) pendingRules = [];
+      if (await persist()) pendingRules = [];
     } else if (action === "weekly") {
       const start = O.addDays(period, -6),
         journals = rs("journal").filter(
@@ -1066,7 +1069,7 @@ function createLifeOS(ctx) {
           .join("\n")}\n\nPriorités de la semaine prochaine\n`,
         createdAt: new Date().toISOString(),
       });
-      persist();
+      await persist();
     } else if (action === "csv") {
       ctx.modal(
         "Importer des mouvements CSV",
@@ -1087,11 +1090,11 @@ function createLifeOS(ctx) {
           existing.add(fp);
         }
       }
-      if (persist()) pendingCSV = [];
+      if (await persist()) pendingCSV = [];
     }
     return true;
   }
-  function submit(f) {
+  async function submit(f) {
     if (f.id !== "os-form") return false;
     if (!f.reportValidity()) return true;
     const m = O.getModel(editType),
@@ -1132,7 +1135,7 @@ function createLifeOS(ctx) {
     if (original)
       state().os = state().os.map((r) => (r.id === original.id ? record : r));
     else state().os.unshift(record);
-    if (persist()) {
+    if (await persist()) {
       editingId = null;
       editType = "";
     }

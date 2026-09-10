@@ -6,8 +6,13 @@ module.exports = {
     ".build/personal.js",
     ".build/planning.js",
     ".build/intelligence.js",
+    ".build/durable.js",
+    ".build/connected.js",
+    ".build/focus.js",
   ],
   ui: [
+    "modules/drafts-ui.js",
+    "modules/focus-ui.js",
     "modules/os-ui.js",
     "modules/personal-ui.js",
     "modules/cockpit-ui.js",

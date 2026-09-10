@@ -1,6 +1,15 @@
-# Quotidien 2.4
+# Quotidien 2.7
 
 Application personnelle locale : organisation quotidienne et **20 Life OS spécialisés, 48 types de fiches**.
+
+## Nouveautés 2.5–2.7
+
+- Stockage IndexedDB transactionnel, migration conservant le localStorage original et les snapshots ; refus d’écraser une version modifiée dans un autre onglet. Compatibilité localStorage seulement si aucune migration n’a eu lieu.
+- Reprise de la dernière saisie dans Réglages, export du brouillon et rappel d’export après 30 jours. La reprise est bloquée si les données ont changé entre-temps : récupérer alors le contenu via l’export du brouillon. Ne pas revenir à une ancienne version du site après migration sans exporter les deux copies.
+- Projets : choix explicite entre dépenses manuelles et transactions liées. Objectifs : solde de compte réservé, cible monétaire, durée simulée à versements constants. Les remboursements de projet sont déduits ; les écritures archivées restent comptées. Un seul objectif actif par compte.
+- Today : contexte, temps et énergie ajustent les recommandations ; Focus avec pause/reprise, notes et checklist ; bilans du soir et des sept derniers jours préparés comme notes à valider. Le minuteur utilise le temps écoulé, plafonné à la durée prévue ; il ne prouve pas une attention réelle et ne termine pas la tâche automatiquement.
+
+Les notes de Focus nécessitent un enregistrement explicite. Les brouillons couvrent les formulaires de fiches, pas tous les contrôles de l’application. Pas de synchronisation, de pièces jointes binaires, de service d’exécution en arrière-plan ou de notification système ajoutés dans ce lot. Le lien public ci-dessous ne change de version qu’après fusion et publication.
 
 [Ouvrir l’application](https://pivot-consulting.github.io/Quotidien/)
 
