@@ -100,7 +100,8 @@ function createLifeOS(ctx) {
       month = period.slice(0, 7);
     let k = [],
       body = "";
-    const remaining = (kind) => rs(kind).filter((r) => !O.done(r));
+    const remaining = (kind) =>
+      rs(kind).filter((r) => Q.Personal.visible(r) && !O.done(r));
     const late = (kind) =>
       remaining(kind).filter((r) => r.due && r.due < today);
     if (d.id === "finance") {
@@ -353,7 +354,7 @@ function createLifeOS(ctx) {
           .join("") +
         '<p class="meta">Ce carnet conserve tes observations et prépare tes rendez-vous. Il ne fournit ni diagnostic ni conseil de traitement.</p>';
     } else if (d.id === "relations") {
-      const contacts = rs("contact");
+      const contacts = rs("contact").filter(Q.Personal.visible);
       let count = 0;
       body = contacts
         .map((r) => {
@@ -564,7 +565,7 @@ function createLifeOS(ctx) {
         metric("Temps d’écran saisi", O.sum(logs, "minutes") + " min"),
         metric(
           "Services à vérifier",
-          rs("service").filter(
+          remaining("service").filter(
             (r) => r.mfa === "À vérifier" || r.mfa === "Désactivée",
           ).length,
         ),
@@ -966,12 +967,11 @@ function createLifeOS(ctx) {
       Object.assign(r, O.completeRecord(r));
       persist();
     } else if (action === "duplicate" && r) {
-      const copy = {
-        ...Q.clone(r),
-        id: ctx.id(),
-        title: r.title + " (copie)",
-        createdAt: new Date().toISOString(),
-      };
+      const copy = Q.Personal.duplicate(
+        state(),
+        { key: "os", id: r.id },
+        ctx.id(),
+      );
       state().os.unshift(copy);
       persist();
     } else if (action === "task" && r) {

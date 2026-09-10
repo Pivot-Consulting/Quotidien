@@ -479,5 +479,6 @@ function createPersonalOS(ctx) {
     changeEvent,
     today,
     markClean,
+    dirtyDialog,
   };
 }

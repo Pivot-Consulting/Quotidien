@@ -1028,7 +1028,9 @@ namespace Q.OS {
     capacity: number;
     remaining: number;
   } {
-    const pref = rows(state, "planning").find((r) => r.date === today);
+    const pref = rows(state, "planning").find(
+      (r) => Personal.visible(r) && r.date === today,
+    );
     const capacity = pref ? n(pref, "capacity") : 120;
     const pool = state.tasks.filter(
       (r) =>
@@ -1047,7 +1049,7 @@ namespace Q.OS {
     let used = 0;
     const tasks = [];
     for (const r of pool) {
-      const duration = n(r, "estimate") || 25;
+      const duration = Personal.meta(r).duration || n(r, "estimate") || 25;
       if (used + duration <= capacity) {
         tasks.push(r);
         used += duration;

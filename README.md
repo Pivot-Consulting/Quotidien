@@ -1,4 +1,4 @@
-# Quotidien 2.3
+# Quotidien 2.4
 
 Application personnelle locale : organisation quotidienne et **20 Life OS spécialisés, 48 types de fiches**.
 
@@ -13,6 +13,14 @@ La recherche (loupe ou Ctrl/Cmd+K) ouvre **Explorer** : filtres transversaux, fa
 Dans une fiche, ouvre **Propriétés avancées** pour les tags communs, la priorité, le contexte et la checklist. Enregistre puis ouvre **Relations, checklist et historique** pour relier d’autres objets, archiver, dupliquer ou restaurer une révision. Le lien « Dépend de » exclut une tâche bloquée des prochaines actions.
 
 **Today** propose trois actions expliquées et des accès aux échéances des différents OS. Ce classement repose sur des règles locales. L’audit et le plan d’évolution se trouvent dans [docs/PERSONAL_OS_ROADMAP.md](docs/PERSONAL_OS_ROADMAP.md).
+
+## Calendrier et centre d’analyse
+
+Dans **Planifier → Calendrier**, retrouve les événements, voyages sur plusieurs jours, séances et échéances des OS, y compris résiliations et garanties. Sélectionne un jour pour ouvrir ses fiches ou ajouter un événement à cette date. Les filtres permettent de choisir un OS et d’inclure les éléments terminés. Les mesures et transactions ne deviennent pas des échéances.
+
+Depuis Today ou Pilotage, le **Centre d’analyse** (`#intelligence`) expose retards, dépassements de budget, contacts à reprendre, projets sans progression enregistrée depuis 30 jours, surcharge, conflits horaires et doublons possibles. Chaque constat explique son calcul et donne accès aux fiches sources. Accepter crée une seule tâche de suivi reliée aux sources, ou suit la tâche existante ; ignorer, reporter 7 jours et réexaminer sont enregistrés dans les sauvegardes. Aucune notification en arrière-plan.
+
+Les fiches modifiées sont protégées contre une fermeture accidentelle : continue la saisie ou abandonne-la explicitement. Cette protection ne remplace pas l’enregistrement, notamment si le système ferme le navigateur mobile.
 
 ## Développement
 
@@ -29,7 +37,7 @@ Serveur local : port 4173. Production : `dist/` uniquement.
 
 ## Données
 
-Les données restent dans le navigateur, sous `quotidien-rebuild-2`. Les exports 2.0/2.1/2.2 sont compatibles ; les captures et registres existants sont conservés. Réglages propose sauvegarde JSON, restauration avec aperçu, copies de récupération et éléments retirés. Exporte régulièrement une copie hors de ton appareil.
+Les données restent dans le navigateur, sous `quotidien-rebuild-2`. Les exports 2.0/2.1/2.2/2.3 sont compatibles ; les captures et registres existants sont conservés. Réglages propose sauvegarde JSON, restauration avec aperçu, copies de récupération et éléments retirés. Exporte régulièrement une copie hors de ton appareil.
 
 Les automatisations créent des tâches **après aperçu et lancement manuel**. L’assistant calcule un plan local et des bilans ; il n’est pas connecté à une IA. Les documents sont des références et liens, sans pièce jointe stockée. Aucune synchronisation distante, opération bancaire ou notification en arrière-plan.
 
@@ -39,6 +47,8 @@ Les automatisations créent des tâches **après aperçu et lancement manuel**. 
 - `modules/os-ui.js` : espaces Life OS.
 - `src/core.ts`, `src/os.ts` : persistance, modèles et règles métier.
 - `src/personal.ts`, `modules/personal-ui.js` : socle commun, relations, historique, recherche et Today.
+- `src/planning.ts`, `src/intelligence.ts`, `modules/cockpit-ui.js` : projections calendrier et analyseurs locaux.
+- `scripts/sources.cjs` : manifeste de chargement partagé entre build et tests.
 - `legacy/v7/` : archive historique hors build.
 
 Après fusion dans `main`, le workflow teste, compile et avance `gh-pages` sans réécriture d’historique. GitHub Pages publie depuis cette branche, racine `/`. Les anciens fichiers à empreinte restent disponibles pour les clients encore sur une page précédente.

@@ -1,4 +1,22 @@
-# Quotidien — version 2.3.0
+# Quotidien — version 2.4.0
+
+## Lot calendrier et analyse — 10 septembre 2026
+
+Les 20 OS et 48 modèles sont conservés. Ce lot complète le socle 2.3, sans prétendre terminer la vision globale.
+
+- Calendrier commun dans Planifier : mois, agenda quotidien, voyages multi-jours, filtres OS/terminés, résiliations et garanties, ouverture des sources et création d’événement à la date sélectionnée. Les mesures et transactions ne deviennent pas des rendez-vous.
+- Centre d’analyse (`#intelligence`) depuis Today et Pilotage : sept analyseurs locaux pour échéances, budgets, contacts, projets stagnants, charge, conflits horaires et doublons possibles. Sources consultables et calculs expliqués, sans IA distante.
+- Suivi persistant : accepter, ignorer, reporter sept jours, réexaminer et historique. Une acceptation crée une tâche reliée, ou suit la tâche existante. Le dédoublonnage reste effectif après rechargement et retrait d’une tâche générée ; un retrait ne la recrée pas silencieusement.
+- Corrections : fermeture accidentelle des fiches modifiées, recherche au clavier et changement de route pendant une saisie ; duplication OS mutualisée ; archivage respecté dans les actions actives concernées ; durée commune dans le plan ; restauration de la route au retour du cache navigateur.
+- Architecture : `src/planning.ts` et `src/intelligence.ts` contiennent les règles pures, `modules/cockpit-ui.js` les parcours ; `scripts/sources.cjs` partage le manifeste entre build et tests. Aucun nouveau framework ni service externe.
+
+Validation : 74 tests passent, incluant tous les parcours précédents et les nouveaux cas de calendrier, données manquantes, charge, conflits, report, acceptation idempotente, quota, import/export et protection des saisies. Les exemples QA ne sont pas inclus dans les données du site.
+
+Contrôles Chrome en cadres responsive : calendrier et centre d’analyse sans débordement horizontal à 320 × 844 et 844 × 390 ; calendrier et formulaire à 390 × 844 ; événement conservé après rechargement ; protection de fermeture testée à 320 px. Une tâche en retard apparaît dans l’analyse après rechargement à 390 px. Ces contrôles ne remplacent pas un essai sur iPhone physique, clavier natif, installation PWA ou démarrage hors réseau.
+
+Limites : pas de qualification de stagnation sans date fiable ; l’historique est borné et l’absence de progression enregistrée ne signifie pas absence d’activité réelle. Les conflits sont comparés sur une même journée ; sans durées, seuls les débuts identiques sont signalés. La surcharge compare les tâches à échéance aux disponibilités déclarées, pas toute la journée. Les constats se recalculent à l’ouverture ; pas de surveillance en arrière-plan. Leurs décisions restent dans l’historique quand leur cause n’est plus détectée.
+
+Les données restent locales par navigateur. Pas de compte/synchronisation, fichiers joints/OCR ou agent distant. Les exports sauvegardent aussi le suivi des recommandations. La protection des formulaires n’est pas un brouillon persistant et ne garantit pas leur récupération si le système ferme le navigateur.
 
 ## Lot transversal du 9 septembre 2026
 

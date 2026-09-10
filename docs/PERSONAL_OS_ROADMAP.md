@@ -45,6 +45,14 @@ Les fonctions détaillées, calculs et limites de chaque OS sont conservés dans
 
 L’archivage est un classement : les listes opérationnelles et Explorer le masquent par défaut, les bilans métier continuent d’utiliser les montants historiques non retirés. Les règles archivées et les sources archivées ne génèrent pas de nouvelles actions. Les exports incluent les métadonnées, liens et révisions. L’application reste locale, sans compte ni synchronisation : un test de reconnexion à un serveur ne serait pas pertinent pour cette version.
 
+## Deuxième livraison — 2.4, cohérence et projections communes
+
+Reprise des sources actives, des 20 dashboards et des parcours des 48 modèles ; référence initiale : 61 tests passants. Corrections : duplication différente entre Explorer et OS, archives proposées comme actions actives, durée commune ignorée par le plan, fermeture/navigation pouvant perdre les modifications d’une fiche et route non restaurée après retour bfcache. Les bilans historiques continuent d’inclure les écritures archivées.
+
+Le calendrier partagé et le centre d’analyse sont des projections des mêmes objets. Sept analyseurs purs exposent leurs sources et hypothèses. Le suivi des constats est une extension additive `insightDecisions`, validée à l’import et à la sauvegarde. L’acceptation relie une seule tâche ; l’identifiant de génération assure son dédoublonnage après réexamen. Les filtres sont consultatifs ; les choix de suivi sont persistés.
+
+Ce lot ne réactive pas V7, ne modifie pas la clé de stockage et ne migre pas la plateforme. 74 tests couvrent les parcours antérieurs et ces règles. Les limites exactes figurent dans `PROJECT_STATUS.md`. Pour les prochains lots ci-dessous, le calendrier et le registre d’analyseurs sont désormais des bases existantes à enrichir, pas à recréer.
+
 ## Programme des prochaines livraisons
 
 Chaque lot : analyse ciblée → règles pures → UI réutilisable → migration additive ou explicite → tests du risque réel → build → commit/PR. Ne pas annoncer les étapes suivantes comme déjà implémentées.

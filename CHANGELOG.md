@@ -1,3 +1,13 @@
+# Version 2.4.0 — Calendrier commun et analyse locale
+
+- Calendrier mensuel transversal, agenda du jour, voyages multi-jours, filtres et création à la date sélectionnée.
+- Centre d’analyse accessible depuis Today/Pilotage : sept analyseurs, sources et explications, acceptation, report 7 jours, masquage et historique persistants.
+- Tâches de suivi reliées aux objets, dédoublonnage après rechargement, retrait et réexamen.
+- Protection des fiches modifiées contre fermeture accidentelle, raccourci de recherche et changement de route.
+- Duplication OS mutualisée : états d’exécution, révisions et identité de génération ne sont plus repris ; liens métier et données sources conservés.
+- Actions archivées exclues des compteurs actifs concernés, durée commune respectée par le plan du jour, route restaurée après retour du cache navigateur.
+- Manifeste commun au build et aux tests pour éviter des composants testés mais absents du site.
+
 # Version 2.3.0 — Fondations Personal OS
 
 - Socle partagé et propriétés avancées sur les formulaires existants.

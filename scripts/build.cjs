@@ -12,21 +12,17 @@ for (const [source, name] of [
 ]) {
   const content =
     source === ".build/core.js"
-      ? Buffer.concat([
-          fs.readFileSync(source),
-          Buffer.from("\n"),
-          fs.readFileSync(".build/os.js"),
-          Buffer.from("\n"),
-          fs.readFileSync(".build/personal.js"),
-        ])
+      ? Buffer.from(
+          require("./sources.cjs")
+            .core.map((p) => fs.readFileSync(p, "utf8"))
+            .join("\n"),
+        )
       : source === "app.js"
-        ? Buffer.concat([
-            fs.readFileSync("modules/os-ui.js"),
-            Buffer.from("\n"),
-            fs.readFileSync("modules/personal-ui.js"),
-            Buffer.from("\n"),
-            fs.readFileSync(source),
-          ])
+        ? Buffer.from(
+            require("./sources.cjs")
+              .ui.map((p) => fs.readFileSync(p, "utf8"))
+              .join("\n"),
+          )
         : fs.readFileSync(source);
   const hash = crypto
     .createHash("sha256")

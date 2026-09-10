@@ -4,11 +4,9 @@ const fs = require("node:fs");
 const vm = require("node:vm");
 const context = vm.createContext({ Date, Set, Map, URL });
 vm.runInContext(
-  fs.readFileSync(".build/core.js", "utf8") +
-    "\n" +
-    fs.readFileSync(".build/os.js", "utf8") +
-    "\n" +
-    fs.readFileSync(".build/personal.js", "utf8"),
+  require("../scripts/sources.cjs")
+    .core.map((p) => fs.readFileSync(p, "utf8"))
+    .join("\n"),
   context,
 );
 const Q = context.Q,

@@ -463,6 +463,22 @@ namespace Q.Personal {
         done: false,
       })),
     };
+    // Copies are new work, without execution or generator identity.
+    for (const key of [
+      "lastCompleted",
+      "completedCount",
+      "lastReviewed",
+      "reviewStreak",
+      "interval",
+      "insightSource",
+      "automationToken",
+    ])
+      delete copy[key];
+    if (ref.key === "os") {
+      copy.status = "Idée";
+      if (copy.progress !== undefined) copy.progress = 0;
+      if (copy.done !== undefined) copy.done = false;
+    }
     if (ref.key === "tasks") copy.done = false;
     if (ref.key === "habits") copy.days = {};
     return copy;
@@ -474,6 +490,7 @@ namespace Q.Personal {
     blocked: Hit[];
   };
   export function nextActions(s: State, today = day()): Action[] {
+    const edges = graph(s);
     return s.tasks
       .filter((r) => visible(r) && !completed(r))
       .map((r) => {
@@ -509,14 +526,16 @@ namespace Q.Personal {
           score += 5;
           reasons.push("Action courte, 15 min ou moins");
         }
-        const linked = related(s, hit).some((c) => {
-          const other = resolve(s, same(c.from, hit) ? c.to : c.from);
-          return (
-            other &&
-            !other.deleted &&
-            (other.kind === "project" || s.goals.includes(other))
-          );
-        });
+        const linked = edges
+          .filter((c) => same(c.from, hit) || same(c.to, hit))
+          .some((c) => {
+            const other = resolve(s, same(c.from, hit) ? c.to : c.from);
+            return (
+              other &&
+              !other.deleted &&
+              (other.kind === "project" || s.goals.includes(other))
+            );
+          });
         if (linked) {
           score += 10;
           reasons.push("Reliée à un projet ou objectif");

@@ -3,7 +3,7 @@ namespace Q {
   export const KEY = "quotidien-rebuild-2";
   export const BACKUP_KEY = KEY + "-previous";
   export const CHECKPOINT_KEY = KEY + "-before-restore";
-  export const RELEASE = "2.3.0";
+  export const RELEASE = "2.4.0";
   export const collections = [
     "os",
     "tasks",
@@ -36,6 +36,7 @@ namespace Q {
     "life",
     "wave",
     "explore",
+    "intelligence",
   ];
   export function clone<T>(value: T): T {
     return JSON.parse(JSON.stringify(value)) as T;
@@ -185,6 +186,7 @@ namespace Q {
     next.screen = screens.includes(next.screen) ? next.screen : "today";
     OS.validateLinks(next);
     Personal.validate(next);
+    Intelligence.validate(next);
     return next;
   }
   export function parseBackup(raw: string): State {

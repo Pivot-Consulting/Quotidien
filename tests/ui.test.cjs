@@ -17,19 +17,15 @@ function app(seed) {
       typeof seed === "string" ? seed : JSON.stringify(seed),
     );
   vm.runInContext(
-    fs.readFileSync(".build/core.js", "utf8") +
-      "\n" +
-      fs.readFileSync(".build/os.js", "utf8") +
-      "\n" +
-      fs.readFileSync(".build/personal.js", "utf8"),
+    require("../scripts/sources.cjs")
+      .core.map((p) => fs.readFileSync(p, "utf8"))
+      .join("\n"),
     dom.getInternalVMContext(),
   );
   vm.runInContext(
-    fs.readFileSync("modules/os-ui.js", "utf8") +
-      "\n" +
-      fs.readFileSync("modules/personal-ui.js", "utf8") +
-      "\n" +
-      fs.readFileSync("app.js", "utf8"),
+    require("../scripts/sources.cjs")
+      .ui.map((p) => fs.readFileSync(p, "utf8"))
+      .join("\n"),
     dom.getInternalVMContext(),
   );
   return {
@@ -521,4 +517,129 @@ test("search history persists only on submitted search and survives reload", () 
   assert.equal(b.saved().settings.searchHistory.length, 0);
   a.dom.window.close();
   b.dom.window.close();
+});
+
+test("Escape, backdrop and search shortcut preserve dirty drafts until explicit discard", () => {
+  const a = app();
+  a.click("[data-action=quick]");
+  a.click("[data-create=note]");
+  a.fill("[name=title]", "Brouillon précieux");
+  a.doc.dispatchEvent(
+    new a.w.KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+  );
+  assert.equal(a.doc.querySelector("[name=title]").value, "Brouillon précieux");
+  a.click("[data-keep-draft]");
+  assert.equal(a.doc.querySelector(".discard-prompt"), null);
+  a.doc.dispatchEvent(
+    new a.w.KeyboardEvent("keydown", {
+      key: "k",
+      ctrlKey: true,
+      bubbles: true,
+    }),
+  );
+  assert.equal(a.doc.querySelector("[name=title]").value, "Brouillon précieux");
+  a.click(".modal-wrap");
+  a.click("[data-discard-draft]");
+  assert.equal(a.doc.querySelector(".modal"), null);
+  assert.equal(a.saved(), null);
+  a.dom.window.close();
+});
+test("calendar routes to record details and preserves multi-day trips across month navigation", () => {
+  const a = app({
+    version: 2,
+    events: [
+      { id: "e", title: "Rendez-vous test", date: "2026-09-09", time: "10:00" },
+    ],
+  });
+  a.click("[data-screen=plan]");
+  a.click("[data-tab=calendar]");
+  a.fill('[data-cockpit-field="month"]', "2026-09");
+  a.doc
+    .querySelector('[data-cockpit-field="month"]')
+    .dispatchEvent(new a.w.Event("change", { bubbles: true }));
+  a.click('[data-day="2026-09-09"]');
+  assert.match(
+    a.doc.querySelector(".calendar-agenda").textContent,
+    /Rendez-vous test/,
+  );
+  a.click(".calendar-agenda [data-personal=detail]");
+  assert.match(a.doc.querySelector(".modal").textContent, /Rendez-vous test/);
+  a.click("[data-close]");
+  a.click('[data-cockpit="month-next"]');
+  assert.equal(
+    a.doc.querySelector('[data-cockpit-field="month"]').value,
+    "2026-10",
+  );
+  a.dom.window.close();
+});
+test("insight acceptance, filtering, reload and quota retry persist one connected follow-up task", () => {
+  const a = app({
+    version: 2,
+    os: [
+      {
+        id: "d",
+        kind: "document",
+        title: "Renouvellement",
+        status: "En cours",
+        due: "2020-01-01",
+      },
+    ],
+  });
+  a.click("[data-cockpit=intelligence]");
+  const original = a.w.Storage.prototype.setItem;
+  a.w.Storage.prototype.setItem = () => {
+    throw new Error("Quota");
+  };
+  a.click("[data-cockpit=accept]");
+  assert.match(
+    a.doc.querySelector("[role=alert]").textContent,
+    /Sauvegarde impossible/,
+  );
+  a.w.Storage.prototype.setItem = original;
+  a.click("[data-cockpit=accept]");
+  assert.equal(a.saved().tasks.length, 1);
+  assert.equal(a.saved().connections.length, 1);
+  const b = app(a.saved());
+  b.click("[data-cockpit=intelligence]");
+  b.fill('[data-cockpit-field="disposition"]', "accepted");
+  b.doc
+    .querySelector('[data-cockpit-field="disposition"]')
+    .dispatchEvent(new b.w.Event("change", { bubbles: true }));
+  b.click("[data-cockpit=reactivate]");
+  b.fill('[data-cockpit-field="disposition"]', "active");
+  b.doc
+    .querySelector('[data-cockpit-field="disposition"]')
+    .dispatchEvent(new b.w.Event("change", { bubbles: true }));
+  const card = Array.from(b.doc.querySelectorAll(".insight-card")).find(
+    (x) =>
+      x.querySelector("h2").textContent.includes("Renouvellement") &&
+      !x.querySelector("h2").textContent.includes("Traiter"),
+  );
+  card.querySelector("[data-cockpit=accept]").click();
+  assert.equal(b.saved().tasks.length, 1);
+  a.dom.window.close();
+  b.dom.window.close();
+});
+
+test("calendar event creation uses the selected day and a clean form can close", () => {
+  const a = app();
+  a.click("[data-screen=plan]");
+  a.click("[data-tab=calendar]");
+  a.fill('[data-cockpit-field="month"]', "2027-02");
+  a.doc
+    .querySelector('[data-cockpit-field="month"]')
+    .dispatchEvent(new a.w.Event("change", { bubbles: true }));
+  a.click('[data-day="2027-02-14"]');
+  a.click('[data-cockpit="create-event"]');
+  assert.equal(
+    a.doc.querySelector("#event-form [name=date]").value,
+    "2027-02-14",
+  );
+  a.click("[data-close]");
+  assert.equal(a.doc.querySelector(".modal"), null);
+  a.click('[data-cockpit="create-event"]');
+  a.fill("#event-form [name=title]", "Événement choisi");
+  a.submit("#event-form");
+  assert.equal(a.saved().events[0].date, "2027-02-14");
+  a.dom.window.close();
 });

@@ -28,6 +28,7 @@
   var editing = null,
     planTab = "tasks",
     lastFocus = null,
+    modalRoute = "",
     pendingImport = null,
     draft = null;
   try {
@@ -76,6 +77,20 @@
         if (ref.key === "os") os.edit(r.kind, r);
         else openForm(kinds[ref.key], r);
       }
+    },
+  });
+  var cockpit = createCockpit({
+    state: () => state,
+    esc,
+    id,
+    save,
+    render,
+    navigate,
+    toast,
+    createEvent: (date) => {
+      openForm("event");
+      document.querySelector("#event-form [name=date]").value = date;
+      personal.markClean();
     },
   });
   function id() {
@@ -185,7 +200,7 @@
   }
   function shell(content) {
     return (
-      '<div class="shell"><header class="topbar"><div><div class="brand">QUOTIDIEN <span>2.3</span></div><div class="date">' +
+      '<div class="shell"><header class="topbar"><div><div class="brand">QUOTIDIEN <span>2.4</span></div><div class="date">' +
       esc(
         new Intl.DateTimeFormat("fr-FR", {
           weekday: "long",
@@ -232,19 +247,21 @@
   function render() {
     document.documentElement.dataset.theme = state.settings.theme;
     var c =
-      state.screen === "explore"
-        ? personal.searchView()
-        : state.screen === "today"
-          ? todayView()
-          : state.screen === "plan"
-            ? planView()
-            : state.screen === "notes"
-              ? notesView()
-              : state.screen === "tracking"
-                ? trackingView()
-                : state.screen === "life"
-                  ? lifeView()
-                  : waveView();
+      state.screen === "intelligence"
+        ? cockpit.intelligence()
+        : state.screen === "explore"
+          ? personal.searchView()
+          : state.screen === "today"
+            ? todayView()
+            : state.screen === "plan"
+              ? planView()
+              : state.screen === "notes"
+                ? notesView()
+                : state.screen === "tracking"
+                  ? trackingView()
+                  : state.screen === "life"
+                    ? lifeView()
+                    : waveView();
     document.body.classList.remove("modal-open");
     root.innerHTML = shell(c);
     decorateForms();
@@ -296,6 +313,7 @@
         : "Aucun événement prévu aujourd’hui.") +
       '</p><button class="primary" data-screen="plan">Planifier</button></section>' +
       personal.today() +
+      cockpit.summary() +
       '<section class="grid stat-grid"><article class="card stat"><strong>' +
       doneWeek +
       '</strong><span>tâches terminées</span></article><article class="card stat"><strong>' +
@@ -315,7 +333,7 @@
   }
   function planView() {
     return (
-      '<div class="page-title"><div><span class="eyebrow">ORGANISER</span><h1>Planifier</h1></div><button class="primary" data-action="quick">＋ Ajouter</button></div><div class="tabs"><button class="active" data-tab="tasks">Tâches</button><button data-tab="agenda">Agenda</button><button data-tab="goals">Objectifs</button><button data-tab="routines">Routines</button></div><section class="card" data-plan-section="tasks"><form class="form" id="inline-task-form"><input name="title" class="full" placeholder="Nouvelle tâche" required><input name="due" type="date"><select name="project"><option>Personnel</option><option>Travail</option><option>Santé</option><option>Finances</option></select><label><input name="important" type="checkbox"> Important</label><label><input name="urgent" type="checkbox"> Urgente</label><button class="primary">Ajouter</button></form></section><section class="card" data-plan-section="tasks"><div class="section-head"><div><span class="eyebrow">MES TÂCHES</span><h2>' +
+      '<div class="page-title"><div><span class="eyebrow">ORGANISER</span><h1>Planifier</h1></div><button class="primary" data-action="quick">＋ Ajouter</button></div><div class="tabs"><button class="active" data-tab="tasks">Tâches</button><button data-tab="agenda">Agenda</button><button data-tab="calendar">Calendrier</button><button data-tab="goals">Objectifs</button><button data-tab="routines">Routines</button></div><section class="card" data-plan-section="tasks"><form class="form" id="inline-task-form"><input name="title" class="full" placeholder="Nouvelle tâche" required><input name="due" type="date"><select name="project"><option>Personnel</option><option>Travail</option><option>Santé</option><option>Finances</option></select><label><input name="important" type="checkbox"> Important</label><label><input name="urgent" type="checkbox"> Urgente</label><button class="primary">Ajouter</button></form></section><section class="card" data-plan-section="tasks"><div class="section-head"><div><span class="eyebrow">MES TÂCHES</span><h2>' +
       active(state.tasks).filter(function (t) {
         return !t.done;
       }).length +
@@ -331,7 +349,8 @@
       listRoutines(active(state.routines)) +
       '</section><section class="card" data-plan-section="goals"><div class="section-head"><h2>Objectifs</h2><button class="mini" data-action="add-goal">＋ Objectif</button></div>' +
       listGoals(active(state.goals)) +
-      "</section>"
+      "</section>" +
+      cockpit.calendar()
     );
   }
   function notesView() {
@@ -391,6 +410,7 @@
   }
   function waveView() {
     return (
+      cockpit.summary() +
       '<div class="page-title"><div><span class="eyebrow">PILOTAGE</span><h1>Pilotage avancé</h1></div></div><section class="grid"><article class="card"><div class="section-head"><div><span class="eyebrow">PROJETS DE VIE</span><h2>Objectifs</h2></div><button class="mini" data-action="add-goal">＋</button></div>' +
       listGoals(active(state.goals)) +
       '</article><article class="card"><div class="section-head"><div><span class="eyebrow">FINANCES</span><h2>' +
@@ -661,6 +681,23 @@
       currency: "EUR",
     }).format(+v || 0);
   }
+  function dismissModal() {
+    if (!personal.dirtyDialog()) {
+      closeModal();
+      return;
+    }
+    let prompt = document.querySelector(".discard-prompt");
+    if (!prompt) {
+      prompt = document.createElement("div");
+      prompt.className = "discard-prompt";
+      prompt.setAttribute("role", "group");
+      prompt.setAttribute("aria-label", "Saisie non enregistrée");
+      prompt.innerHTML =
+        '<p>Cette saisie n’est pas enregistrée.</p><div class="os-actions"><button class="primary" data-keep-draft="1">Continuer la saisie</button><button class="danger" data-discard-draft="1">Abandonner les modifications</button></div>';
+      document.querySelector(".modal header").after(prompt);
+    }
+    prompt.querySelector("button").focus();
+  }
   function closeModal() {
     document.getElementById("modal").innerHTML = "";
     document.body.classList.remove("modal-open");
@@ -671,7 +708,10 @@
     if (lastFocus && lastFocus.isConnected) lastFocus.focus();
   }
   function modal(title, body) {
-    if (!document.querySelector(".modal")) lastFocus = document.activeElement;
+    if (!document.querySelector(".modal")) {
+      lastFocus = document.activeElement;
+      modalRoute = location.hash;
+    }
     editing = null;
     document.getElementById("modal").innerHTML =
       '<div class="modal-wrap"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1"><header><h2 id="modal-title">' +
@@ -985,13 +1025,24 @@
     if (!(e.target instanceof Element)) return;
     // The backdrop closes only when it is the direct target, never for an input inside it.
     if (e.target.classList.contains("modal-wrap")) {
-      closeModal();
+      dismissModal();
       return;
     }
     var t = e.target.closest("button");
     if (!t) return;
-    if (t.dataset.close) {
+    if (t.dataset.discardDraft) {
       closeModal();
+      return;
+    }
+    if (t.dataset.keepDraft) {
+      t.closest(".discard-prompt").remove();
+      document
+        .querySelector(".modal input,.modal textarea,.modal select")
+        ?.focus();
+      return;
+    }
+    if (t.dataset.close) {
+      dismissModal();
       return;
     }
     if (t.dataset.screen) {
@@ -1011,6 +1062,7 @@
       }
       return;
     }
+    if (cockpit.handleClick(t)) return;
     if (personal.handleClick(t)) return;
     if (os.handleClick(t)) return;
     if (t.dataset.edit === "os") {
@@ -1221,6 +1273,7 @@
   root.addEventListener("change", function (e) {
     os.changeEvent(e.target);
     personal.changeEvent(e.target);
+    cockpit.changeEvent(e.target);
   });
   function navigate(screen) {
     if (!Q.screens.includes(screen)) screen = "today";
@@ -1232,6 +1285,11 @@
   }
   window.addEventListener("hashchange", function () {
     if (bootError) return;
+    if (personal.dirtyDialog()) {
+      history.replaceState(null, "", modalRoute || "#today");
+      showError("Enregistre ou ferme cette saisie avant de changer de page.");
+      return;
+    }
     if (os.route(location.hash)) {
       state.screen = "life";
       closeModal();
@@ -1246,14 +1304,18 @@
   document.addEventListener("keydown", function (e) {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
       e.preventDefault();
-      if (!bootError) search();
+      if (!bootError) {
+        if (personal.dirtyDialog())
+          showError("Enregistre ou ferme cette saisie avant de rechercher.");
+        else search();
+      }
       return;
     }
     var dialog = document.querySelector(".modal");
     if (!dialog) return;
     if (e.key === "Escape") {
       e.preventDefault();
-      closeModal();
+      dismissModal();
       return;
     }
     if (e.key === "Tab") {
@@ -1282,6 +1344,12 @@
       }
     }
   });
+  window.addEventListener("beforeunload", function (e) {
+    if (!bootError && personal.dirtyDialog()) {
+      e.preventDefault();
+      e.returnValue = "";
+    }
+  });
   window.addEventListener("storage", function (e) {
     if (e.key === KEY && !bootError)
       showError(
@@ -1295,6 +1363,9 @@
         repository = new Q.Repository(localStorage);
         state = repository.load();
         committed = Q.clone(state);
+        if (os.route(location.hash)) state.screen = "life";
+        else if (Q.screens.includes(location.hash.slice(1)))
+          state.screen = location.hash.slice(1);
         render();
       } catch (err) {
         recovery(err);
