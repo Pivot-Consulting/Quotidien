@@ -977,7 +977,7 @@ namespace Q.OS {
       state.tasks.map((t) => String(t.automationToken || "")),
     );
     for (const rule of rows(state, "rule").filter(
-      (r) => r.enabled === "Active" && !done(r),
+      (r) => Personal.visible(r) && r.enabled === "Active" && !done(r),
     )) {
       const key =
         rule.source === "Documents existants"
@@ -987,7 +987,7 @@ namespace Q.OS {
             : "os";
       const records = state[key].filter(
         (r) =>
-          !r.deleted &&
+          Personal.visible(r) &&
           !r.done &&
           !done(r) &&
           r.id !== rule.id &&
@@ -1028,10 +1028,16 @@ namespace Q.OS {
     capacity: number;
     remaining: number;
   } {
-    const pref = rows(state, "planning").find((r) => r.date === today);
+    const pref = rows(state, "planning").find(
+      (r) => Personal.visible(r) && r.date === today,
+    );
     const capacity = pref ? n(pref, "capacity") : 120;
     const pool = state.tasks.filter(
-      (r) => !r.deleted && !r.done && (!r.due || String(r.due) <= today),
+      (r) =>
+        Personal.visible(r) &&
+        !r.done &&
+        !Personal.blockers(state, { key: "tasks", id: r.id }).length &&
+        (!r.due || String(r.due) <= today),
     );
     pool.sort((a, b) =>
       pref?.priority === "Importance"
@@ -1043,7 +1049,7 @@ namespace Q.OS {
     let used = 0;
     const tasks = [];
     for (const r of pool) {
-      const duration = n(r, "estimate") || 25;
+      const duration = Personal.meta(r).duration || n(r, "estimate") || 25;
       if (used + duration <= capacity) {
         tasks.push(r);
         used += duration;

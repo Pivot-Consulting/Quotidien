@@ -17,15 +17,15 @@ function app(seed) {
       typeof seed === "string" ? seed : JSON.stringify(seed),
     );
   vm.runInContext(
-    fs.readFileSync(".build/core.js", "utf8") +
-      "\n" +
-      fs.readFileSync(".build/os.js", "utf8"),
+    require("../scripts/sources.cjs")
+      .core.map((p) => fs.readFileSync(p, "utf8"))
+      .join("\n"),
     dom.getInternalVMContext(),
   );
   vm.runInContext(
-    fs.readFileSync("modules/os-ui.js", "utf8") +
-      "\n" +
-      fs.readFileSync("app.js", "utf8"),
+    require("../scripts/sources.cjs")
+      .ui.map((p) => fs.readFileSync(p, "utf8"))
+      .join("\n"),
     dom.getInternalVMContext(),
   );
   return {
@@ -374,5 +374,272 @@ test("rules preview does not write, applying twice cannot duplicate generated ta
   assert.equal(a.saved().tasks.length, 1);
   a.click("[data-os=rules-preview]");
   assert.equal(a.doc.querySelector("[data-os=rules-apply]"), null);
+  a.dom.window.close();
+});
+
+test("shared properties, relations and checklist survive reload with cross-collection IDs", () => {
+  const a = app({
+    version: 2,
+    tasks: [{ id: "same", title: "Dossier" }],
+    notes: [{ id: "same", title: "Banque" }],
+  });
+  a.click("[data-edit=tasks]");
+  a.fill("[name=personal_tags]", "Banque, Urgent");
+  a.fill("[name=personal_checklist]", "Joindre pièce\n[x] Vérifier");
+  a.fill("[name=personal_priority]", "5");
+  a.submit("#task-form");
+  assert.equal(a.saved().tasks[0].personal.priority, 5);
+  assert.equal(a.saved().tasks[0].personal.checklist[1].done, true);
+  a.click("[data-edit=tasks]");
+  a.click("[data-personal=detail]");
+  a.fill("#relation-target", JSON.stringify(["notes", "same"]));
+  a.submit("#relation-form");
+  assert.equal(a.saved().connections.length, 1);
+  assert.match(a.doc.querySelector(".modal").textContent, /Banque/);
+  a.click('[data-personal-check="0"]');
+  assert.equal(a.saved().tasks[0].personal.checklist[0].done, true);
+  const b = app(a.saved());
+  b.click("[data-edit=tasks]");
+  b.click("[data-personal=detail]");
+  assert.match(b.doc.querySelector(".modal").textContent, /Banque/);
+  a.dom.window.close();
+  b.dom.window.close();
+});
+test("dirty editors block opening relations until saved, including OS fields", () => {
+  const a = app({ version: 2, tasks: [{ id: "t", title: "Original" }] });
+  a.click("[data-edit=tasks]");
+  a.fill("[name=title]", "Brouillon");
+  a.click("[data-personal=detail]");
+  assert.match(a.doc.querySelector("[role=alert]").textContent, /Enregistre/);
+  assert.equal(a.doc.querySelector("[name=title]").value, "Brouillon");
+  a.dom.window.close();
+});
+test("archive, saved filters, shared views, duplication and revision restore are usable", () => {
+  const a = app({ version: 2, tasks: [{ id: "t", title: "Dossier" }] });
+  a.click("[data-edit=tasks]");
+  a.fill("[name=title]", "Dossier v2");
+  a.submit("#task-form");
+  a.click("[data-edit=tasks]");
+  a.click("[data-personal=detail]");
+  a.click("[data-personal=archive]");
+  assert.equal(a.saved().tasks[0].personal.archived, true);
+  a.click("[data-close]");
+  a.click("[data-action=search]");
+  a.fill("[data-personal-filter=archive]", "archived");
+  a.doc
+    .querySelector("[data-personal-filter=archive]")
+    .dispatchEvent(new a.w.Event("change", { bubbles: true }));
+  assert.match(
+    a.doc.querySelector("#search-results").textContent,
+    /Dossier v2/,
+  );
+  for (const v of ["kanban", "timeline", "list"]) {
+    a.click(`[data-view=${v}]`);
+    assert.match(
+      a.doc.querySelector("#search-results").textContent,
+      /Dossier v2/,
+    );
+  }
+  a.click("[data-personal=save-search]");
+  a.fill("#saved-search-form [name=name]", "Archives");
+  a.submit("#saved-search-form");
+  assert.equal(a.saved().settings.searches[0].filter.archive, "archived");
+  a.click("[data-personal=detail]");
+  a.click("[data-personal=revision]");
+  a.click("[data-personal=confirm-revision]");
+  assert.equal(a.saved().tasks[0].personal?.archived, undefined);
+  a.click("[data-personal=duplicate]");
+  assert.equal(a.saved().tasks.length, 2);
+  assert.equal(a.saved().tasks[0].title, "Dossier v2 (copie)");
+  a.dom.window.close();
+});
+test("relationship rejection and save failure preserve selected target for retry", () => {
+  const a = app({
+    version: 2,
+    tasks: [{ id: "t", title: "Tâche" }],
+    notes: [{ id: "n", title: "Note" }],
+  });
+  a.click("[data-edit=tasks]");
+  a.click("[data-personal=detail]");
+  a.fill("#relation-target", JSON.stringify(["notes", "n"]));
+  const original = a.w.Storage.prototype.setItem;
+  a.w.Storage.prototype.setItem = () => {
+    throw new Error("Quota");
+  };
+  a.submit("#relation-form");
+  assert.equal(
+    a.doc.querySelector("#relation-target").value,
+    JSON.stringify(["notes", "n"]),
+  );
+  a.w.Storage.prototype.setItem = original;
+  a.submit("#relation-form");
+  assert.equal(a.saved().connections.length, 1);
+  a.fill("#relation-target", JSON.stringify(["notes", "n"]));
+  a.submit("#relation-form");
+  assert.match(a.doc.querySelector("[role=alert]").textContent, /existe déjà/);
+  assert.equal(a.saved().connections.length, 1);
+  a.dom.window.close();
+});
+
+test("OS deep links reset old filters and reject a type from another domain", () => {
+  const a = app();
+  a.click("[data-screen=life]");
+  a.click("[data-os=open][data-domain=finance]");
+  a.fill("[data-os-query]", "Introuvable");
+  a.doc
+    .querySelector("[data-os-query]")
+    .dispatchEvent(new a.w.Event("input", { bubbles: true }));
+  a.w.location.hash = "#life/projects/account";
+  a.w.dispatchEvent(new a.w.HashChangeEvent("hashchange"));
+  assert.equal(a.doc.querySelector("h1").textContent, "Projets de vie");
+  assert.equal(a.doc.querySelector("[data-os-query]").value, "");
+  assert.equal(
+    a.doc.querySelector("[role=tab][aria-selected=true]").dataset.type,
+    "project",
+  );
+  a.dom.window.close();
+});
+test("search history persists only on submitted search and survives reload", () => {
+  const a = app();
+  a.click("[data-action=search]");
+  a.fill("#global-search", "voyage");
+  a.doc
+    .querySelector("#global-search")
+    .dispatchEvent(new a.w.Event("input", { bubbles: true }));
+  assert.equal(a.saved(), null);
+  a.submit("#global-search-form");
+  assert.equal(a.saved().settings.searchHistory[0], "voyage");
+  const b = app(a.saved());
+  b.click("[data-action=search]");
+  b.click("[data-personal=recent-search]");
+  assert.equal(b.doc.querySelector("#global-search").value, "voyage");
+  b.click("[data-personal=clear-history]");
+  assert.equal(b.saved().settings.searchHistory.length, 0);
+  a.dom.window.close();
+  b.dom.window.close();
+});
+
+test("Escape, backdrop and search shortcut preserve dirty drafts until explicit discard", () => {
+  const a = app();
+  a.click("[data-action=quick]");
+  a.click("[data-create=note]");
+  a.fill("[name=title]", "Brouillon précieux");
+  a.doc.dispatchEvent(
+    new a.w.KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+  );
+  assert.equal(a.doc.querySelector("[name=title]").value, "Brouillon précieux");
+  a.click("[data-keep-draft]");
+  assert.equal(a.doc.querySelector(".discard-prompt"), null);
+  a.doc.dispatchEvent(
+    new a.w.KeyboardEvent("keydown", {
+      key: "k",
+      ctrlKey: true,
+      bubbles: true,
+    }),
+  );
+  assert.equal(a.doc.querySelector("[name=title]").value, "Brouillon précieux");
+  a.click(".modal-wrap");
+  a.click("[data-discard-draft]");
+  assert.equal(a.doc.querySelector(".modal"), null);
+  assert.equal(a.saved(), null);
+  a.dom.window.close();
+});
+test("calendar routes to record details and preserves multi-day trips across month navigation", () => {
+  const a = app({
+    version: 2,
+    events: [
+      { id: "e", title: "Rendez-vous test", date: "2026-09-09", time: "10:00" },
+    ],
+  });
+  a.click("[data-screen=plan]");
+  a.click("[data-tab=calendar]");
+  a.fill('[data-cockpit-field="month"]', "2026-09");
+  a.doc
+    .querySelector('[data-cockpit-field="month"]')
+    .dispatchEvent(new a.w.Event("change", { bubbles: true }));
+  a.click('[data-day="2026-09-09"]');
+  assert.match(
+    a.doc.querySelector(".calendar-agenda").textContent,
+    /Rendez-vous test/,
+  );
+  a.click(".calendar-agenda [data-personal=detail]");
+  assert.match(a.doc.querySelector(".modal").textContent, /Rendez-vous test/);
+  a.click("[data-close]");
+  a.click('[data-cockpit="month-next"]');
+  assert.equal(
+    a.doc.querySelector('[data-cockpit-field="month"]').value,
+    "2026-10",
+  );
+  a.dom.window.close();
+});
+test("insight acceptance, filtering, reload and quota retry persist one connected follow-up task", () => {
+  const a = app({
+    version: 2,
+    os: [
+      {
+        id: "d",
+        kind: "document",
+        title: "Renouvellement",
+        status: "En cours",
+        due: "2020-01-01",
+      },
+    ],
+  });
+  a.click("[data-cockpit=intelligence]");
+  const original = a.w.Storage.prototype.setItem;
+  a.w.Storage.prototype.setItem = () => {
+    throw new Error("Quota");
+  };
+  a.click("[data-cockpit=accept]");
+  assert.match(
+    a.doc.querySelector("[role=alert]").textContent,
+    /Sauvegarde impossible/,
+  );
+  a.w.Storage.prototype.setItem = original;
+  a.click("[data-cockpit=accept]");
+  assert.equal(a.saved().tasks.length, 1);
+  assert.equal(a.saved().connections.length, 1);
+  const b = app(a.saved());
+  b.click("[data-cockpit=intelligence]");
+  b.fill('[data-cockpit-field="disposition"]', "accepted");
+  b.doc
+    .querySelector('[data-cockpit-field="disposition"]')
+    .dispatchEvent(new b.w.Event("change", { bubbles: true }));
+  b.click("[data-cockpit=reactivate]");
+  b.fill('[data-cockpit-field="disposition"]', "active");
+  b.doc
+    .querySelector('[data-cockpit-field="disposition"]')
+    .dispatchEvent(new b.w.Event("change", { bubbles: true }));
+  const card = Array.from(b.doc.querySelectorAll(".insight-card")).find(
+    (x) =>
+      x.querySelector("h2").textContent.includes("Renouvellement") &&
+      !x.querySelector("h2").textContent.includes("Traiter"),
+  );
+  card.querySelector("[data-cockpit=accept]").click();
+  assert.equal(b.saved().tasks.length, 1);
+  a.dom.window.close();
+  b.dom.window.close();
+});
+
+test("calendar event creation uses the selected day and a clean form can close", () => {
+  const a = app();
+  a.click("[data-screen=plan]");
+  a.click("[data-tab=calendar]");
+  a.fill('[data-cockpit-field="month"]', "2027-02");
+  a.doc
+    .querySelector('[data-cockpit-field="month"]')
+    .dispatchEvent(new a.w.Event("change", { bubbles: true }));
+  a.click('[data-day="2027-02-14"]');
+  a.click('[data-cockpit="create-event"]');
+  assert.equal(
+    a.doc.querySelector("#event-form [name=date]").value,
+    "2027-02-14",
+  );
+  a.click("[data-close]");
+  assert.equal(a.doc.querySelector(".modal"), null);
+  a.click('[data-cockpit="create-event"]');
+  a.fill("#event-form [name=title]", "Événement choisi");
+  a.submit("#event-form");
+  assert.equal(a.saved().events[0].date, "2027-02-14");
   a.dom.window.close();
 });

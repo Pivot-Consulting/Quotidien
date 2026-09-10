@@ -20,10 +20,15 @@ http
       return;
     }
     if (url === "/__qa/mobile") {
+      const params = new URL(req.url, "http://localhost").searchParams;
+      const width = [320, 390, 844].includes(Number(params.get("width")))
+        ? Number(params.get("width"))
+        : 390;
+      const height = width === 844 ? 390 : 844;
       res
         .writeHead(200, { "Content-Type": "text/html" })
         .end(
-          '<title>Quotidien · test 390 × 844</title><style>body{margin:0;background:#ddd}iframe{display:block;width:390px;height:844px;border:0;margin:16px auto}</style><iframe title="Quotidien mobile" src="/index.html"></iframe>',
+          `<title>Quotidien · test ${width} × ${height}</title><style>body{margin:0;background:#ddd}iframe{display:block;width:${width}px;height:${height}px;border:0;margin:16px auto}</style><iframe title="Quotidien mobile" src="/index.html"></iframe>`,
         );
       return;
     }

@@ -100,7 +100,8 @@ function createLifeOS(ctx) {
       month = period.slice(0, 7);
     let k = [],
       body = "";
-    const remaining = (kind) => rs(kind).filter((r) => !O.done(r));
+    const remaining = (kind) =>
+      rs(kind).filter((r) => Q.Personal.visible(r) && !O.done(r));
     const late = (kind) =>
       remaining(kind).filter((r) => r.due && r.due < today);
     if (d.id === "finance") {
@@ -353,7 +354,7 @@ function createLifeOS(ctx) {
           .join("") +
         '<p class="meta">Ce carnet conserve tes observations et prépare tes rendez-vous. Il ne fournit ni diagnostic ni conseil de traitement.</p>';
     } else if (d.id === "relations") {
-      const contacts = rs("contact");
+      const contacts = rs("contact").filter(Q.Personal.visible);
       let count = 0;
       body = contacts
         .map((r) => {
@@ -564,7 +565,7 @@ function createLifeOS(ctx) {
         metric("Temps d’écran saisi", O.sum(logs, "minutes") + " min"),
         metric(
           "Services à vérifier",
-          rs("service").filter(
+          remaining("service").filter(
             (r) => r.mfa === "À vérifier" || r.mfa === "Désactivée",
           ).length,
         ),
@@ -772,10 +773,12 @@ function createLifeOS(ctx) {
   }
   function filteredRecords() {
     return rs(selectedType)
+      .filter((r) => Q.Personal.visible(r))
       .filter(
         (r) =>
           (!filter || r.status === filter) &&
-          JSON.stringify(r)
+          [r.title, r.details, ...Q.Personal.tags(r)]
+            .join(" ")
             .normalize("NFD")
             .replace(/[\u0300-\u036f]/g, "")
             .toLowerCase()
@@ -888,8 +891,9 @@ function createLifeOS(ctx) {
       : "";
     ctx.modal(
       `${record ? "Modifier" : "Ajouter"} · ${m.label}`,
-      `<form id="os-form" class="form">${fields.map((f) => input(f, r)).join("")}<div class="full os-actions"><button class="primary" type="submit">Enregistrer</button>${urls}</div></form>${related.length ? "<h3>Actions liées</h3>" + related.map((t) => `<p><button class="text-button" data-edit="tasks" data-id="${e(t.id)}">${t.done ? "✓ " : ""}${e(t.title)}</button></p>`).join("") : ""}`,
+      `<form id="os-form" class="form">${fields.map((f) => input(f, r)).join("")}${ctx.commonFields(r)}<div class="full os-actions"><button class="primary" type="submit">Enregistrer</button>${urls}</div></form>${record ? ctx.commonFooter({ key: "os", id: record.id }) : ""}${related.length ? "<h3>Actions liées</h3>" + related.map((t) => `<p><button class="text-button" data-edit="tasks" data-id="${e(t.id)}">${t.done ? "✓ " : ""}${e(t.title)}</button></p>`).join("") : ""}`,
     );
+    ctx.markClean();
   }
   function persist() {
     if (!ctx.save()) return false;
@@ -915,8 +919,18 @@ function createLifeOS(ctx) {
   function route(hash) {
     const parts = hash.replace(/^#/, "").split("/");
     if (parts[0] !== "life") return false;
-    selected = O.domains.some((d) => d.id === parts[1]) ? parts[1] : "";
-    if (parts[2] && O.getModel(parts[2])) selectedType = parts[2];
+    const domain = O.domains.find((d) => d.id === parts[1]);
+    const nextDomain = domain?.id || "";
+    const nextType =
+      domain?.models.find((m) => m.id === parts[2])?.id ||
+      domain?.models[0]?.id ||
+      "";
+    if (selected !== nextDomain || selectedType !== nextType) {
+      query = "";
+      filter = "";
+    }
+    selected = nextDomain;
+    selectedType = nextType;
     return true;
   }
   function open(domain) {
@@ -953,12 +967,11 @@ function createLifeOS(ctx) {
       Object.assign(r, O.completeRecord(r));
       persist();
     } else if (action === "duplicate" && r) {
-      const copy = {
-        ...Q.clone(r),
-        id: ctx.id(),
-        title: r.title + " (copie)",
-        createdAt: new Date().toISOString(),
-      };
+      const copy = Q.Personal.duplicate(
+        state(),
+        { key: "os", id: r.id },
+        ctx.id(),
+      );
       state().os.unshift(copy);
       persist();
     } else if (action === "task" && r) {
@@ -1096,6 +1109,7 @@ function createLifeOS(ctx) {
       if (f.type === "refs") record[f.key] = fd.getAll(f.key);
     for (const key of Object.keys(record))
       if (typeof record[key] === "string") record[key] = record[key].trim();
+    ctx.commonRead(f, record);
     try {
       O.validate(record);
       for (const f of m.fields.filter(

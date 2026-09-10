@@ -3,7 +3,7 @@ namespace Q {
   export const KEY = "quotidien-rebuild-2";
   export const BACKUP_KEY = KEY + "-previous";
   export const CHECKPOINT_KEY = KEY + "-before-restore";
-  export const RELEASE = "2.2.0";
+  export const RELEASE = "2.4.0";
   export const collections = [
     "os",
     "tasks",
@@ -28,7 +28,16 @@ namespace Q {
     settings: { theme: string; focus: number; [key: string]: unknown };
     [key: string]: unknown;
   } & Record<Collection, RecordData[]>;
-  export const screens = ["today", "plan", "notes", "tracking", "life", "wave"];
+  export const screens = [
+    "today",
+    "plan",
+    "notes",
+    "tracking",
+    "life",
+    "wave",
+    "explore",
+    "intelligence",
+  ];
   export function clone<T>(value: T): T {
     return JSON.parse(JSON.stringify(value)) as T;
   }
@@ -164,6 +173,7 @@ namespace Q {
           )
             throw new Error("Historique d’habitude invalide.");
         }
+        Personal.validateMeta(record);
         if (key === "os") OS.validate(record);
         return record;
       });
@@ -175,6 +185,8 @@ namespace Q {
       next.settings.theme = "dark";
     next.screen = screens.includes(next.screen) ? next.screen : "today";
     OS.validateLinks(next);
+    Personal.validate(next);
+    Intelligence.validate(next);
     return next;
   }
   export function parseBackup(raw: string): State {
@@ -224,6 +236,11 @@ namespace Q {
       if (checkpoint)
         this.storage.setItem(CHECKPOINT_KEY, JSON.stringify(this.load()));
       if (raw !== null) this.storage.setItem(BACKUP_KEY, raw);
+      if (!checkpoint)
+        Personal.stamp(
+          raw === null ? empty() : normalize(JSON.parse(raw)),
+          next,
+        );
       const serialized = JSON.stringify(next);
       this.storage.setItem(KEY, serialized);
       this.expected = serialized;
@@ -234,21 +251,12 @@ namespace Q {
     state: State,
     query: string,
   ): { key: Collection; record: RecordData }[] {
-    const fold = (value: string) =>
-      value
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase();
-    const q = fold(query.trim());
-    return collections.flatMap((key) =>
-      state[key]
-        .filter(
-          (record) =>
-            !record.deleted && fold(JSON.stringify(record)).includes(q),
-        )
-        .map((record) => ({ key, record })),
-    );
+    return Personal.search(state, { query }).map((hit) => ({
+      key: hit.key,
+      record: hit.record,
+    }));
   }
+
   export function focusMinutes(state: State): number {
     return state.health
       .filter((x) => !x.deleted && String(x.kind).toLowerCase() === "focus")
