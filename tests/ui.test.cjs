@@ -850,3 +850,100 @@ test("calendar event creation uses the selected day and a clean form can close",
   assert.equal(a.saved().events[0].date, "2027-02-14");
   a.dom.window.close();
 });
+
+test("Today installs, executes and remembers essential routines", async () => {
+  const a = await app();
+  await a.click('[data-routine="templates"]');
+  assert.equal(a.saved().routines.length, 3);
+  await a.click('[data-routine="open"]');
+  while (a.doc.querySelector("[data-routine-step]:not(:checked)")) {
+    const step = a.doc.querySelector("[data-routine-step]:not(:checked)");
+    step.checked = true;
+    step.dispatchEvent(new a.w.Event("change", { bubbles: true }));
+    await a.w.Q.pending;
+  }
+  await a.click('[data-routine="complete"]');
+  assert.ok(a.saved().routineRuns[0].completedAt);
+  const b = await app(a.saved());
+  assert.match(b.doc.body.textContent, /Terminée/);
+  a.dom.window.close();
+  b.dom.window.close();
+});
+
+test("Today widgets can be simplified and stay configured", async () => {
+  const a = await app();
+  await a.click('[data-action="today-settings"]');
+  a.doc.querySelector('[name="routines"]').checked = false;
+  await a.submit("#today-settings-form");
+  assert.equal(a.saved().settings.todayWidgets.routines, false);
+  assert.equal(a.doc.querySelector('[data-routine="templates"]'), null);
+  const b = await app(a.saved());
+  assert.equal(b.doc.querySelector('[data-routine="templates"]'), null);
+  a.dom.window.close();
+  b.dom.window.close();
+});
+
+test("Document Vault persists metadata, project links and filters across reload", async () => {
+  const seed = {
+    version: 2,
+    os: [
+      {
+        id: "project",
+        kind: "project",
+        title: "Maison",
+        status: "En cours",
+        budget: 0,
+        spent: 0,
+      },
+    ],
+  };
+  const a = await app(seed);
+  let b;
+  try {
+    await a.click('[data-screen="wave"]');
+    await a.click('[data-screen="vault"]');
+    await a.click('[data-vault="new"]');
+    a.fill('#vault-form [name="title"]', "Assurance habitation");
+    a.fill('#vault-form [name="category"]', "Contrat");
+    a.fill('#vault-form [name="company"]', "Mutuelle Exemple");
+    a.fill('#vault-form [name="projectId"]', "project");
+    await a.submit("#vault-form");
+    assert.equal(a.saved().documents[0].projectId, "project");
+    b = await app(a.saved());
+    await b.click('[data-screen="wave"]');
+    await b.click('[data-screen="vault"]');
+    b.fill('#vault-search [name="query"]', "mutuelle");
+    await b.submit("#vault-search");
+    assert.match(b.doc.body.textContent, /Assurance habitation/);
+  } finally {
+    a.dom.window.close();
+    b?.dom.window.close();
+  }
+});
+
+test("Automation templates create idempotent notices and save quiet hours", async () => {
+  const a = await app({
+    version: 2,
+    finances: [{ id: "expense", label: "Ordinateur", amount: -900 }],
+  });
+  await a.click('[data-screen="wave"]');
+  await a.click('[data-screen="automation"]');
+  await a.click(
+    '[data-automation="template"][data-trigger="Dépense importante"]',
+  );
+  await a.submit("#automation-builder");
+  assert.equal(a.saved().automations.length, 1);
+  assert.equal(a.saved().notifications.length, 1);
+  assert.equal(a.saved().automationLogs.length, 1);
+  a.fill('#notification-prefs [name="quietStart"]', "21:30");
+  a.fill('#notification-prefs [name="quietEnd"]', "06:45");
+  await a.submit("#notification-prefs");
+  assert.equal(a.saved().settings.notificationQuietStart, "21:30");
+  await a.click('[data-automation="run"]');
+  assert.equal(a.saved().notifications.length, 1);
+  await a.click('[data-automation="notices"]');
+  await a.click('[data-automation="snooze"][data-days="1"]');
+  assert.equal(a.saved().notifications[0].read, true);
+  assert.ok(a.saved().notifications[0].snoozedUntil);
+  a.dom.window.close();
+});

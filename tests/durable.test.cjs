@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const vm = require("node:vm");
 const fs = require("node:fs");
 const { IDBFactory } = require("fake-indexeddb");
-const context = vm.createContext({ Date, Set, Map });
+const context = vm.createContext({ Date, Set, Map, Blob });
 vm.runInContext(
   require("../scripts/sources.cjs")
     .core.map((p) => fs.readFileSync(p, "utf8"))
@@ -142,6 +142,17 @@ test("auxiliary drafts persist independently and can be removed", async () => {
   assert.equal(await a.repo.read("draft", "drafts"), null);
   a.repo.close();
   b.close();
+});
+test("file blobs survive the v2 database upgrade and remain outside JSON snapshots", async () => {
+  const a = await setup(),
+    blob = new Blob(["preuve"], { type: "text/plain" });
+  await a.repo.putFile("doc:file", blob);
+  const stored = await a.repo.getFile("doc:file");
+  assert.equal(await stored.text(), "preuve");
+  assert.doesNotMatch(await a.repo.read("current"), /preuve/);
+  await a.repo.deleteFile("doc:file");
+  assert.equal(await a.repo.getFile("doc:file"), null);
+  a.repo.close();
 });
 test("invalid legacy data and blocked migration marker preserve the original", async () => {
   const local = storage(),

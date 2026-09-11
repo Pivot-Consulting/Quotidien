@@ -1,10 +1,10 @@
 {
   "name": "quotidien",
-  "version": "2.7.0",
+  "version": "3.0.0",
   "private": true,
   "scripts": {
     "dev": "npm run build && node scripts/serve.cjs",
-    "lint": "node --check app.js && node --check modules/os-ui.js && node --check modules/personal-ui.js && node --check modules/cockpit-ui.js && prettier --check app.js app.css modules src tests scripts index.html",
+    "lint": "node --check app.js && for file in modules/*.js; do node --check \"$file\"; done && prettier --check app.js app.css modules src tests scripts index.html",
     "typecheck": "tsc --noEmit",
     "build": "tsc && node scripts/build.cjs",
     "test": "npm run build && node --test tests/*.test.cjs",

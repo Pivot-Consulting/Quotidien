@@ -264,7 +264,7 @@ function createPersonalOS(ctx) {
         String(h.record.due) <= Q.OS.addDays(Q.day(), 7),
     );
     const fav = P.search(state(), { favorite: true }).slice(0, 4);
-    return `<section class="card shared-cockpit"><div class="section-head"><div><span class="eyebrow">TON FIL CONDUCTEUR</span><h2>Prochaines actions</h2></div>${button("explore", "Tout explorer")}</div><details class="shared-method"><summary>Comment sont choisies les actions ?</summary><p>Classement local selon les échéances, l’importance, la priorité et les liens. Les actions bloquées sont écartées.</p></details><div class="shared-actions">${actions.map((a) => `<article class="shared-action"><div class="section-head"><h3><button class="text-button" data-edit="tasks" data-id="${e(a.hit.id)}">${e(P.title(a.hit.record))}</button></h3><span class="tag">${a.score} pts</span></div><details><summary>Pourquoi cette action ?</summary><ul>${a.reasons.map((r) => `<li>${e(r)}</li>`).join("")}</ul></details><div class="os-actions"><button class="mini" data-toggle="task" data-id="${e(a.hit.id)}">Terminer</button><button class="mini" data-focus="start" data-id="${e(a.hit.id)}">Focus</button>${button("detail", "Relations & checklist", attrs(a.hit))}<button class="danger" data-del="tasks" data-id="${e(a.hit.id)}" aria-label="Retirer cette tâche">×</button></div></article>`).join("") || `<p class="empty">Aucune action disponible. Capture une tâche ou consulte les dépendances dans Explorer.</p>`}</div><div class="os-actions">${button("late", `${late.length} échéance(s) en retard`)}${button("upcoming", `${upcoming.length} échéance(s) dans les 7 jours`)}${button("quick", "＋ Capture rapide", "", "primary")}</div>${fav.length ? `<details><summary>Mes favoris · ${fav.length}</summary>${fav.map(hitCard).join("")}</details>` : ""}</section>`;
+    return `<section class="card shared-cockpit"><div class="section-head"><div><span class="eyebrow">TON FIL CONDUCTEUR</span><h2>Prochaines actions</h2></div>${button("explore", "Tout explorer")}</div><details class="shared-method"><summary>Comment sont choisies les actions ?</summary><p>Classement local selon les échéances, l’importance, la priorité et les liens. Les actions bloquées sont écartées.</p></details><div class="shared-actions">${actions.map((a) => `<article class="shared-action"><div class="section-head"><h3><button class="text-button" data-edit="tasks" data-id="${e(a.hit.id)}">${e(P.title(a.hit.record))}</button></h3><span class="tag">${a.score} pts</span></div><details><summary>Pourquoi cette action ?</summary><ul>${a.reasons.map((r) => `<li>${e(r)}</li>`).join("")}</ul></details><div class="os-actions"><button class="mini" data-toggle="task" data-id="${e(a.hit.id)}">Terminer</button><button class="mini" data-focus="start" data-id="${e(a.hit.id)}">Focus</button>${button("tomorrow", "Demain", `data-id="${e(a.hit.id)}"`)}${button("detail", "Relations & checklist", attrs(a.hit))}<button class="danger" data-del="tasks" data-id="${e(a.hit.id)}" aria-label="Retirer cette tâche">×</button></div></article>`).join("") || `<p class="empty">Aucune action disponible. Capture une tâche ou consulte les dépendances dans Explorer.</p>`}</div><div class="os-actions">${button("late", `${late.length} échéance(s) en retard`)}${button("upcoming", `${upcoming.length} échéance(s) dans les 7 jours`)}${button("quick", "＋ Capture rapide", "", "primary")}</div>${fav.length ? `<details><summary>Mes favoris · ${fav.length}</summary>${fav.map(hitCard).join("")}</details>` : ""}</section>`;
   }
   function dirtyDialog() {
     const form = document.querySelector(".modal form");
@@ -286,6 +286,8 @@ function createPersonalOS(ctx) {
         "document-form",
         "asset-form",
         "automation-form",
+        "vault-form",
+        "automation-builder",
       ].includes(form.id)
     )
       return false;
@@ -314,6 +316,15 @@ function createPersonalOS(ctx) {
         return true;
       }
       detail({ key: t.dataset.key, id: t.dataset.id });
+    } else if (a === "tomorrow") {
+      const task = state().tasks.find((x) => x.id === t.dataset.id);
+      if (task) {
+        task.due = Q.OS.addDays(Q.day(), 1);
+        if (await ctx.save()) {
+          ctx.render();
+          ctx.toast("Tâche reportée à demain");
+        }
+      }
     } else if (a === "quick") ctx.quick();
     else if (a === "explore") search({});
     else if (a === "late") search({ status: "overdue" });

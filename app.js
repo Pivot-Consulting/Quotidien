@@ -36,6 +36,8 @@ Q.ready = (async function () {
     repository = new Q.Durable.Repository(localStorage, window.indexedDB);
     await repository.open();
     state = await repository.load();
+    if (Q.Automation.run(state, Q.day(), id))
+      state = await repository.commit(state);
     committed = Q.clone(state);
   } catch (error) {
     bootError = error;
@@ -77,6 +79,9 @@ Q.ready = (async function () {
       const r = Q.Personal.resolve(state, ref);
       if (r) {
         if (ref.key === "os") os.edit(r.kind, r);
+        else if (ref.key === "documents") vaultUI.open(r);
+        else if (ref.key === "automations" && r.engineVersion === 1)
+          automationUI.open(r);
         else openForm(kinds[ref.key], r);
       }
     },
@@ -105,7 +110,11 @@ Q.ready = (async function () {
     error: showError,
     download,
     open: (kind, recordId) => {
-      if (kind.startsWith("os:"))
+      if (kind === "vault")
+        vaultUI.open(state.documents.find((x) => x.id === recordId));
+      else if (kind === "automation-builder")
+        automationUI.open(state.automations.find((x) => x.id === recordId));
+      else if (kind.startsWith("os:"))
         os.edit(
           kind.slice(3),
           state.os.find((x) => x.id === recordId),
@@ -137,6 +146,53 @@ Q.ready = (async function () {
         title + " · " + day();
       document.querySelector('#note-form [name="body"]').value = body;
       editorDrafts.capture();
+    },
+  });
+  var routinesUI = createRoutinesUI({
+    state: () => state,
+    esc,
+    id,
+    save,
+    modal,
+    close: closeModal,
+    render,
+    toast,
+    error: showError,
+  });
+  var vaultUI = createVaultUI({
+    state: () => state,
+    repository,
+    esc,
+    id,
+    save,
+    modal,
+    close: closeModal,
+    render,
+    toast,
+    error: showError,
+    markClean: () => personal.markClean(),
+    footer: (ref) => personal.footer(ref),
+  });
+  var automationUI = createAutomationUI({
+    state: () => state,
+    esc,
+    id,
+    save,
+    modal,
+    close: closeModal,
+    render,
+    toast,
+    error: showError,
+    markClean: () => personal.markClean(),
+    edit: (ref) => {
+      if (ref.key === "documents") vaultUI.open(Q.Personal.resolve(state, ref));
+      else if (ref.key === "os") {
+        const record = Q.Personal.resolve(state, ref);
+        if (record) os.edit(record.kind, record);
+      } else {
+        const record = Q.Personal.resolve(state, ref);
+        if (record) openForm(kinds[ref.key], record);
+      }
     },
   });
   function day() {
@@ -252,7 +308,7 @@ Q.ready = (async function () {
   }
   function shell(content) {
     return (
-      '<div class="shell"><header class="topbar"><div><div class="brand">QUOTIDIEN <span>2.7</span></div><div class="date">' +
+      '<div class="shell"><header class="topbar"><div><div class="brand">QUOTIDIEN <span>3.0</span></div><div class="date">' +
       esc(
         new Intl.DateTimeFormat("fr-FR", {
           weekday: "long",
@@ -260,7 +316,9 @@ Q.ready = (async function () {
           month: "long",
         }).format(new Date()),
       ) +
-      '</div></div><div class="top-actions"><button class="icon" aria-label="Rechercher" data-action="search">⌕</button><button class="icon" aria-label="Ajouter" data-action="quick">＋</button><button class="icon" aria-label="Réglages" data-action="settings">⚙</button></div></header>' +
+      '</div></div><div class="top-actions">' +
+      automationUI.badge() +
+      '<button class="icon" aria-label="Rechercher" data-action="search">⌕</button><button class="icon" aria-label="Ajouter" data-action="quick">＋</button><button class="icon" aria-label="Réglages" data-action="settings">⚙</button></div></header>' +
       content +
       "</div>" +
       nav() +
@@ -301,19 +359,23 @@ Q.ready = (async function () {
     var c =
       state.screen === "intelligence"
         ? cockpit.intelligence()
-        : state.screen === "explore"
-          ? personal.searchView()
-          : state.screen === "today"
-            ? todayView()
-            : state.screen === "plan"
-              ? planView()
-              : state.screen === "notes"
-                ? notesView()
-                : state.screen === "tracking"
-                  ? trackingView()
-                  : state.screen === "life"
-                    ? lifeView()
-                    : waveView();
+        : state.screen === "automation"
+          ? automationUI.view()
+          : state.screen === "vault"
+            ? vaultUI.view()
+            : state.screen === "explore"
+              ? personal.searchView()
+              : state.screen === "today"
+                ? todayView()
+                : state.screen === "plan"
+                  ? planView()
+                  : state.screen === "notes"
+                    ? notesView()
+                    : state.screen === "tracking"
+                      ? trackingView()
+                      : state.screen === "life"
+                        ? lifeView()
+                        : waveView();
     document.body.classList.remove("modal-open");
     root.innerHTML = shell(c);
     decorateForms();
@@ -363,30 +425,59 @@ Q.ready = (async function () {
           esc(ev[0].title) +
           "</strong>"
         : "Aucun événement prévu aujourd’hui.") +
-      '</p><button class="primary" data-screen="plan">Planifier</button></section>' +
-      personal.today() +
+      '</p><div class="os-actions"><button class="primary" data-screen="plan">Planifier</button><button class="mini" data-action="today-settings">Configurer Today</button></div></section>' +
+      (widget("actions") ? personal.today() : "") +
       (!lastExportRequested ||
       Date.now() - Date.parse(lastExportRequested) > 30 * 86400000
         ? '<section class="card"><h2>Une copie hors du navigateur</h2><p class="meta">Aucun export demandé depuis 30 jours. Une sauvegarde externe protège contre la perte du stockage local.</p><button class="mini" data-action="export">Exporter mes données</button></section>'
         : "") +
-      focusUI.panel() +
-      cockpit.summary() +
-      '<section class="grid stat-grid"><article class="card stat"><strong>' +
-      doneWeek +
-      '</strong><span>tâches terminées</span></article><article class="card stat"><strong>' +
-      focus +
-      '</strong><span>min focus</span></article><article class="card stat"><strong>' +
-      active(state.workouts).length +
-      '</strong><span>séances sport</span></article><article class="card stat"><strong>' +
-      due.length +
-      '</strong><span>échéances aujourd’hui</span></article><article class="card wide"><div class="section-head"><div><span class="eyebrow">CHRONOLOGIE</span><h2>Ma journée</h2></div><button class="mini" data-action="add-event">＋ Événement</button></div>' +
-      listEvents(ev) +
-      '</article><article class="card"><div class="section-head"><div><span class="eyebrow">HABITUDES</span><h2>À cocher</h2></div></div>' +
-      listHabits(active(state.habits)) +
-      '</article><article class="card wide"><div class="section-head"><div><span class="eyebrow">OBJECTIFS</span><h2>Cap</h2></div><button class="mini" data-action="add-goal">＋</button></div>' +
-      listGoals(active(state.goals)) +
-      "</article></section>"
+      (widget("context") ? focusUI.panel() : "") +
+      (widget("routines") ? routinesUI.today() : "") +
+      (widget("notifications") ? automationUI.today() : "") +
+      (widget("analysis") ? cockpit.summary() : "") +
+      (widget("overview")
+        ? '<section class="grid stat-grid"><article class="card stat"><strong>' +
+          doneWeek +
+          '</strong><span>tâches terminées</span></article><article class="card stat"><strong>' +
+          focus +
+          '</strong><span>min focus</span></article><article class="card stat"><strong>' +
+          active(state.workouts).length +
+          '</strong><span>séances sport</span></article><article class="card stat"><strong>' +
+          due.length +
+          '</strong><span>échéances aujourd’hui</span></article><article class="card wide"><div class="section-head"><div><span class="eyebrow">CHRONOLOGIE</span><h2>Ma journée</h2></div><button class="mini" data-action="add-event">＋ Événement</button></div>' +
+          listEvents(ev) +
+          '</article><article class="card"><div class="section-head"><div><span class="eyebrow">HABITUDES</span><h2>À cocher</h2></div></div>' +
+          listHabits(active(state.habits)) +
+          '</article><article class="card wide"><div class="section-head"><div><span class="eyebrow">OBJECTIFS</span><h2>Cap</h2></div><button class="mini" data-action="add-goal">＋</button></div>' +
+          listGoals(active(state.goals)) +
+          "</article></section>"
+        : "")
     );
+  }
+  function widget(name) {
+    return state.settings.todayWidgets?.[name] !== false;
+  }
+  function todaySettings() {
+    const labels = {
+      actions: "Actions recommandées",
+      context: "Contexte et Focus",
+      routines: "Routines",
+      notifications: "Notifications",
+      analysis: "Centre d’analyse",
+      overview: "Statistiques, agenda, habitudes et objectifs",
+    };
+    modal(
+      "Configurer Today",
+      `<form id="today-settings-form" class="form">${Object.entries(labels)
+        .map(
+          ([key, label]) =>
+            `<label class="full"><input type="checkbox" name="${key}" ${widget(key) ? "checked" : ""}> ${esc(label)}</label>`,
+        )
+        .join(
+          "",
+        )}<button class="primary" type="submit">Enregistrer</button></form>`,
+    );
+    personal.markClean();
   }
   function planView() {
     return (
@@ -474,12 +565,15 @@ Q.ready = (async function () {
       money(balance()) +
       '</h2></div><button class="mini" data-action="finance">＋</button></div>' +
       listFinance(active(state.finances)) +
-      '</article><article class="card"><div class="section-head"><div><span class="eyebrow">DOCUMENTS</span><h2>Échéances</h2></div><button class="mini" data-action="document">＋</button></div>' +
+      '</article><article class="card"><div class="section-head"><div><span class="eyebrow">DOCUMENTS</span><h2>Échéances</h2></div><button class="mini" data-screen="vault">Ouvrir le coffre</button></div>' +
       listGeneric(state.documents, "documents") +
       '</article><article class="card"><div class="section-head"><div><span class="eyebrow">MAISON</span><h2>Équipements</h2></div><button class="mini" data-action="asset">＋</button></div>' +
       listGeneric(state.assets, "assets") +
-      '</article><article class="card wide"><div class="section-head"><div><span class="eyebrow">AUTOMATISATIONS</span><h2>Idées de règles</h2></div><button class="mini" data-action="automation">＋</button></div>' +
-      listGeneric(state.automations, "automations") +
+      '</article><article class="card wide"><div class="section-head"><div><span class="eyebrow">AUTOMATISATIONS</span><h2>Règles & exécutions</h2></div><button class="mini" data-screen="automation">Ouvrir le builder</button></div>' +
+      listGeneric(
+        state.automations.filter((x) => x.engineVersion !== 1),
+        "automations",
+      ) +
       "</article></section>"
     );
   }
@@ -775,6 +869,7 @@ Q.ready = (async function () {
     prompt.querySelector("button").focus();
   }
   function closeModal() {
+    vaultUI?.cleanup();
     document.getElementById("modal").innerHTML = "";
     document.body.classList.remove("modal-open");
     root.querySelector(".shell")?.removeAttribute("inert");
@@ -1015,7 +1110,7 @@ Q.ready = (async function () {
       ],
       routine: [
         "Nouvelle routine",
-        '<input name="name" placeholder="Routine" required><input name="time" type="time"><textarea name="steps" class="full" placeholder="Étapes séparées par des virgules"></textarea>',
+        '<input name="name" placeholder="Routine" required><input name="time" type="time"><select name="schedule"><option>Tous les jours</option><option>Jours ouvrés</option><option>Week-end</option><option>Jours choisis</option></select><input name="weekdays" placeholder="Jours choisis : 1,2,3,4,5"><textarea name="steps" class="full" placeholder="Une étape par ligne ou séparée par des virgules"></textarea>',
       ],
       workout: [
         "Nouvelle séance",
@@ -1213,7 +1308,9 @@ Q.ready = (async function () {
       return;
     }
     if (t.dataset.create) {
-      openForm(t.dataset.create);
+      if (t.dataset.create === "document") vaultUI.open();
+      else if (t.dataset.create === "automation") automationUI.open();
+      else openForm(t.dataset.create);
       if (t.dataset.domain) {
         var select = document.querySelector(".modal [name=domain]");
         if (select) select.value = t.dataset.domain;
@@ -1222,6 +1319,9 @@ Q.ready = (async function () {
     }
     if (await cockpit.handleClick(t)) return;
     if (await focusUI.click(t)) return;
+    if (await routinesUI.click(t)) return;
+    if (await vaultUI.click(t)) return;
+    if (await automationUI.click(t)) return;
     if (await personal.handleClick(t)) return;
     if (await os.handleClick(t)) return;
     if (t.dataset.edit === "os") {
@@ -1233,7 +1333,14 @@ Q.ready = (async function () {
       var record = state[t.dataset.edit]?.find(function (x) {
         return x.id === t.dataset.id;
       });
-      if (record) openForm(kinds[t.dataset.edit], record);
+      if (record && t.dataset.edit === "documents") vaultUI.open(record);
+      else if (
+        record &&
+        t.dataset.edit === "automations" &&
+        record.engineVersion === 1
+      )
+        automationUI.open(record);
+      else if (record) openForm(kinds[t.dataset.edit], record);
       return;
     }
     if (t.dataset.restore) {
@@ -1291,6 +1398,7 @@ Q.ready = (async function () {
     var a = t.dataset.action;
     if (a === "quick") quick();
     else if (a === "settings") settings();
+    else if (a === "today-settings") todaySettings();
     else if (a === "trash") trash();
     else if (a === "search") search();
     else if (a === "add-note") openForm("note");
@@ -1301,8 +1409,9 @@ Q.ready = (async function () {
     else if (a === "add-workout") openForm("workout");
     else if (a === "track") openForm("track");
     else if (a === "life-entry") openForm("life");
-    else if (["finance", "document", "asset", "automation"].includes(a))
-      openForm(a);
+    else if (a === "document") vaultUI.open();
+    else if (a === "automation") automationUI.open();
+    else if (["finance", "asset"].includes(a)) openForm(a);
     else if (a === "resume-editor") editorDrafts.resume();
     else if (a === "export-editor") editorDrafts.export();
     else if (a === "discard-editor") {
@@ -1407,9 +1516,31 @@ Q.ready = (async function () {
     e.preventDefault();
     var f = e.target;
     if (!(f instanceof HTMLFormElement) || !f.reportValidity()) return;
+    if (f.id === "today-settings-form") {
+      const data = new FormData(f),
+        keys = [
+          "actions",
+          "context",
+          "routines",
+          "notifications",
+          "analysis",
+          "overview",
+        ];
+      state.settings.todayWidgets = Object.fromEntries(
+        keys.map((key) => [key, data.has(key)]),
+      );
+      if (await save()) {
+        closeModal();
+        render();
+        toast("Today personnalisé");
+      }
+      return;
+    }
     submittingEditor = editorDrafts.hasForm();
     await editorDrafts.flush();
     if (await focusUI.submit(f)) return;
+    if (await vaultUI.submit(f)) return;
+    if (await automationUI.submit(f)) return;
     if (await personal.submit(f)) return;
     if (await os.submit(f)) return;
     var d = Object.fromEntries(new FormData(f).entries());
@@ -1465,6 +1596,7 @@ Q.ready = (async function () {
     personal.inputEvent(e.target);
   });
   on("change", async function (e) {
+    if (await routinesUI.change(e.target)) return;
     await editorDrafts.capture();
     os.changeEvent(e.target);
     await personal.changeEvent(e.target);
