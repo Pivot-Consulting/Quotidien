@@ -304,6 +304,8 @@ namespace Q.Personal {
         add(h, "os", h.record.projectId, "Projet financé");
       if (h.key === "goals")
         add(h, "os", h.record.savingsAccountId, "Compte d’épargne");
+      if (h.key === "documents")
+        add(h, "os", h.record.projectId, "Projet documenté");
     }
     return result;
   }

@@ -1,4 +1,19 @@
-# Quotidien — version 2.7.0 candidate
+# Quotidien — version 3.0.0 candidate
+
+## Lots Routines, Document Vault et Automatisation — 11 septembre 2026
+
+Implémentation additive sur la base 2.7, sans réécriture des 20 OS ni des 48 modèles existants.
+
+- Today devient configurable et accueille les routines dues, leurs checklists, leur progression et leur historique. Trois modèles essentiels sont installables sans écraser ni dupliquer les routines de l’utilisateur.
+- Le coffre documentaire possède une route dédiée, des statistiques d’échéance, une recherche accent-insensible et des relations projet. Les PDF et images compatibles sont prévisualisés ; les autres fichiers sont téléchargeables.
+- IndexedDB passe de la version 1 à 2 avec un magasin `files` séparé. La migration conserve les données et brouillons existants. Un fichier est limité à 25 Mo et reste hors des snapshots/export JSON.
+- Le moteur d’automatisation déterministe gère six déclencheurs, trois actions cumulables, des conditions, cinq modèles, l’activation, la duplication et un journal borné à 500 exécutions. Les jetons d’événement empêchent de recréer silencieusement une action déjà traitée.
+- Le centre de notifications trie par priorité, filtre les éléments lus, permet le report et l’ouverture de la source. Les horaires silencieux sont persistés en préparation de futures notifications système.
+- Les anciens contenus libres d’Automation OS restent importables mais ne sont jamais exécutés comme règles sans conversion explicite.
+
+Limites : l’évaluation n’a lieu que lorsque QUOTIDIEN est ouvert ou lancée manuellement. Il n’existe pas encore de scheduler, push, synchronisation entre appareils, OCR, extraction automatique, chiffrement applicatif ni inclusion des fichiers dans l’export. Retirer une fiche document ne supprime pas automatiquement son blob local afin d’éviter une perte irréversible involontaire.
+
+Validation : `npm run verify`, **111 tests réussis**. Les parcours DOM couvrent installation/exécution/rechargement des routines, personnalisation de Today, création/recherche/relation projet dans le coffre, modèles d’automatisation, idempotence, notifications, report et préférences. Aperçu Chrome : Today, Coffre, formulaire document et Automation Builder inspectés sans débordement horizontal au viewport disponible. Le cadre mobile 320/390 px n’était pas pilotable dans cette session ; les règles responsive existantes et les tests DOM sont conservés, mais un contrôle sur appareil physique reste recommandé.
 
 ## Lots fiabilité, finances connectées et Focus — 10 septembre 2026
 
@@ -12,7 +27,7 @@ Finances : `projectId` sur les mouvements et objectifs, graphe commun ; mode man
 
 Today / Focus : préférences persistées influençant le classement sans cacher les urgences ; session unique avec pause, reprise après rechargement, notes et checklist, enregistrement idempotent dans le suivi Focus. Bilans issus des dates de réalisation et des dépenses réellement enregistrées, modifiables avant sauvegarde dans Notes.
 
-Limites : pas de coffre de fichiers, pas de synchronisation/authentification, pas d’exécution programmée des routines. Le panneau Focus n’intègre pas encore les pièces documentaires. Les revues sont des notes à valider, non des rapports programmés. Aucun déploiement automatique de ce lot.
+Limites à cette étape historique : le coffre de fichiers et l’exécution guidée des routines ont depuis été ajoutés en 3.0. Il n’y a toujours pas de synchronisation/authentification ni d’exécution programmée en arrière-plan. Le panneau Focus n’intègre pas encore les pièces documentaires. Les revues sont des notes à valider, non des rapports programmés.
 
 Les sections suivantes sont l’historique des livraisons antérieures, pas une description du stockage courant.
 
@@ -67,7 +82,7 @@ Les vingt Life OS disposent maintenant de **48 types de fiches structurées**, d
 | Finances        | ✅ Comptes et mouvements affectés ; budgets mensuels par catégorie ; import CSV avec aperçu et détection des doublons ; flux sur six mois ; abonnements annualisés et avancement des échéances ; actifs, dettes et patrimoine net déclaré | 🟡 Pas de connexion bancaire, virements ou cours de marché ; patrimoine saisi séparément des comptes ; pas de prévisionnel de trésorerie |
 | Projets de vie  | ✅ Projets, priorité, budget et dépenses saisis ; jalons pondérés ; tâches liées et taux de réalisation                                                                                                                                   | 🟡 Pas de Gantt ni de dépendances entre jalons                                                                                           |
 | Apprentissage   | ✅ Parcours, compétences, ressources, sessions minutées ; cartes avec réponse masquée et révision espacée selon difficulté                                                                                                                | 🟡 Algorithme local simple, sans synchronisation de plateforme                                                                           |
-| Documents       | ✅ Liens HTTP(S), emplacement, catégorie, version déclarée, expiration et démarches ; association aux projets                                                                                                                             | 🟡 Références de fichiers uniquement, sans stockage de pièces jointes ni OCR                                                             |
+| Documents       | ✅ Liens HTTP(S), emplacement, catégorie, version déclarée, expiration et démarches ; association aux projets ; coffre local ajouté en 3.0                                                                                                  | 🟡 Fichiers locaux non synchronisés et hors export JSON ; pas d’OCR                                                                      |
 | Maison          | ✅ Inventaire, pièces, achat et valorisation, garanties, factures référencées ; entretien récurrent, coût et prestataire                                                                                                                  | 🟡 Pas de commande de prestataire                                                                                                        |
 | Nutrition       | ✅ Repas, calories, protéines, glucides, lipides, eau ; totaux quotidiens et objectifs datés ; recettes, portions et préparation                                                                                                          | 🟡 Apports saisis manuellement, sans base d’aliments, scanner ou prescription                                                            |
 | Santé avancée   | ✅ Observations, intensité, contexte ; sommeil et moyenne sur sept jours ; rendez-vous et questions à préparer ; accès aux mesures et séances existantes                                                                                  | 🟡 Carnet descriptif sans diagnostic, traitement ou connexion à une montre                                                               |

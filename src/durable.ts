@@ -22,10 +22,14 @@ namespace Q.Durable {
       }
       this.db = await new Promise<IDBDatabase>((resolve, reject) => {
         let blocked = false;
-        const r = this.factory!.open(DB, 1);
+        const r = this.factory!.open(DB, 2);
         r.onupgradeneeded = () => {
-          r.result.createObjectStore("data");
-          r.result.createObjectStore("drafts");
+          if (!r.result.objectStoreNames.contains("data"))
+            r.result.createObjectStore("data");
+          if (!r.result.objectStoreNames.contains("drafts"))
+            r.result.createObjectStore("drafts");
+          if (!r.result.objectStoreNames.contains("files"))
+            r.result.createObjectStore("files");
         };
         r.onsuccess = () => {
           if (blocked) r.result.close();
@@ -101,6 +105,49 @@ namespace Q.Durable {
         else st.put(value, key);
         tx.oncomplete = () => resolve();
         tx.onabort = () => reject(tx.error);
+      });
+    }
+    async putFile(key: string, value: Blob): Promise<void> {
+      if (!this.db)
+        throw new Error(
+          "Les pièces jointes nécessitent le stockage IndexedDB de ce navigateur.",
+        );
+      if (!(value instanceof Blob) || value.size > 25 * 1024 * 1024)
+        throw new Error("Fichier invalide ou supérieur à 25 Mo.");
+      return new Promise((resolve, reject) => {
+        const tx = this.db!.transaction("files", "readwrite");
+        tx.objectStore("files").put(value, key);
+        tx.oncomplete = () => resolve();
+        tx.onabort = () =>
+          reject(tx.error || new Error("Pièce jointe non enregistrée."));
+      });
+    }
+    async getFile(key: string): Promise<Blob | null> {
+      if (!this.db) return null;
+      return new Promise((resolve, reject) => {
+        const r = this.db!.transaction("files").objectStore("files").get(key);
+        r.onsuccess = () => resolve(r.result instanceof Blob ? r.result : null);
+        r.onerror = () => reject(r.error);
+      });
+    }
+    async deleteFile(key: string): Promise<void> {
+      if (!this.db) return;
+      return new Promise((resolve, reject) => {
+        const tx = this.db!.transaction("files", "readwrite");
+        tx.objectStore("files").delete(key);
+        tx.oncomplete = () => resolve();
+        tx.onabort = () =>
+          reject(tx.error || new Error("Pièce jointe non retirée."));
+      });
+    }
+    async clearFiles(): Promise<void> {
+      if (!this.db) return;
+      return new Promise((resolve, reject) => {
+        const tx = this.db!.transaction("files", "readwrite");
+        tx.objectStore("files").clear();
+        tx.oncomplete = () => resolve();
+        tx.onabort = () =>
+          reject(tx.error || new Error("Coffre non réinitialisé."));
       });
     }
     async load(): Promise<State> {

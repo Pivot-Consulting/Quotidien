@@ -1,15 +1,22 @@
-# Quotidien 2.7
+# Quotidien 3.0
 
 Application personnelle locale : organisation quotidienne et **20 Life OS spécialisés, 48 types de fiches**.
 
-## Nouveautés 2.5–2.7
+## Nouveautés 2.8–3.0
+
+- **Today personnalisable** : widgets activables, échéances, recommandations, routines et alertes sur un même cockpit. Les modèles Morning Routine, Evening Review et Sunday Reset créent des checklists quotidiennes historisées.
+- **Document Vault** : métadonnées, recherche, catégories, statut, échéance, société, montant, tags, relation projet et aperçu local des PDF/images. Les fichiers sont stockés séparément dans IndexedDB, avec une limite de 25 Mo par fichier.
+- **Automation Builder** : déclencheurs sur tâches en retard, documents à renouveler, dépenses importantes, projets stagnants, voyages et revue du dimanche ; conditions de délai, montant et catégorie ; notifications, tâches et checklists comme actions cumulables.
+- **Notification Center** : priorité, lecture, filtres, report à demain ou sept jours, ouverture de la source et préférences d’horaires silencieux pour les futures notifications système.
+
+## Socle 2.5–2.7 conservé
 
 - Stockage IndexedDB transactionnel, migration conservant le localStorage original et les snapshots ; refus d’écraser une version modifiée dans un autre onglet. Compatibilité localStorage seulement si aucune migration n’a eu lieu.
 - Reprise de la dernière saisie dans Réglages, export du brouillon et rappel d’export après 30 jours. La reprise est bloquée si les données ont changé entre-temps : récupérer alors le contenu via l’export du brouillon. Ne pas revenir à une ancienne version du site après migration sans exporter les deux copies.
 - Projets : choix explicite entre dépenses manuelles et transactions liées. Objectifs : solde de compte réservé, cible monétaire, durée simulée à versements constants. Les remboursements de projet sont déduits ; les écritures archivées restent comptées. Un seul objectif actif par compte.
 - Today : contexte, temps et énergie ajustent les recommandations ; Focus avec pause/reprise, notes et checklist ; bilans du soir et des sept derniers jours préparés comme notes à valider. Le minuteur utilise le temps écoulé, plafonné à la durée prévue ; il ne prouve pas une attention réelle et ne termine pas la tâche automatiquement.
 
-Les notes de Focus nécessitent un enregistrement explicite. Les brouillons couvrent les formulaires de fiches, pas tous les contrôles de l’application. Pas de synchronisation, de pièces jointes binaires, de service d’exécution en arrière-plan ou de notification système ajoutés dans ce lot. Le lien public ci-dessous ne change de version qu’après fusion et publication.
+Les notes de Focus nécessitent un enregistrement explicite. Les brouillons couvrent les formulaires de fiches, pas tous les contrôles de l’application. Il n’y a ni synchronisation, ni OCR, ni service d’exécution en arrière-plan, ni notification système. Les fichiers du coffre restent sur cet appareil et ne sont pas inclus dans l’export JSON. Le lien public ci-dessous ne change de version qu’après fusion et publication.
 
 [Ouvrir l’application](https://pivot-consulting.github.io/Quotidien/)
 
@@ -48,7 +55,7 @@ Serveur local : port 4173. Production : `dist/` uniquement.
 
 Les données restent dans le navigateur, sous `quotidien-rebuild-2`. Les exports 2.0/2.1/2.2/2.3 sont compatibles ; les captures et registres existants sont conservés. Réglages propose sauvegarde JSON, restauration avec aperçu, copies de récupération et éléments retirés. Exporte régulièrement une copie hors de ton appareil.
 
-Les automatisations créent des tâches **après aperçu et lancement manuel**. L’assistant calcule un plan local et des bilans ; il n’est pas connecté à une IA. Les documents sont des références et liens, sans pièce jointe stockée. Aucune synchronisation distante, opération bancaire ou notification en arrière-plan.
+Les automatisations actives sont évaluées de façon idempotente à l’ouverture de l’application, lors de leur enregistrement ou sur lancement manuel. L’assistant calcule un plan local et des bilans ; il n’est pas connecté à une IA. Aucune synchronisation distante, opération bancaire ou notification en arrière-plan.
 
 ## Sources et déploiement
 
@@ -57,6 +64,9 @@ Les automatisations créent des tâches **après aperçu et lancement manuel**. 
 - `src/core.ts`, `src/os.ts` : persistance, modèles et règles métier.
 - `src/personal.ts`, `modules/personal-ui.js` : socle commun, relations, historique, recherche et Today.
 - `src/planning.ts`, `src/intelligence.ts`, `modules/cockpit-ui.js` : projections calendrier et analyseurs locaux.
+- `src/routines.ts`, `modules/routines-ui.js` : planification, exécutions et historique des routines.
+- `src/vault.ts`, `modules/vault-ui.js` : coffre documentaire, métadonnées et fichiers locaux séparés.
+- `src/automation.ts`, `modules/automation-ui.js` : règles, notifications et journal d’exécution.
 - `scripts/sources.cjs` : manifeste de chargement partagé entre build et tests.
 - `legacy/v7/` : archive historique hors build.
 

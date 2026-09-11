@@ -63,6 +63,20 @@ button {
   display: flex;
   gap: 8px;
 }
+.top-actions .icon {
+  position: relative;
+}
+.count {
+  position: absolute;
+  inset: -0.25rem -0.2rem auto auto;
+  min-width: 1.15rem;
+  padding: 0.05rem 0.25rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #111827;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
 .icon {
   width: 44px;
   height: 44px;
@@ -349,6 +363,16 @@ textarea {
   border-radius: 24px;
   padding: 18px;
   box-shadow: var(--shadow);
+}
+.vault-preview {
+  display: block;
+  width: 100%;
+  min-height: min(65vh, 42rem);
+  max-height: 70vh;
+  object-fit: contain;
+  border: 0;
+  border-radius: var(--radius);
+  background: #fff;
 }
 .modal header {
   display: flex;
