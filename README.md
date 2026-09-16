@@ -1,6 +1,19 @@
-# Quotidien 3.1
+# Quotidien 3.2
 
-Application personnelle locale : organisation quotidienne et **20 Life OS spécialisés, 48 types de fiches**.
+Application personnelle locale : organisation quotidienne et **20 Life OS spécialisés, 60 types de fiches**.
+
+## Nouveautés 3.2 — parcours E–K
+
+Accès : **Pilotage → Centre de pilotage** (`#workbench`).
+
+- Propriétés communes : sous-tâches, contact responsable, champs typés et brouillons restaurables ; conversions explicites équipement→Maison et objectif→Projet, réversibles avec source conservée.
+- Parcours métier : échéanciers au centime et règlements sans double comptage, scénarios distincts du réel, décisions multicritères, liens vers le coffre, menus→courses→stock, programmes tennis/musculation, compétences→cours, contacts→candidatures et dépenses de voyage.
+- Bilan : seuils d’analyse, scores expliqués sur les huit domaines d’auto-évaluation existants, historique des résultats, revue mensuelle et intervalles, périodes de vie et chronologie, courbe d’humeur, points optionnels.
+- Command Center local : `tâche`, `note`, `chercher`, `planifier`, aperçu avant écriture et annulation protégée. Syntaxe explicite ; aucune IA externe.
+- Agents locaux par domaine : autorisation de lecture, propositions issues des analyseurs, validation avant création de tâche, journal et annulation.
+- Client de synchronisation et [service privé Node](server/README.md) : identités par jetons expirants, droits par espace, pièces jointes et révisions atomiques. **Le service serveur n’est pas déployé.** Sans serveur, l’application reste locale. Exécution distante, push, OCR et agents autonomes restent à réaliser.
+
+Périmètre précis, dépendances et limites : [docs/REPRISE_3_2.md](docs/REPRISE_3_2.md). Les lots A–D ne sont pas reconstruits.
 
 ## Nouveautés 3.1 — reprise A–D
 
@@ -25,7 +38,7 @@ La sauvegarde complète est un fichier JSON autonome limité à **100 Mo de piè
 - Projets : choix explicite entre dépenses manuelles et transactions liées. Objectifs : solde de compte réservé, cible monétaire, durée simulée à versements constants. Les remboursements de projet sont déduits ; les écritures archivées restent comptées. Un seul objectif actif par compte.
 - Today : contexte, temps et énergie ajustent les recommandations ; Focus avec pause/reprise, notes et checklist ; bilans du soir et des sept derniers jours préparés comme notes à valider. Le minuteur utilise le temps écoulé, plafonné à la durée prévue ; il ne prouve pas une attention réelle et ne termine pas la tâche automatiquement.
 
-Les notes de Focus nécessitent un enregistrement explicite. Les brouillons couvrent les formulaires de fiches, pas tous les contrôles de l’application. Il n’y a ni synchronisation, ni OCR, ni service d’exécution en arrière-plan, ni notification système. Les fichiers du coffre restent sur cet appareil et sont inclus uniquement dans la sauvegarde complète. Le lien public ci-dessous ne change de version qu’après fusion et publication.
+Les notes de Focus nécessitent un enregistrement explicite. Les brouillons couvrent les formulaires de fiches, pas tous les contrôles de l’application. La synchronisation manuelle nécessite le serveur privé de la version 3.2. Il n’y a pas d’OCR, d’exécution distante en arrière-plan ni de notification système. Les fichiers du coffre restent sur cet appareil et sont inclus uniquement dans la sauvegarde complète. Le lien public ci-dessous ne change de version qu’après fusion et publication.
 
 [Ouvrir l’application](https://pivot-consulting.github.io/Quotidien/)
 
@@ -64,7 +77,7 @@ Serveur local : port 4173. Production : `dist/` uniquement.
 
 Les données restent dans le navigateur, sous `quotidien-rebuild-2`. Les exports 2.0/2.1/2.2/2.3 sont compatibles ; les captures et registres existants sont conservés. Réglages propose sauvegarde JSON, restauration avec aperçu, copies de récupération et éléments retirés. Exporte régulièrement une copie hors de ton appareil.
 
-Les automatisations actives sont évaluées de façon idempotente à l’ouverture de l’application, lors de leur enregistrement ou sur lancement manuel. L’assistant calcule un plan local et des bilans ; il n’est pas connecté à une IA. Aucune synchronisation distante, opération bancaire ou notification en arrière-plan.
+Les automatisations actives sont évaluées de façon idempotente à l’ouverture de l’application, lors de leur enregistrement ou sur lancement manuel. L’assistant calcule un plan local et des bilans ; il n’est pas connecté à une IA. La synchronisation est facultative et manuelle, avec serveur privé. Aucune opération bancaire ni notification en arrière-plan.
 
 ## Sources et déploiement
 

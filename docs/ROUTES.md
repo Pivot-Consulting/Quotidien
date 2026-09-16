@@ -1,8 +1,8 @@
-# Routes et modèles actifs — 3.1
+# Routes et modèles actifs — 3.2
 
-Catalogue dérivé de src/os.ts. Les noms français existants sont conservés : Documents correspond à Admin OS, Impact à Eco OS, Progression à Game OS.
+Catalogue dérivé de src/os.ts et src/evolution.ts. Les noms français existants sont conservés : Documents correspond à Admin OS, Impact à Eco OS, Progression à Game OS.
 
-Écrans racine : `#today`, `#plan`, `#notes`, `#tracking`, `#life`, `#wave`, `#explore`, `#intelligence`, `#vault`, `#automation`.
+Écrans racine : `#today`, `#plan`, `#notes`, `#tracking`, `#life`, `#wave`, `#explore`, `#intelligence`, `#vault`, `#automation`, `#workbench`.
 
 Le calendrier commun est un onglet de `#plan`. Le centre d’analyse se rejoint aussi depuis Today et Pilotage. Les fiches continuent de s’ouvrir en modale.
 
@@ -31,4 +31,17 @@ Chaque section est accessible via `#life/<domaine>/<type>`. Un type absent ou ap
 | Progression | `#life/progress` | Indicateurs (`indicator`), Mesures (`measurement`) |
 | Équilibre | `#life/balance` | Satisfaction (`lifeRating`), Charge quotidienne (`energyDay`) |
 
-Total : 20 OS, 48 modèles spécialisés. Explorer indexe aussi les 13 collections historiques hors OS. Les fiches s’ouvrent dans le dialogue existant. Liens directs : `#record/<collection>/<id encodé par encodeURIComponent>`, par exemple `#record/tasks/abc`. Les collections sont celles de `Q.collections`. Un lien inconnu affiche une erreur sans créer ni modifier de fiche. Fermer une fiche ouverte par lien ramène à Explorer. Ces liens ne synchronisent et ne partagent pas les données.
+Total : 20 OS, 60 modèles spécialisés. Explorer indexe aussi les 13 collections historiques hors OS. Les fiches s’ouvrent dans le dialogue existant. Liens directs : `#record/<collection>/<id encodé par encodeURIComponent>`, par exemple `#record/tasks/abc`. Les collections sont celles de `Q.collections`. Un lien inconnu affiche une erreur sans créer ni modifier de fiche. Fermer une fiche ouverte par lien ramène à Explorer. Ces liens ne synchronisent et ne partagent pas les données.
+
+## Sections ajoutées en 3.2
+
+| Domaine | Modèles ajoutés |
+|---|---|
+| finance | Échéances (`commitment`), scénarios (`scenario`) |
+| decisions | Critères (`criterion`), évaluations (`optionScore`) |
+| security | Récupération (`recovery`) |
+| nutrition | Ingrédients (`ingredient`), menus (`menu`), stock (`stock`), courses (`shopping`) |
+| health | Programmes (`trainingProgram`), séances (`trainingSession`) |
+| journal | Périodes de vie (`lifePeriod`) |
+
+`#workbench` contient les commandes, parcours métier, bilans, agents et le client de synchronisation. Il est accessible depuis Pilotage. Les nouveaux modèles suivent les routes `#life/<domaine>/<type>` existantes.

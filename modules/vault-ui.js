@@ -49,7 +49,7 @@ function createVaultUI(ctx) {
     const r = record || {};
     ctx.modal(
       record ? "Modifier le document" : "Nouveau document",
-      `<form id="vault-form" class="form" data-draft-kind="vault" data-draft-id="${e(r.id || "")}"><label>Titre<input name="title" required value="${e(r.title || "")}"></label><label>Catégorie<input name="category" value="${e(r.category || "")}" placeholder="Contrat, facture, assurance…"></label><label>Société<input name="company" value="${e(r.company || "")}"></label><label>Statut<select name="status">${V.statuses.map((x) => `<option ${x === (r.status || "À traiter") ? "selected" : ""}>${e(x)}</option>`).join("")}</select></label><label>Expiration / renouvellement<input name="expiry" type="date" value="${e(r.expiry || "")}"></label><label>Montant (€)<input name="amount" type="number" step="0.01" value="${e(r.amount ?? "")}"></label><label>Projet lié<select name="projectId"><option value="">Aucun</option>${projectOptions(r)}</select></label><label class="full">Tags<input name="tags" value="${e(Array.isArray(r.personal?.tags) ? r.personal.tags.join(", ") : r.tags || "")}"></label><label class="full">Notes<textarea name="details">${e(r.details || "")}</textarea></label><label class="full">${r.fileName ? "Remplacer le fichier · " + e(r.fileName) : "Joindre un fichier (25 Mo maximum)"}<input name="file" type="file"></label><button class="primary" type="submit">Enregistrer</button></form>${record ? ctx.footer({ key: "documents", id: r.id }) : ""}`,
+      `<form id="vault-form" class="form" data-draft-kind="vault" data-draft-id="${e(r.id || "")}"><label>Titre<input name="title" required value="${e(r.title || "")}"></label><label>Catégorie<input name="category" value="${e(r.category || "")}" placeholder="Contrat, facture, assurance…"></label><label>Société<input name="company" value="${e(r.company || "")}"></label><label>Statut<select name="status">${V.statuses.map((x) => `<option ${x === (r.status || "À traiter") ? "selected" : ""}>${e(x)}</option>`).join("")}</select></label><label>Expiration / renouvellement<input name="expiry" type="date" value="${e(r.expiry || "")}"></label><label>Montant (€)<input name="amount" type="number" step="0.01" value="${e(r.amount ?? "")}"></label><label>Projet lié<select name="projectId"><option value="">Aucun</option>${projectOptions(r)}</select></label><label class="full">Notes<textarea name="details">${e(r.details || "")}</textarea></label><label class="full">${r.fileName ? "Remplacer le fichier · " + e(r.fileName) : "Joindre un fichier (25 Mo maximum)"}<input name="file" type="file"></label>${ctx.fields(r)}<button class="primary" type="submit">Enregistrer</button></form>${record ? ctx.footer({ key: "documents", id: r.id }) : ""}`,
     );
     ctx.markClean();
   }
@@ -103,7 +103,6 @@ function createVaultUI(ctx) {
       ctx.error("Le fichier dépasse 25 Mo.");
       return true;
     }
-    if (newFile) await ctx.repository.putFile(newFileId, newFile);
     const record = Object.assign(
       { id, createdAt: new Date().toISOString() },
       old || {},
@@ -120,13 +119,8 @@ function createVaultUI(ctx) {
         updatedAt: new Date().toISOString(),
       },
     );
-    record.personal = {
-      ...(record.personal || {}),
-      tags: String(data.get("tags") || "")
-        .split(/[,;#]/)
-        .map((x) => x.trim())
-        .filter(Boolean),
-    };
+    ctx.readFields(form, record);
+    if (newFile) await ctx.repository.putFile(newFileId, newFile);
     if (newFile)
       Object.assign(record, {
         fileId: newFileId,

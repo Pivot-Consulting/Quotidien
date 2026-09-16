@@ -20,6 +20,19 @@ namespace Q.Routines {
     if (!Personal.visible(routine)) return false;
     const mode = String(routine.schedule || "Tous les jours");
     const weekday = new Date(date + "T12:00:00").getDay();
+    if (mode === "Mensuel") {
+      const d = new Date(date + "T12:00:00"),
+        last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+      return d.getDate() === Math.min(Number(routine.monthDay || 1), last);
+    }
+    if (mode === "Intervalle")
+      return (
+        !!routine.anchor &&
+        date >= String(routine.anchor) &&
+        OS.daysBetween(String(routine.anchor), date) %
+          Number(routine.everyDays) ===
+          0
+      );
     if (mode === "Jours ouvrés") return weekday >= 1 && weekday <= 5;
     if (mode === "Week-end") return weekday === 0 || weekday === 6;
     if (mode === "Jours choisis")
@@ -153,9 +166,28 @@ namespace Q.Routines {
           "Jours ouvrés",
           "Week-end",
           "Jours choisis",
+          "Mensuel",
+          "Intervalle",
         ].includes(schedule)
       )
         throw new Error("Planification de routine invalide.");
+      if (
+        schedule === "Mensuel" &&
+        (!Number.isInteger(Number(routine.monthDay)) ||
+          Number(routine.monthDay) < 1 ||
+          Number(routine.monthDay) > 31)
+      )
+        throw new Error("Jour mensuel attendu entre 1 et 31.");
+      if (
+        schedule === "Intervalle" &&
+        (!validDate(String(routine.anchor)) ||
+          !Number.isInteger(Number(routine.everyDays)) ||
+          Number(routine.everyDays) < 1 ||
+          Number(routine.everyDays) > 365)
+      )
+        throw new Error(
+          "Intervalle attendu entre 1 et 365 jours avec une date de départ.",
+        );
       if (schedule === "Jours choisis") {
         const selected = String(routine.weekdays || "")
           .split(",")

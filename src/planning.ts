@@ -42,7 +42,14 @@ namespace Q.Planning {
       if (
         ["events", "workouts"].includes(hit.key) ||
         (hit.key === "os" &&
-          ["trip", "booking", "interaction", "study"].includes(String(r.kind)))
+          [
+            "trip",
+            "booking",
+            "interaction",
+            "study",
+            "menu",
+            "trainingSession",
+          ].includes(String(r.kind)))
       )
         if (r.date !== r.due)
           add(

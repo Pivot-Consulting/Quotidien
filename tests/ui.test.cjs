@@ -404,7 +404,8 @@ test("all 20 workspaces create, reopen, edit and restore their specialized recor
         else if (f.type === "month") input.value = "2026-09";
         else if (f.type === "time") input.value = "14:30";
         else if (f.type === "url") input.value = "https://example.com/";
-        else if (f.type !== "select") input.value = "Essai";
+        else if (f.type !== "select" && f.type !== "vaultref")
+          input.value = "Essai";
       }
       await a.submit("#os-form");
       await settle();
@@ -1035,4 +1036,89 @@ test("notification preference blur does not swallow its native submit", async ()
   await a.w.Q.pending;
   assert.equal(a.saved().settings.notificationQuietStart, "21:15");
   a.w.close();
+});
+test("workbench previews commands, persists once, and undoes after audit stamping", async () => {
+  const a = await app();
+  await a.click("[data-screen=wave]");
+  await a.click("[data-screen=workbench]");
+  a.fill(
+    "#evo-command [name=command]",
+    "tâche Préparer le bilan le 2026-10-01",
+  );
+  await a.submit("#evo-command");
+  assert.equal(a.saved()?.tasks?.length || 0, 0);
+  await a.click("[data-evo=apply-command]");
+  assert.equal(a.saved().tasks.length, 1);
+  assert.equal(a.saved().tasks[0].due, "2026-10-01");
+  await a.click("[data-evo=undo]");
+  assert.equal(a.saved().tasks[0].deleted, true);
+  for (const tab of ["flows", "review", "agents", "sync"]) {
+    await a.click(`[data-evo=tab][data-id=${tab}]`);
+    assert.equal(a.doc.querySelector("[role=alert]"), null);
+  }
+  a.dom.window.close();
+});
+test("shared custom fields and parent task survive save and draft restoration", async () => {
+  const a = await app({
+    version: 2,
+    tasks: [
+      { id: "p", title: "Projet" },
+      { id: "c", title: "Étape" },
+    ],
+  });
+  await a.click("[data-screen=plan]");
+  await a.click("[data-edit=tasks][data-id=c]");
+  await a.click("[data-personal=add-custom]");
+  a.fill("[data-custom-name]", "Budget");
+  a.fill("[data-custom-type]", "number");
+  a.fill("[data-custom-value]", "120");
+  a.doc
+    .querySelector("[data-custom-value]")
+    .dispatchEvent(new a.w.Event("input", { bubbles: true }));
+  await a.w.Q.draftPending;
+  const editor = a.w.localStorage.getItem("quotidien-editor-draft");
+  assert.ok(editor);
+  const b = await app(a.saved(), undefined, editor);
+  await b.click("[data-action=settings]");
+  await b.click("[data-action=resume-editor]");
+  assert.equal(b.doc.querySelector("[data-custom-value]").value, "120");
+  b.fill("[name=parentTaskId]", "p");
+  await b.submit("#task-form");
+  const task = b.saved().tasks.find((t) => t.id === "c");
+  assert.equal(task.parentTaskId, "p");
+  assert.deepEqual(task.customFields, [
+    { name: "Budget", type: "number", value: 120 },
+  ]);
+  assert.equal(task.custom_value, undefined);
+  a.dom.window.close();
+  b.dom.window.close();
+});
+test("workbench financial installments settle without double counting", async () => {
+  const a = await app({
+    version: 2,
+    os: [
+      {
+        id: "a",
+        kind: "account",
+        title: "Banque",
+        status: "En cours",
+        opening: 1000,
+        accountType: "Courant",
+      },
+    ],
+  });
+  await a.click("[data-screen=wave]");
+  await a.click("[data-screen=workbench]");
+  await a.click("[data-evo=tab][data-id=flows]");
+  a.fill("#evo-installments [name=title]", "Projet");
+  a.fill("#evo-installments [name=total]", "-100");
+  a.fill("#evo-installments [name=count]", "3");
+  a.fill("#evo-installments [name=first]", "2026-10-01");
+  await a.submit("#evo-installments");
+  assert.equal(a.doc.querySelector("[role=alert]"), null);
+  assert.equal(a.saved().os.filter((r) => r.kind === "commitment").length, 3);
+  await a.click("[data-evo=settle]");
+  assert.equal(a.saved().finances.length, 1);
+  assert.equal(a.doc.querySelectorAll("[data-evo=settle]").length, 2);
+  a.dom.window.close();
 });

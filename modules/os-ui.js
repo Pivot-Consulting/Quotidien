@@ -13,7 +13,7 @@ function createLifeOS(ctx) {
     pendingRules = [],
     pendingCSV = [];
   const state = () => ctx.state();
-  const rs = (kind) => O.rows(state(), kind);
+  const rs = (kind) => O.rows(state(), kind).filter(Q.Personal.visible);
   const num = O.n;
   const format = (value) =>
     new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 1 }).format(value);
@@ -89,7 +89,7 @@ function createLifeOS(ctx) {
       ? `<details class="card os-legacy"><summary>Captures libres conservées (${captures.length})</summary>${ctx.listLife(captures)}</details>`
       : "";
     for (const key of keys) {
-      const data = state()[key].filter((r) => !r.deleted);
+      const data = state()[key].filter(Q.Personal.visible);
       html += `<section class="card os-legacy"><div class="section-head"><h2>${labels[key]}</h2><div class="os-actions"><button class="mini" data-create="${ctx.kinds[key]}">＋ Ajouter</button>${key === "finances" ? button("csv", "Importer CSV") : ""}</div></div>${data.length ? data.map((r) => `<div class="os-insight"><button class="text-button" data-edit="${key}" data-id="${e(r.id)}">${e(r.title || r.label || r.kind || r.type)} · ${e(r.date || "")}</button><span>${key === "finances" ? e(euro(Number(r.amount))) : ""}</span></div>`).join("") : noData("Tes données de cet espace apparaîtront ici.")}</section>`;
     }
     return html;
@@ -847,6 +847,14 @@ function createLifeOS(ctx) {
           )
           .join("") || "<small>Ajoute d’abord les membres du foyer.</small>"
       }</div>`;
+    else if (f.type === "vaultref")
+      html = `<select ${attr}><option value="">Non lié</option>${state()
+        .documents.filter((x) => !x.deleted || x.id === v)
+        .map(
+          (x) =>
+            `<option value="${e(x.id)}" ${x.id === v ? "selected" : ""}>${e(x.title)}</option>`,
+        )
+        .join("")}</select>`;
     else if (f.type === "textarea")
       html = `<textarea ${attr} rows="3">${e(v)}</textarea>`;
     else

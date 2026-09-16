@@ -18,6 +18,11 @@ namespace Q.Intelligence {
   };
   type Analyzer = (s: State, today: string) => Finding[];
   const P = Personal;
+  const threshold = (s: State, key: string, fallback: number) =>
+    Number(
+      (s.settings.analysis as Record<string, number> | undefined)?.[key] ||
+        fallback,
+    );
   export const categories = [
     "Important",
     "Risque",
@@ -53,13 +58,17 @@ namespace Q.Intelligence {
     }).format(n);
   const deadlines: Analyzer = (s, today) =>
     Planning.entries(s)
-      .filter((x) => x.deadline && x.start <= OS.addDays(today, 7))
+      .filter(
+        (x) =>
+          x.deadline &&
+          x.start <= OS.addDays(today, threshold(s, "horizon", 7)),
+      )
       .map((x) =>
         finding(
           "deadline:" + x.id,
           x.start < today ? "Important" : "À surveiller",
           `${x.label} ${x.start < today ? "dépassée" : "à venir"} · ${P.title(x.hit.record)}`,
-          `${x.label} le ${x.start}. ${x.start < today ? OS.daysBetween(x.start, today) + " jour(s) de retard." : "Dans les sept prochains jours."}`,
+          `${x.label} le ${x.start}. ${x.start < today ? OS.daysBetween(x.start, today) + " jour(s) de retard." : `Dans les ${threshold(s, "horizon", 7)} prochains jours.`}`,
           [x.hit],
           `Traiter ${x.label.toLowerCase()} · ${P.title(x.hit.record)}`,
           x.start,
@@ -160,7 +169,11 @@ namespace Q.Intelligence {
         }
         const known = dates.filter((d) => validDate(d) && d <= today).sort();
         const last = known[known.length - 1];
-        if (!last || OS.daysBetween(last, today) < 30) return [];
+        if (
+          !last ||
+          OS.daysBetween(last, today) < threshold(s, "stagnation", 30)
+        )
+          return [];
         return [
           finding(
             "stagnation",
@@ -177,7 +190,8 @@ namespace Q.Intelligence {
     live(s, "planning")
       .filter(
         (r) =>
-          String(r.date) >= today && String(r.date) <= OS.addDays(today, 7),
+          String(r.date) >= today &&
+          String(r.date) <= OS.addDays(today, threshold(s, "horizon", 7)),
       )
       .flatMap((r) => {
         const tasks = s.tasks.filter(
@@ -211,7 +225,7 @@ namespace Q.Intelligence {
     const items = Planning.entries(s).filter(
       (x) =>
         x.start >= today &&
-        x.start <= OS.addDays(today, 7) &&
+        x.start <= OS.addDays(today, threshold(s, "horizon", 7)) &&
         x.time &&
         (x.hit.key === "events" ||
           x.hit.record.kind === "appointment" ||
