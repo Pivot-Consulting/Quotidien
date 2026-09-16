@@ -88,6 +88,20 @@ Q.ready = (async function () {
       }
     },
   });
+  var evolutionUI = createEvolutionUI({
+    state: () => state,
+    esc,
+    id,
+    save,
+    render,
+    error: showError,
+    edit: (kind) => os.edit(kind),
+    repository: () => repository,
+    restore: async (prepared) => {
+      state = prepared.state;
+      return await save(true, prepared.files);
+    },
+  });
   var cockpit = createCockpit({
     state: () => state,
     esc,
@@ -107,6 +121,7 @@ Q.ready = (async function () {
   }
   var editorDrafts = createDrafts({
     repository,
+    restoreFields: (form, fields) => personal.restoreDraftFields(form, fields),
     state: () => committed,
     dirty: () => personal.dirtyDialog(),
     error: showError,
@@ -174,8 +189,12 @@ Q.ready = (async function () {
     error: showError,
     markClean: () => personal.markClean(),
     footer: (ref) => personal.footer(ref),
+    fields: (r) => personal.fields(r, "documents"),
+    readFields: (f, r) => personal.readFields(f, r),
   });
   var automationUI = createAutomationUI({
+    fields: (r) => personal.fields(r, "automations"),
+    readFields: (f, r) => personal.readFields(f, r),
     state: () => state,
     esc,
     id,
@@ -361,25 +380,27 @@ Q.ready = (async function () {
   function render() {
     document.documentElement.dataset.theme = state.settings.theme;
     var c =
-      state.screen === "intelligence"
-        ? cockpit.intelligence()
-        : state.screen === "automation"
-          ? automationUI.view()
-          : state.screen === "vault"
-            ? vaultUI.view()
-            : state.screen === "explore"
-              ? personal.searchView()
-              : state.screen === "today"
-                ? todayView()
-                : state.screen === "plan"
-                  ? planView()
-                  : state.screen === "notes"
-                    ? notesView()
-                    : state.screen === "tracking"
-                      ? trackingView()
-                      : state.screen === "life"
-                        ? lifeView()
-                        : waveView();
+      state.screen === "workbench"
+        ? evolutionUI.view()
+        : state.screen === "intelligence"
+          ? cockpit.intelligence()
+          : state.screen === "automation"
+            ? automationUI.view()
+            : state.screen === "vault"
+              ? vaultUI.view()
+              : state.screen === "explore"
+                ? personal.searchView()
+                : state.screen === "today"
+                  ? todayView()
+                  : state.screen === "plan"
+                    ? planView()
+                    : state.screen === "notes"
+                      ? notesView()
+                      : state.screen === "tracking"
+                        ? trackingView()
+                        : state.screen === "life"
+                          ? lifeView()
+                          : waveView();
     document.body.classList.remove("modal-open");
     root.innerHTML = shell(c);
     decorateForms();
@@ -562,6 +583,7 @@ Q.ready = (async function () {
   }
   function waveView() {
     return (
+      '<section class="card"><h2>Centre de pilotage</h2><p>Commandes, parcours métier, bilans, agents et synchronisation.</p><button class="primary" data-screen="workbench">Ouvrir le centre</button></section>' +
       cockpit.summary() +
       '<div class="page-title"><div><span class="eyebrow">PILOTAGE</span><h1>Pilotage avancé</h1></div></div><section class="grid"><article class="card"><div class="section-head"><div><span class="eyebrow">PROJETS DE VIE</span><h2>Objectifs</h2></div><button class="mini" data-action="add-goal">＋</button></div>' +
       listGoals(active(state.goals)) +
@@ -1123,7 +1145,7 @@ Q.ready = (async function () {
       ],
       routine: [
         "Nouvelle routine",
-        '<input name="name" placeholder="Routine" required><input name="time" type="time"><select name="schedule"><option>Tous les jours</option><option>Jours ouvrés</option><option>Week-end</option><option>Jours choisis</option></select><input name="weekdays" placeholder="Jours choisis : 1,2,3,4,5"><textarea name="steps" class="full" placeholder="Une étape par ligne ou séparée par des virgules"></textarea>',
+        '<input name="name" placeholder="Routine" required><input name="time" type="time"><select name="schedule"><option>Tous les jours</option><option>Jours ouvrés</option><option>Week-end</option><option>Jours choisis</option><option>Mensuel</option><option>Intervalle</option></select><label>Jour du mois (1–31)<input name="monthDay" type="number" min="1" max="31" value="1"></label><label>Intervalle (jours)<input name="everyDays" type="number" min="1" max="365" value="1"></label><label>Départ de l’intervalle<input name="anchor" type="date"></label><input name="weekdays" placeholder="Jours choisis : 1,2,3,4,5"><textarea name="steps" class="full" placeholder="Une étape par ligne ou séparée par des virgules"></textarea>',
       ],
       workout: [
         "Nouvelle séance",
@@ -1342,6 +1364,7 @@ Q.ready = (async function () {
       }
       return;
     }
+    if (await evolutionUI.click(t)) return;
     if (await cockpit.handleClick(t)) return;
     if (await focusUI.click(t)) return;
     if (await routinesUI.click(t)) return;
@@ -1399,7 +1422,11 @@ Q.ready = (async function () {
         return x.id === t.dataset.id;
       });
       if (task) {
-        task.done = !task.done;
+        Q.Personal.changeStatus(
+          state,
+          { key: "tasks", id: task.id },
+          task.done ? "À faire" : "Terminé",
+        );
         task.completedAt = task.done ? new Date().toISOString() : null;
         if (await save()) render();
       }
@@ -1583,6 +1610,7 @@ Q.ready = (async function () {
     }
     submittingEditor = editorDrafts.hasForm();
     await editorDrafts.flush();
+    if (await evolutionUI.submit(f)) return;
     if (await focusUI.submit(f)) return;
     if (await vaultUI.submit(f)) return;
     if (await automationUI.submit(f)) return;

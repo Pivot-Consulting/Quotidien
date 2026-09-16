@@ -13,6 +13,8 @@ module.exports = {
     ".build/vault.js",
     ".build/automation.js",
     ".build/backup.js",
+    ".build/evolution.js",
+    ".build/commands.js",
   ],
   ui: [
     "modules/drafts-ui.js",
@@ -23,6 +25,7 @@ module.exports = {
     "modules/os-ui.js",
     "modules/personal-ui.js",
     "modules/cockpit-ui.js",
+    "modules/evolution-ui.js",
     "app.js",
   ],
 };

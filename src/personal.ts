@@ -340,7 +340,28 @@ namespace Q.Personal {
             for (const id of (h.record[f.key] as string[]) || [])
               add(h, "os", id, f.label);
         }
-      if (h.key === "tasks") add(h, "os", h.record.osSourceId, "Action liée");
+      add(h, "os", h.record.assigneeId, "Contact responsable");
+      add(h, "documents", h.record.vaultDocumentId, "Document du coffre");
+      if (h.key === "tasks") {
+        add(h, "os", h.record.osSourceId, "Action liée");
+        add(h, "tasks", h.record.parentTaskId, "Tâche parente");
+      }
+      if (h.key === "assets" || h.key === "goals")
+        add(h, "os", h.record.convertedTo, "Fiche spécialisée");
+      if (
+        h.key === "os" &&
+        ["assets", "goals"].includes(String(h.record.convertedFrom))
+      )
+        add(
+          h,
+          h.record.convertedFrom as Collection,
+          h.id,
+          "Registre d’origine",
+        );
+      if (h.key === "finances") {
+        add(h, "os", h.record.tripId, "Voyage");
+        add(h, "os", h.record.commitmentId, "Échéance réglée");
+      }
       if (h.key === "finances") add(h, "os", h.record.accountId, "Compte");
       if (h.key === "finances" || h.key === "goals")
         add(h, "os", h.record.projectId, "Projet financé");
@@ -355,10 +376,18 @@ namespace Q.Personal {
     return graph(s).filter((c) => same(c.from, ref) || same(c.to, ref));
   }
   export function blockers(s: State, ref: Ref): Hit[] {
-    return connections(s)
+    const linked = connections(s)
       .filter((c) => !c.deleted && c.type === "depends" && same(c.from, ref))
-      .map((c) => ({ ...c.to, record: resolve(s, c.to)! }))
-      .filter((h) => !completed(h.record, s));
+      .map((c) => ({ ...c.to, record: resolve(s, c.to)! }));
+    const children: Hit[] =
+      ref.key === "tasks"
+        ? Evolution.children(s, ref.id).map((record) => ({
+            key: "tasks",
+            id: record.id,
+            record,
+          }))
+        : [];
+    return [...linked, ...children].filter((h) => !completed(h.record, s));
   }
   /** Audit only changed user records. Navigation/search preferences create no record revisions. */
   export function stamp(
@@ -438,6 +467,10 @@ namespace Q.Personal {
         ...fields.map((k) => r[k] || ""),
         describe(h),
         ...tags(r),
+        ...((r.customFields || []) as Evolution.Custom[]).flatMap((c) => [
+          c.name,
+          String(c.value),
+        ]),
         meta(r).description || "",
         meta(r).context || "",
         meta(r).owner || "",
@@ -522,6 +555,14 @@ namespace Q.Personal {
       "interval",
       "insightSource",
       "automationToken",
+      "commitmentId",
+      "commandSource",
+      "commandUndone",
+      "receivedAt",
+      "consumedAt",
+      "convertedFrom",
+      "convertedTo",
+      "conversionArchivedBefore",
     ])
       delete copy[key];
     if (ref.key === "os") {

@@ -70,6 +70,7 @@ function createDrafts(ctx) {
     ctx.open(draft.kind, draft.id);
     const f = form();
     if (!f) return;
+    ctx.restoreFields?.(f, draft.fields);
     const used = new Set();
     for (const field of draft.fields) {
       const input = Array.from(f.elements).find(

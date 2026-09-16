@@ -13,6 +13,32 @@ function createPersonalOS(ctx) {
   const attrs = (ref) => `data-key="${e(ref.key)}" data-id="${e(ref.id)}"`;
   const select = (name, label, values, value = "") =>
     `<label>${e(label)}<select name="${name}" data-personal-filter="${name}">${values.map(([v, t]) => `<option value="${e(v)}" ${v === value ? "selected" : ""}>${e(t)}</option>`).join("")}</select></label>`;
+  function customRow(c = {}) {
+    return `<div class="custom-row full"><label>Nom<input name="custom_name" data-custom-name value="${e(c.name || "")}"></label><label>Type<select name="custom_type" data-custom-type>${[
+      ["text", "Texte"],
+      ["number", "Nombre"],
+      ["date", "Date AAAA-MM-JJ"],
+      ["boolean", "Oui / non"],
+    ]
+      .map(
+        ([v, t]) =>
+          `<option value="${v}" ${v === c.type ? "selected" : ""}>${t}</option>`,
+      )
+      .join(
+        "",
+      )}</select></label><label>Valeur<input name="custom_value" data-custom-value value="${e(typeof c.value === "boolean" ? (c.value ? "oui" : "non") : (c.value ?? ""))}"></label>${button("remove-custom", "Retirer")}</div>`;
+  }
+  function linkedOptions(rows, selected) {
+    return (
+      `<option value="">Non lié</option>` +
+      rows
+        .map(
+          (x) =>
+            `<option value="${e(x.id)}" ${x.id === selected ? "selected" : ""}>${e(P.title(x))}</option>`,
+        )
+        .join("")
+    );
+  }
   function fields(r = {}, key = "os") {
     const m = P.meta(r);
     return `<details class="full shared-fields"><summary>Propriétés avancées · tags, priorité, contexte</summary><div class="form">
@@ -31,12 +57,55 @@ function createPersonalOS(ctx) {
     )}
     <label>Contexte<input name="personal_context" placeholder="Maison, travail, transport…" value="${e(m.context || "")}"></label>
     ${key === "tasks" ? "" : `<label>Durée prévue (min)<input type="number" name="personal_duration" min="1" value="${e(m.duration || "")}"></label>`}
+    <label>Contact responsable<select name="assigneeId">${linkedOptions(
+      state().os.filter(
+        (x) => x.kind === "contact" && (!x.deleted || x.id === r.assigneeId),
+      ),
+      r.assigneeId,
+    )}</select></label>
+    ${
+      key === "tasks"
+        ? `<label>Tâche parente<select name="parentTaskId">${linkedOptions(
+            state().tasks.filter(
+              (x) => x.id !== r.id && (!x.deleted || x.id === r.parentTaskId),
+            ),
+            r.parentTaskId,
+          )}</select></label>`
+        : ""
+    }
+    ${
+      key === "finances"
+        ? `<label>Voyage lié<select name="tripId">${linkedOptions(
+            state().os.filter(
+              (x) => x.kind === "trip" && (!x.deleted || x.id === r.tripId),
+            ),
+            r.tripId,
+          )}</select></label>`
+        : ""
+    }
+    <div class="full"><p>Champs personnalisés</p><div data-custom-rows>${(r.customFields || []).map(customRow).join("")}</div>${button("add-custom", "＋ Champ")}</div>
     <label>Responsable<input name="personal_owner" value="${e(m.owner || "")}"></label>
     <label>Lieu<input name="personal_location" value="${e(m.location || "")}"></label>
     <label class="full">Description commune<textarea name="personal_description">${e(m.description || "")}</textarea></label>
     <label><input type="checkbox" name="personal_favorite" ${m.favorite ? "checked" : ""}>Favori</label>
     <label class="full">Checklist (une étape par ligne ; [x] pour terminée)<textarea name="personal_checklist" rows="3">${e((m.checklist || []).map((x) => (x.done ? "[x] " : "") + x.text).join("\n"))}</textarea></label>
     </div></details>`;
+  }
+  function restoreDraftFields(form, values) {
+    const container = form.querySelector("[data-custom-rows]");
+    if (!container) return;
+    const names = values.filter((x) => x.name === "custom_name"),
+      types = values.filter((x) => x.name === "custom_type"),
+      fields = values.filter((x) => x.name === "custom_value");
+    container.innerHTML = names
+      .map((x, i) =>
+        customRow({
+          name: x.value,
+          type: types[i]?.value,
+          value: fields[i]?.value,
+        }),
+      )
+      .join("");
   }
   function readFields(form, record) {
     if (!form.elements.namedItem("personal_tags")) return;
@@ -69,12 +138,43 @@ function createPersonalOS(ctx) {
         done: /^\[x\]/i.test(t),
       }))
       .filter((x) => x.text);
+    record.assigneeId = String(fd.get("assigneeId") || "");
+    if (form.elements.namedItem("parentTaskId"))
+      record.parentTaskId = String(fd.get("parentTaskId") || "");
+    if (form.elements.namedItem("tripId"))
+      record.tripId = String(fd.get("tripId") || "");
+    record.customFields = [...form.querySelectorAll(".custom-row")].map(
+      (row) => {
+        const name = row.querySelector("[data-custom-name]").value.trim(),
+          type = row.querySelector("[data-custom-type]").value,
+          raw = row.querySelector("[data-custom-value]").value.trim();
+        if (type === "number" && !raw)
+          throw new Error(
+            "Renseigne la valeur numérique du champ personnalisé.",
+          );
+        if (type === "boolean" && !["oui", "non"].includes(raw.toLowerCase()))
+          throw new Error("Un champ Oui / non attend oui ou non.");
+        return {
+          name,
+          type,
+          value:
+            type === "number"
+              ? Number(raw)
+              : type === "boolean"
+                ? raw.toLowerCase() === "oui"
+                : raw,
+        };
+      },
+    );
     record.personal = m;
     for (const key of Object.keys(record))
-      if (key.startsWith("personal_")) delete record[key];
+      if (key.startsWith("personal_") || key.startsWith("custom_"))
+        delete record[key];
   }
   function footer(ref) {
-    return `<div class="shared-footer">${button("detail", "Relations, checklist et historique", attrs(ref))}<a class="mini" href="${e(P.route(ref))}">Lien direct vers cette fiche</a><p class="meta">Les propriétés et relations sont communes à tous les espaces.</p></div>`;
+    const children =
+      ref.key === "tasks" ? Q.Evolution.children(state(), ref.id) : [];
+    return `<div class="shared-footer">${children.length ? `<p>Sous-tâches : ${children.filter((x) => x.done).length}/${children.length} terminées</p>${children.map((x) => `<a class="mini" href="${e(P.route({ key: "tasks", id: x.id }))}">${e(P.title(x))}</a>`).join("")}` : ""}${button("detail", "Relations, checklist et historique", attrs(ref))}<a class="mini" href="${e(P.route(ref))}">Lien direct vers cette fiche</a><p class="meta">Les propriétés et relations sont communes à tous les espaces.</p></div>`;
   }
   function hitCard(h) {
     const r = h.record,
@@ -274,6 +374,12 @@ function createPersonalOS(ctx) {
     const fav = P.search(state(), { favorite: true }).slice(0, 4);
     return `<section class="card shared-cockpit"><div class="section-head"><div><span class="eyebrow">TON FIL CONDUCTEUR</span><h2>Prochaines actions</h2></div>${button("explore", "Tout explorer")}</div><details class="shared-method"><summary>Comment sont choisies les actions ?</summary><p>Classement local selon les échéances, l’importance, la priorité et les liens. Les actions bloquées sont écartées.</p></details><div class="shared-actions">${actions.map((a) => `<article class="shared-action"><div class="section-head"><h3><button class="text-button" data-edit="tasks" data-id="${e(a.hit.id)}">${e(P.title(a.hit.record))}</button></h3><span class="tag">${a.score} pts</span></div><details><summary>Pourquoi cette action ?</summary><ul>${a.reasons.map((r) => `<li>${e(r)}</li>`).join("")}</ul></details><div class="os-actions"><button class="mini" data-toggle="task" data-id="${e(a.hit.id)}">Terminer</button><button class="mini" data-focus="start" data-id="${e(a.hit.id)}">Focus</button>${button("tomorrow", "Demain", `data-id="${e(a.hit.id)}"`)}${button("detail", "Relations & checklist", attrs(a.hit))}<button class="danger" data-del="tasks" data-id="${e(a.hit.id)}" aria-label="Retirer cette tâche">×</button></div></article>`).join("") || `<p class="empty">Aucune action disponible. Capture une tâche ou consulte les dépendances dans Explorer.</p>`}</div><div class="os-actions">${button("late", `${late.length} échéance(s) en retard`)}${button("upcoming", `${upcoming.length} échéance(s) dans les 7 jours`)}${button("quick", "＋ Capture rapide", "", "primary")}</div>${fav.length ? `<details><summary>Mes favoris · ${fav.length}</summary>${fav.map(hitCard).join("")}</details>` : ""}</section>`;
   }
+  const customSnapshot = (form) =>
+    JSON.stringify(
+      [...form.querySelectorAll(".custom-row input,.custom-row select")].map(
+        (x) => x.value,
+      ),
+    );
   function dirtyDialog() {
     const form = document.querySelector(".modal form");
     if (
@@ -299,6 +405,11 @@ function createPersonalOS(ctx) {
       ].includes(form.id)
     )
       return false;
+    if (
+      form.dataset.initialCustom !== undefined &&
+      form.dataset.initialCustom !== customSnapshot(form)
+    )
+      return true;
     return Array.from(form.elements).some(
       (x) =>
         x.dataset.initialValue !== undefined &&
@@ -307,6 +418,8 @@ function createPersonalOS(ctx) {
     );
   }
   function markClean() {
+    const form = document.querySelector(".modal form");
+    if (form) form.dataset.initialCustom = customSnapshot(form);
     document
       .querySelectorAll(".modal input,.modal select,.modal textarea")
       .forEach(
@@ -318,6 +431,19 @@ function createPersonalOS(ctx) {
   async function handleClick(t) {
     const a = t.dataset.personal;
     if (!a) return false;
+    if (a === "add-custom") {
+      t.parentElement
+        .querySelector("[data-custom-rows]")
+        .insertAdjacentHTML("beforeend", customRow());
+      t.closest("form").dispatchEvent(new Event("input", { bubbles: true }));
+      return true;
+    }
+    if (a === "remove-custom") {
+      const form = t.closest("form");
+      t.closest(".custom-row").remove();
+      form.dispatchEvent(new Event("input", { bubbles: true }));
+      return true;
+    }
     if (a === "detail") {
       if (dirtyDialog()) {
         ctx.error("Enregistre tes modifications avant d’ouvrir les relations.");
@@ -523,6 +649,7 @@ function createPersonalOS(ctx) {
   return {
     fields,
     readFields,
+    restoreDraftFields,
     footer,
     search,
     searchView,

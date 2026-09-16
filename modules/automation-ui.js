@@ -52,7 +52,7 @@ function createAutomationUI(ctx) {
     const r = record || {};
     ctx.modal(
       record ? "Modifier l’automatisation" : "Nouvelle automatisation",
-      `<form id="automation-builder" class="form" data-draft-kind="automation-builder" data-draft-id="${e(r.id || "")}"><label>Nom<input name="title" required value="${e(r.title || "")}"></label><label>Déclencheur<select name="trigger">${A.triggers.map((x) => `<option ${r.trigger === x ? "selected" : ""}>${e(x)}</option>`).join("")}</select></label><label>Horizon / inactivité (jours)<input name="horizon" type="number" min="0" value="${e(r.horizon ?? 7)}"></label><label>Seuil financier (€)<input name="threshold" type="number" min="0" step="0.01" value="${e(r.threshold ?? 500)}"></label><label>Catégorie exacte (facultatif)<input name="category" value="${e(r.category || "")}"></label><label>Priorité de notification<input name="priority" type="number" min="1" max="5" value="${e(r.priority ?? 2)}"></label><fieldset class="full"><legend>Actions</legend>${A.actions.map((x) => `<label><input type="checkbox" name="actions" value="${e(x)}" ${(r.actions || ["Notification"]).includes(x) ? "checked" : ""}> ${e(x)}</label>`).join("")}</fieldset><label><input type="checkbox" name="active" ${r.active !== false ? "checked" : ""}> Règle active</label><button class="primary" type="submit">Enregistrer et évaluer</button></form>`,
+      `<form id="automation-builder" class="form" data-draft-kind="automation-builder" data-draft-id="${e(r.id || "")}"><label>Nom<input name="title" required value="${e(r.title || "")}"></label><label>Déclencheur<select name="trigger">${A.triggers.map((x) => `<option ${r.trigger === x ? "selected" : ""}>${e(x)}</option>`).join("")}</select></label><label>Horizon / inactivité (jours)<input name="horizon" type="number" min="0" value="${e(r.horizon ?? 7)}"></label><label>Seuil financier (€)<input name="threshold" type="number" min="0" step="0.01" value="${e(r.threshold ?? 500)}"></label><label>Catégorie exacte (facultatif)<input name="category" value="${e(r.category || "")}"></label><label>Priorité de notification<input name="priority" type="number" min="1" max="5" value="${e(r.priority ?? 2)}"></label><fieldset class="full"><legend>Actions</legend>${A.actions.map((x) => `<label><input type="checkbox" name="actions" value="${e(x)}" ${(r.actions || ["Notification"]).includes(x) ? "checked" : ""}> ${e(x)}</label>`).join("")}</fieldset><label><input type="checkbox" name="active" ${r.active !== false ? "checked" : ""}> Règle active</label>${ctx.fields(r)}<button class="primary" type="submit">Enregistrer et évaluer</button></form>`,
     );
     ctx.markClean();
   }
@@ -88,6 +88,7 @@ function createAutomationUI(ctx) {
           updatedAt: new Date().toISOString(),
         },
       );
+    ctx.readFields(form, record);
     const index = ctx.state().automations.findIndex((x) => x.id === id);
     if (index < 0) ctx.state().automations.unshift(record);
     else ctx.state().automations[index] = record;
