@@ -13,7 +13,7 @@ function createEvolutionUI(ctx) {
       currency: "EUR",
     }).format(n);
   const link = (key, r) =>
-    `<a href="${e(P.route({ key, id: r.id }))}">${e(P.title(r))}</a>`;
+    `<a class="evo-link" href="${e(P.route({ key, id: r.id }))}">${e(P.title(r))}</a>`;
   const button = (action, label, id = "") =>
     `<button type="button" class="mini" data-evo="${action}" data-id="${e(id)}">${e(label)}</button>`;
   const options = (rs) =>
@@ -21,7 +21,7 @@ function createEvolutionUI(ctx) {
       .map((r) => `<option value="${e(r.id)}">${e(P.title(r))}</option>`)
       .join("");
   const create = (kind, label) =>
-    `<button class="mini" data-evo="new" data-id="${e(kind)}">＋ ${e(label)}</button>`;
+    `<button class="mini" data-evo="new" data-id="${e(kind)}">+ ${e(label)}</button>`;
   const empty = '<p class="meta">Aucune donnée pour cette période.</p>';
   let tab = "commands",
     preview = null,

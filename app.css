@@ -1324,3 +1324,9 @@ summary:focus-visible {
     grid-template-columns: 1fr;
   }
 }
+
+a.evo-link {
+  color: var(--text);
+  text-decoration-color: var(--blue);
+  text-underline-offset: 3px;
+}
