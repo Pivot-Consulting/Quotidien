@@ -1,4 +1,28 @@
-# Quotidien — version 3.0.0 candidate
+# Quotidien — version 3.1.0
+
+## État courant — reprise du 14 septembre 2026
+
+Base : `main` 6d97b34, version 3.0 publiée. Les PR #10 à #14 sont déjà intégrées ; les anciens historiques V6/V7 et clean-reset-source ne sont pas fusionnés.
+
+Livré dans cette reprise :
+- A : état courant et routes actualisés, version de publication dérivée du package.
+- B : reçus durables distincts du journal, migration des reçus encore présents dans les logs/tâches, prévention des boucles sur tâches générées, respect des archives. Les anciens jetons déjà perdus en 3.0 et sans tâche associée ne sont pas reconstituables ; aucune notification existante n’est supprimée silencieusement.
+- C : sauvegarde complète versionnée (format 2), SHA-256 des données et fichiers, restauration atomique avec checkpoint et nouveaux identifiants de fichiers pour préserver les anciennes copies. Conservation des pièces remplacées pour permettre la restauration des révisions. Les exports format 1 restent disponibles, sans pièces.
+- D : liens profonds par fiche, Kanban modifiable pour tâches et modèles disposant d’un statut, filtres et vues Explorer persistants. Le statut « bloqué » reste calculé à partir des dépendances.
+
+Limites actuelles : mono-navigateur, pas d’authentification/synchronisation, pas d’OCR, pas de scheduler/push, pas de chiffrement applicatif, pas de démarrage hors réseau garanti. Sauvegarde complète plafonnée à 100 Mo de pièces et 160 Mo à l’import ; limite 25 Mo par pièce. Les pièces conservées pour récupération occupent de l’espace ; aucun nettoyage automatique destructif. Les snapshots locaux antérieurs ne sont pas tous embarqués dans un export : l’état choisi et son historique de fiches le sont.
+
+Validation du 16 septembre : `npm run verify` réussi, **122 tests passants**. Chromium réel : création par un clic Enregistrer, Kanban, lien direct après rechargement, remplacement de pièce, sauvegarde de deux versions, restauration dans un contexte vierge et téléchargement du fichier restauré. Today, Explorer, Vault et Automation : 12 contrôles à 320/390/844 px, sans débordement horizontal ni erreur JavaScript. Clavier natif iOS/Android et appareil physique non testés.
+
+Correction supplémentaire : le changement de champ à la perte de focus ne désactive plus le bouton avant le clic natif Enregistrer. Titres longs adaptés aux écrans étroits ; version affichée issue de Q.RELEASE.
+
+Le plan détaillé et la matrice des lots figurent dans `docs/REPRISE_3_1.md`.
+
+---
+
+## Historique des livraisons (les limites ci-dessous sont datées)
+
+### Version 3.0.0
 
 ## Lots Routines, Document Vault et Automatisation — 11 septembre 2026
 

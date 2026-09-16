@@ -1,5 +1,7 @@
 # QUOTIDIEN — audit et exécution progressive
 
+> Document historique commencé en 2.2. Pour l’état courant 3.1 et les lots déjà livrés, lire [REPRISE_3_1.md](REPRISE_3_1.md) et le début de PROJECT_STATUS.md. Les mentions de stockage transactionnel, coffre, routines, calendrier et centre d’analyse comme travaux futurs ci-dessous sont dépassées.
+
 Audit du 9 septembre 2026, base `main` au commit `1e65395` (2.2, PR #11 fusionnée). Travail sur `feat/personal-os-foundations`. Ce document distingue la première livraison du programme demandé à terme.
 
 ## Audit de la base

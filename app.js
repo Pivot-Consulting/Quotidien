@@ -30,7 +30,9 @@ Q.ready = (async function () {
     planTab = "tasks",
     lastFocus = null,
     modalRoute = "",
+    recordReturnRoute = "#explore",
     pendingImport = null,
+    pendingFiles = [],
     draft = null;
   try {
     repository = new Q.Durable.Repository(localStorage, window.indexedDB);
@@ -209,9 +211,9 @@ Q.ready = (async function () {
       }[c];
     });
   }
-  async function save(checkpoint) {
+  async function save(checkpoint, files = []) {
     try {
-      state = await repository.commit(state, !!checkpoint);
+      state = await repository.commit(state, !!checkpoint, files);
       committed = Q.clone(state);
       draft = null;
       if (submittingEditor) await editorDrafts.clear();
@@ -308,7 +310,9 @@ Q.ready = (async function () {
   }
   function shell(content) {
     return (
-      '<div class="shell"><header class="topbar"><div><div class="brand">QUOTIDIEN <span>3.0</span></div><div class="date">' +
+      '<div class="shell"><header class="topbar"><div><div class="brand">QUOTIDIEN <span>' +
+      esc(Q.RELEASE) +
+      '</span></div><div class="date">' +
       esc(
         new Intl.DateTimeFormat("fr-FR", {
           weekday: "long",
@@ -869,6 +873,8 @@ Q.ready = (async function () {
     prompt.querySelector("button").focus();
   }
   function closeModal() {
+    if (location.hash.startsWith("#record/"))
+      history.replaceState(null, "", recordReturnRoute);
     vaultUI?.cleanup();
     document.getElementById("modal").innerHTML = "";
     document.body.classList.remove("modal-open");
@@ -876,6 +882,7 @@ Q.ready = (async function () {
     root.querySelector(".bottom")?.removeAttribute("inert");
     editing = null;
     pendingImport = null;
+    pendingFiles = [];
     if (lastFocus && lastFocus.isConnected) lastFocus.focus();
   }
   function modal(title, body) {
@@ -942,7 +949,7 @@ Q.ready = (async function () {
       "Réglages & données",
       '<div class="list">' +
         editorDrafts.controls() +
-        '<button class="primary" data-action="export">Exporter mes données</button><button class="mini" data-action="import">Importer une sauvegarde</button><button class="mini" data-action="trash">Éléments retirés</button><button class="mini" data-action="restore">Récupérer la copie précédente</button><button class="mini" data-action="checkpoint">Récupérer avant le dernier import</button><button class="mini" data-action="theme">Passer au thème ' +
+        '<button class="primary" data-action="export-full">Sauvegarde complète avec fichiers</button><button class="mini" data-action="export">Exporter les données seules (sans fichiers)</button><button class="mini" data-action="import">Importer une sauvegarde</button><button class="mini" data-action="trash">Éléments retirés</button><button class="mini" data-action="restore">Récupérer la copie précédente</button><button class="mini" data-action="checkpoint">Récupérer avant le dernier import</button><button class="mini" data-action="theme">Passer au thème ' +
         (state.settings.theme === "dark" ? "clair" : "sombre") +
         "</button>" +
         (draft
@@ -960,14 +967,20 @@ Q.ready = (async function () {
         '. Une copie locale ne remplace pas une sauvegarde externe.</p><button class="mini" data-action="persist-storage">Demander la conservation du stockage local</button></div>',
     );
   }
-  function importPreview(next) {
+  function importPreview(next, files = [], full = false) {
     modal(
       "Vérifier la restauration",
       "<p>Cette sauvegarde remplacera les données actuelles. Une copie de celles-ci sera conservée avant le remplacement.</p><p>" +
         esc(Q.summary(next)) +
+        "</p><p>" +
+        (full
+          ? files.length +
+            " fichier(s) vérifié(s), inclus dans la restauration."
+          : "Données seules : les fichiers ne sont pas inclus. Les pièces ne seront disponibles que si elles existent déjà dans ce navigateur.") +
         '</p><button class="primary" data-action="confirm-import">Restaurer cette sauvegarde</button>',
     );
     pendingImport = next;
+    pendingFiles = files;
   }
   function trash() {
     var rows = [];
@@ -1238,6 +1251,18 @@ Q.ready = (async function () {
   var submittingEditor = false;
   function on(type, handler) {
     root.addEventListener(type, function (event) {
+      // A field blur must not disable the submit button before the browser clicks it.
+      // Draft writes have their own queue and are flushed by submit.
+      if (
+        type === "change" &&
+        event.target.closest?.("form") &&
+        !event.target.matches(
+          "[data-os-csv],[data-cockpit-field],[data-personal-check],[data-routine-step],[data-kanban-key]",
+        )
+      ) {
+        editorDrafts.capture();
+        return;
+      }
       if (
         type === "click" &&
         !event.target.closest?.("button") &&
@@ -1428,6 +1453,17 @@ Q.ready = (async function () {
             ? "Conservation accordée ; les exports restent nécessaires"
             : "Conservation non accordée par le navigateur",
         );
+    } else if (a === "export-full") {
+      await repository.assertCurrent();
+      const snapshot = Q.clone(committed);
+      const raw = await Q.FullBackup.create(snapshot, repository);
+      await repository.assertCurrent();
+      download(raw, "quotidien-complet-" + day() + ".json");
+      lastExportRequested = new Date().toISOString();
+      await repository.auxiliary("last-export-requested", lastExportRequested);
+      toast(
+        "Sauvegarde complète téléchargée. Vérifie le fichier et conserve-le hors de cet appareil.",
+      );
     } else if (a === "export") {
       download(Q.backup(state), "quotidien-backup-" + day() + ".json");
       lastExportRequested = new Date().toISOString();
@@ -1473,17 +1509,26 @@ Q.ready = (async function () {
       i.onchange = function () {
         var file = i.files && i.files[0];
         if (!file) return;
-        if (file.size > 20 * 1024 * 1024) {
-          showError("Fichier trop volumineux (20 Mo maximum).");
+        if (file.size > Q.FullBackup.MAX_ARCHIVE_BYTES) {
+          showError("Fichier trop volumineux (160 Mo maximum).");
           return;
         }
         var reader = new FileReader();
         reader.onerror = function () {
           showError("Lecture du fichier impossible.");
         };
-        reader.onload = function () {
+        reader.onload = async function () {
           try {
-            importPreview(Q.parseBackup(String(reader.result)));
+            const raw = String(reader.result);
+            const header = JSON.parse(raw);
+            if (header?.app === "quotidien" && header.format === 2) {
+              const prepared = await Q.FullBackup.prepare(raw);
+              if (personal.dirtyDialog())
+                throw new Error(
+                  "Ferme ou enregistre la saisie en cours avant de restaurer.",
+                );
+              importPreview(prepared.state, prepared.files, true);
+            } else importPreview(Q.parseBackup(raw));
           } catch (err) {
             showError("Import refusé : " + err.message);
           }
@@ -1493,7 +1538,7 @@ Q.ready = (async function () {
       i.click();
     } else if (a === "confirm-import" && pendingImport) {
       state = Q.clone(pendingImport);
-      if (await save(true)) {
+      if (await save(true, pendingFiles)) {
         closeModal();
         render();
         toast("Sauvegarde restaurée");
@@ -1610,6 +1655,28 @@ Q.ready = (async function () {
     if (location.hash !== "#" + screen) location.hash = screen;
     window.scrollTo(0, 0);
   }
+  function openRecordRoute() {
+    if (!location.hash.startsWith("#record/")) return false;
+    const hash = location.hash;
+    const ref = Q.Personal.parseRoute(hash);
+    const record = ref && Q.Personal.resolve(state, ref);
+    closeModal();
+    state.screen = "explore";
+    render();
+    if (!record || !ref) {
+      showError(
+        "Cette fiche est introuvable sur cet appareil. Vérifie la sauvegarde utilisée.",
+      );
+      return true;
+    }
+    history.replaceState(null, "", hash);
+    if (ref.key === "os") os.edit(record.kind, record);
+    else if (ref.key === "documents") vaultUI.open(record);
+    else if (ref.key === "automations" && record.engineVersion === 1)
+      automationUI.open(record);
+    else openForm(kinds[ref.key], record);
+    return true;
+  }
   window.addEventListener("hashchange", function () {
     if (bootError) return;
     if (busy) return;
@@ -1618,6 +1685,8 @@ Q.ready = (async function () {
       showError("Enregistre ou ferme cette saisie avant de changer de page.");
       return;
     }
+    if (openRecordRoute()) return;
+    closeModal();
     if (os.route(location.hash)) {
       state.screen = "life";
       closeModal();
@@ -1650,7 +1719,7 @@ Q.ready = (async function () {
     if (e.key === "Tab") {
       var controls = Array.from(
         dialog.querySelectorAll(
-          'button,input,select,textarea,summary,[tabindex="0"]',
+          'button,a[href],input,select,textarea,summary,[tabindex="0"]',
         ),
       ).filter(function (el) {
         return (
@@ -1695,6 +1764,7 @@ Q.ready = (async function () {
         else if (Q.screens.includes(location.hash.slice(1)))
           state.screen = location.hash.slice(1);
         render();
+        openRecordRoute();
       } catch (err) {
         recovery(err);
       }
@@ -1738,5 +1808,6 @@ Q.ready = (async function () {
         : "today";
     if (os.route(location.hash)) state.screen = "life";
     render();
+    openRecordRoute();
   }
 })();
