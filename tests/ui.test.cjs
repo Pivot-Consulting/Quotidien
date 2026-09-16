@@ -7,9 +7,9 @@ const windows = [];
 async function settle() {
   for (const w of windows) await w.Q?.pending;
 }
-async function app(seed, factory, editor) {
+async function app(seed, factory, editor, route = "") {
   const dom = new JSDOM('<div id="app"></div>', {
-    url: "http://localhost/",
+    url: "http://localhost/" + route,
     runScripts: "outside-only",
     pretendToBeVisual: true,
   });
@@ -946,4 +946,93 @@ test("Automation templates create idempotent notices and save quiet hours", asyn
   assert.equal(a.saved().notifications[0].read, true);
   assert.ok(a.saved().notifications[0].snoozedUntil);
   a.dom.window.close();
+});
+
+test("record deep links reopen encoded IDs and closing returns to Explorer", async () => {
+  const seed = { version: 2, tasks: [{ id: "t /?#é", title: "Fiche liée" }] };
+  const a = await app(
+    seed,
+    undefined,
+    undefined,
+    "#record/tasks/" + encodeURIComponent("t /?#é"),
+  );
+  assert.equal(
+    a.doc.querySelector('#task-form [name="title"]').value,
+    "Fiche liée",
+  );
+  await a.click("[data-close]");
+  assert.equal(a.w.location.hash, "#explore");
+  assert.equal(a.doc.querySelector(".modal"), null);
+  const b = await app(seed, undefined, undefined, "#record/tasks/missing");
+  assert.match(b.doc.querySelector("[role=alert]").textContent, /introuvable/);
+  assert.equal(b.doc.querySelector(".modal"), null);
+});
+test("Kanban changes persist, blocked completions fail, and view filters survive reload", async () => {
+  const a = await app({
+    version: 2,
+    tasks: [
+      { id: "a", title: "Prérequis" },
+      { id: "b", title: "Suite" },
+    ],
+    connections: [
+      {
+        id: "c",
+        from: { key: "tasks", id: "b" },
+        to: { key: "tasks", id: "a" },
+        type: "depends",
+      },
+    ],
+  });
+  await a.click('[data-action="search"]');
+  await a.click('[data-personal="view"][data-view="kanban"]');
+  async function status(id, value) {
+    const el = a.doc.querySelector(`[data-kanban-id="${id}"]`);
+    el.value = value;
+    el.dispatchEvent(new a.w.Event("change", { bubbles: true }));
+    await a.w.Q.pending;
+  }
+  await status("b", "Terminé");
+  assert.match(a.doc.querySelector("[role=alert]").textContent, /dépendances/);
+  assert.notEqual(a.saved().tasks.find((t) => t.id === "b").done, true);
+  await status("a", "Terminé");
+  await status("b", "Terminé");
+  assert.equal(a.saved().tasks.find((t) => t.id === "b").done, true);
+  const b = await app(a.saved());
+  await b.click('[data-action="search"]');
+  assert.ok(b.doc.querySelector('[data-view="kanban"][aria-pressed="true"]'));
+});
+
+test.after(() => {
+  for (const w of windows) w.close();
+});
+
+test("field blur keeps native submit enabled while the draft is queued", async () => {
+  const a = await app();
+  await a.click('[data-action="quick"]');
+  await a.click('[data-create="task"]');
+  const input = a.doc.querySelector('#task-form [name="title"]');
+  input.value = "Un seul clic";
+  input.dispatchEvent(new a.w.Event("change", { bubbles: true }));
+  const submit = a.doc.querySelector("#task-form .primary");
+  assert.equal(submit.disabled, false);
+  submit.click();
+  await a.w.Q.pending;
+  assert.equal(a.saved().tasks[0].title, "Un seul clic");
+  assert.equal(a.doc.querySelector(".modal"), null);
+  a.w.close();
+});
+
+test("notification preference blur does not swallow its native submit", async () => {
+  const a = await app(undefined, undefined, undefined, "#automation");
+  const input = a.doc.querySelector('#notification-prefs [name="quietStart"]');
+  input.value = "21:15";
+  input.dispatchEvent(new a.w.Event("change", { bubbles: true }));
+  const button = a.doc.querySelector(
+    '#notification-prefs button[type="submit"]',
+  );
+  assert.equal(button.disabled, false);
+  button.click();
+  await a.w.Q.pending;
+  assert.equal(a.saved().settings.notificationQuietStart, "21:15");
+  a.w.close();
 });

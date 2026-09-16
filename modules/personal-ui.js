@@ -4,8 +4,8 @@ function createPersonalOS(ctx) {
   const P = Q.Personal,
     e = ctx.esc,
     state = ctx.state;
-  let filter = {},
-    view = "list",
+  let filter = { ...(state()?.settings.explorer?.filter || {}) },
+    view = state()?.settings.explorer?.view || "list",
     current = null,
     pendingRevision = null;
   const button = (action, label, attrs = "", cls = "mini") =>
@@ -74,12 +74,16 @@ function createPersonalOS(ctx) {
       if (key.startsWith("personal_")) delete record[key];
   }
   function footer(ref) {
-    return `<div class="shared-footer">${button("detail", "Relations, checklist et historique", attrs(ref))}<p class="meta">Les propriétés et relations sont communes à tous les espaces.</p></div>`;
+    return `<div class="shared-footer">${button("detail", "Relations, checklist et historique", attrs(ref))}<a class="mini" href="${e(P.route(ref))}">Lien direct vers cette fiche</a><p class="meta">Les propriétés et relations sont communes à tous les espaces.</p></div>`;
   }
   function hitCard(h) {
     const r = h.record,
-      m = P.meta(r);
-    return `<article class="shared-result"><button class="search-result" data-edit="${e(h.key)}" data-id="${e(h.id)}"><strong>${m.favorite ? "★ " : ""}${e(P.title(r))}</strong><span>${e(P.describe(h))}${P.date(r) ? " · " + e(P.date(r)) : ""}${m.archived ? " · Archivé" : ""}</span></button><div class="shared-result-bottom"><span class="meta">${e(P.tags(r).join(" · "))}</span>${button("detail", "Relations & détails", attrs(h))}</div></article>`;
+      m = P.meta(r),
+      options = view === "kanban" ? P.statusOptions(state(), h) : [];
+    const control = options.length
+      ? `<label>Statut de ${e(P.title(r))}<select data-kanban-key="${e(h.key)}" data-kanban-id="${e(h.id)}">${options.map((x) => `<option ${x === (h.key === "tasks" ? (r.done ? "Terminé" : "À faire") : r.status) ? "selected" : ""}>${e(x)}</option>`).join("")}</select></label>`
+      : "";
+    return `<article class="shared-result"><button class="search-result" data-edit="${e(h.key)}" data-id="${e(h.id)}"><strong>${m.favorite ? "★ " : ""}${e(P.title(r))}</strong><span>${e(P.describe(h))}${P.date(r) ? " · " + e(P.date(r)) : ""}${m.archived ? " · Archivé" : ""}</span></button><div class="shared-result-bottom"><span class="meta">${e(P.tags(r).join(" · "))}</span>${button("detail", "Relations & détails", attrs(h))}</div>${control}</article>`;
   }
   function searchView() {
     return `<div class="page-title"><div><span class="eyebrow">TOUT EST CONNECTÉ</span><h1>Explorer</h1><p class="meta">Retrouve tes objets dans les vingt OS et les outils quotidiens.</p></div>${button("quick", "＋ Capturer", "", "primary")}</div>
@@ -191,7 +195,11 @@ function createPersonalOS(ctx) {
     ctx.navigate("explore");
     document.getElementById("global-search")?.focus();
   }
+  function rememberView() {
+    state().settings.explorer = { view, filter: { ...filter } };
+  }
   function remember() {
+    rememberView();
     const q = (filter.query || "").trim();
     if (!q) return;
     state().settings.searchHistory = [
@@ -343,18 +351,25 @@ function createPersonalOS(ctx) {
       if (await ctx.save()) ctx.render();
     } else if (a === "view") {
       view = t.dataset.view;
-      ctx.render();
+      rememberView();
+      if (await ctx.save()) ctx.render();
     } else if (a === "reset-search") {
       filter = {};
-      ctx.render();
+      rememberView();
+      if (await ctx.save()) ctx.render();
     } else if (a === "save-search")
       ctx.modal(
         "Enregistrer la recherche",
         `<form id="saved-search-form" class="form"><label class="full">Nom<input name="name" required placeholder="Mes projets prioritaires"></label><button class="primary">Enregistrer</button></form>`,
       );
     else if (a === "load-search") {
-      filter = { ...state().settings.searches[Number(t.dataset.index)].filter };
-      ctx.render();
+      const saved = state().settings.searches[Number(t.dataset.index)];
+      filter = { ...saved.filter };
+      view = ["list", "kanban", "timeline"].includes(saved.view)
+        ? saved.view
+        : "list";
+      rememberView();
+      if (await ctx.save()) ctx.render();
     } else if (a === "remove-search") {
       state().settings.searches.splice(Number(t.dataset.index), 1);
       if (await ctx.save()) ctx.render();
@@ -418,7 +433,10 @@ function createPersonalOS(ctx) {
         ctx.error("Ce nom de recherche existe déjà.");
         return true;
       }
-      state().settings.searches = [...list, { name, filter: { ...filter } }];
+      state().settings.searches = [
+        ...list,
+        { name, view, filter: { ...filter } },
+      ];
       remember();
       if (await ctx.save()) {
         ctx.close();
@@ -466,6 +484,30 @@ function createPersonalOS(ctx) {
   }
   async function changeEvent(target) {
     inputEvent(target);
+    if (target.dataset.kanbanKey) {
+      try {
+        P.changeStatus(
+          state(),
+          { key: target.dataset.kanbanKey, id: target.dataset.kanbanId },
+          target.value,
+        );
+        if (await ctx.save()) {
+          ctx.render();
+          ctx.toast("Statut enregistré");
+        }
+      } catch (error) {
+        refreshResults();
+        ctx.error(error.message);
+      }
+      return;
+    }
+    if (
+      target.id === "global-search" ||
+      (target.dataset.personalFilter && !target.name.startsWith("personal_"))
+    ) {
+      rememberView();
+      await ctx.save();
+    }
     if (target.dataset.personalCheck !== undefined && current) {
       const r = P.resolve(state(), current),
         index = Number(target.dataset.personalCheck);

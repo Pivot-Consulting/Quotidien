@@ -1,3 +1,11 @@
+# 3.1.0 — 16 septembre 2026
+
+- Sauvegarde complète des données et fichiers avec intégrité, aperçu, checkpoint et restauration atomique.
+- Anciennes pièces conservées pour les révisions et copies de récupération.
+- Dédoublonnage durable des automatisations après rotation du journal ; prévention des boucles et respect des archives.
+- Liens directs de fiches, statuts Kanban modifiables, filtres et vues persistants.
+- Documentation courante et libellés de publication alignés sur la version du package.
+
 # Version 2.4.0 — Calendrier commun et analyse locale
 
 - Calendrier mensuel transversal, agenda du jour, voyages multi-jours, filtres et création à la date sélectionnée.

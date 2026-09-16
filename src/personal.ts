@@ -100,6 +100,37 @@ namespace Q.Personal {
         .filter(Boolean),
     ),
   ];
+  export const route = (ref: Ref): string =>
+    "#record/" + ref.key + "/" + encodeURIComponent(ref.id);
+  export function parseRoute(hash: string): Ref | null {
+    const match = /^#record\/([^/]+)\/([^/]+)$/.exec(hash);
+    if (!match || !collections.includes(match[1] as Collection)) return null;
+    try {
+      return { key: match[1] as Collection, id: decodeURIComponent(match[2]!) };
+    } catch {
+      return null;
+    }
+  }
+  export function statusOptions(s: State, ref: Ref): string[] {
+    const r = resolve(s, ref);
+    if (!r || !visible(r)) return [];
+    if (ref.key === "tasks") return ["À faire", "Terminé"];
+    if (ref.key === "os")
+      return (
+        OS.getModel(r.kind)?.fields.find((f) => f.key === "status")?.options ||
+        []
+      );
+    return [];
+  }
+  export function changeStatus(s: State, ref: Ref, value: string): void {
+    const r = resolve(s, ref);
+    if (!r || !statusOptions(s, ref).includes(value))
+      throw new Error("Statut non disponible pour cette fiche.");
+    if (value === "Terminé" && blockers(s, ref).length)
+      throw new Error("Termine les dépendances avant cette fiche.");
+    if (ref.key === "tasks") r.done = value === "Terminé";
+    else r.status = value;
+  }
   export function domain(hit: Hit): string {
     if (hit.key === "os") return OS.domainFor(hit.record.kind)?.id || "";
     if (hit.key === "life")
@@ -248,6 +279,17 @@ namespace Q.Personal {
         throw new Error("Révision invalide.");
       historyIds.add(h.id);
     }
+    const explorer = s.settings.explorer;
+    if (
+      explorer !== undefined &&
+      (!obj(explorer) ||
+        !["list", "kanban", "timeline"].includes(String(explorer.view)) ||
+        !obj(explorer.filter) ||
+        Object.entries(explorer.filter).some(([k, v]) =>
+          k === "favorite" ? typeof v !== "boolean" : typeof v !== "string",
+        ))
+    )
+      throw new Error("Préférences Explorer invalides.");
     const searches = s.settings.searches;
     if (
       searches !== undefined &&

@@ -111,3 +111,48 @@ test("legacy automation ideas remain importable but are not executed", () => {
   assert.doesNotThrow(() => Q.normalize(s));
   assert.equal(Q.Automation.run(s, "2026-09-11", id), 0);
 });
+
+test("durable receipts survive log rotation, backup restore and repeated runs", () => {
+  const s = Q.empty();
+  s.tasks = Array.from({ length: 1001 }, (_, i) => ({
+    id: "source" + i,
+    title: "Late",
+    due: "2026-09-01",
+    done: false,
+  }));
+  s.automations = [rule("Tâche en retard")];
+  assert.equal(Q.Automation.run(s, "2026-09-14", id), 1001);
+  assert.equal(s.automationLogs.length, 500);
+  let restored = Q.parseBackup(Q.backup(s));
+  for (let i = 0; i < 5; i++)
+    assert.equal(Q.Automation.run(restored, "2026-09-14", id), 0);
+  assert.equal(restored.notifications.length, 1001);
+  assert.equal(restored.automationReceipts.length, 1001);
+});
+test("generated tasks do not generate follow-up loops and archives stay inactive", () => {
+  const s = Q.empty();
+  s.tasks = [{ id: "late", title: "Original", due: "2026-09-01" }];
+  s.automations = [rule("Tâche en retard", ["Créer une tâche"])];
+  assert.equal(Q.Automation.run(s, "2026-09-14", id), 1);
+  assert.equal(Q.Automation.run(s, "2026-09-15", id), 0);
+  assert.equal(s.tasks.length, 2);
+  const archived = Q.empty();
+  archived.tasks = [{ id: "late", title: "Original", due: "2026-09-01" }];
+  archived.automations = [
+    { ...rule("Tâche en retard"), personal: { archived: true } },
+  ];
+  assert.equal(Q.Automation.run(archived, "2026-09-14", id), 0);
+});
+test("3.0 log and task receipts migrate without replay", () => {
+  const s = Q.empty();
+  s.tasks = [{ id: "late", title: "Original", due: "2026-09-01" }];
+  s.automations = [
+    rule("Tâche en retard", ["Notification", "Créer une tâche"]),
+  ];
+  Q.Automation.run(s, "2026-09-14", id);
+  delete s.automationReceipts;
+  s.automationLogs = [];
+  assert.equal(Q.Automation.run(s, "2026-09-14", id), 0);
+  assert.equal(s.notifications.length, 1);
+  assert.throws(() => Q.normalize({ ...s, automationReceipts: [3] }), /Reçus/);
+});

@@ -30,7 +30,7 @@ function createVaultUI(ctx) {
     const s = ctx.state(),
       stats = V.stats(s),
       rows = V.search(s, query, status);
-    return `<div class="page-title"><div><span class="eyebrow">COFFRE DOCUMENTAIRE</span><h1>Documents</h1></div><button class="primary" data-vault="new">＋ Document</button></div><section class="grid stat-grid"><article class="card stat"><strong>${stats.total}</strong><span>documents</span></article><article class="card stat"><strong>${stats.attached}</strong><span>fichiers locaux · ${bytes(stats.bytes)}</span></article><article class="card stat"><strong>${stats.soon}</strong><span>échéance sous 30 jours</span></article><article class="card stat"><strong>${stats.expired}</strong><span>expirés</span></article></section><section class="card"><form id="vault-search" class="form"><label class="full">Rechercher<input name="query" value="${e(query)}" placeholder="Titre, société, catégorie, fichier ou tag"></label><label>Statut<select name="status"><option value="">Tous</option>${V.statuses.map((x) => `<option ${status === x ? "selected" : ""}>${e(x)}</option>`).join("")}</select></label><button class="mini" type="submit">Filtrer</button></form></section><section class="card"><div class="section-head"><h2>${rows.length} résultat(s)</h2><p class="meta">Les fichiers restent sur cet appareil et ne sont pas inclus dans l’export JSON.</p></div><div class="shared-actions">${rows.map(card).join("") || '<p class="empty">Aucun document pour ces filtres.</p>'}</div></section>`;
+    return `<div class="page-title"><div><span class="eyebrow">COFFRE DOCUMENTAIRE</span><h1>Documents</h1></div><button class="primary" data-vault="new">＋ Document</button></div><section class="grid stat-grid"><article class="card stat"><strong>${stats.total}</strong><span>documents</span></article><article class="card stat"><strong>${stats.attached}</strong><span>fichiers locaux · ${bytes(stats.bytes)}</span></article><article class="card stat"><strong>${stats.soon}</strong><span>échéance sous 30 jours</span></article><article class="card stat"><strong>${stats.expired}</strong><span>expirés</span></article></section><section class="card"><form id="vault-search" class="form"><label class="full">Rechercher<input name="query" value="${e(query)}" placeholder="Titre, société, catégorie, fichier ou tag"></label><label>Statut<select name="status"><option value="">Tous</option>${V.statuses.map((x) => `<option ${status === x ? "selected" : ""}>${e(x)}</option>`).join("")}</select></label><button class="mini" type="submit">Filtrer</button></form></section><section class="card"><div class="section-head"><h2>${rows.length} résultat(s)</h2><p class="meta">Les fichiers restent sur cet appareil. Utilise la sauvegarde complète dans Réglages pour les conserver ailleurs.</p></div><div class="shared-actions">${rows.map(card).join("") || '<p class="empty">Aucun document pour ces filtres.</p>'}</div></section>`;
   }
   function projectOptions(record) {
     return ctx
@@ -138,8 +138,7 @@ function createVaultUI(ctx) {
     if (index < 0) ctx.state().documents.unshift(record);
     else ctx.state().documents[index] = record;
     if (await ctx.save()) {
-      if (newFile && old?.fileId && old.fileId !== newFileId)
-        await ctx.repository.deleteFile(old.fileId).catch(() => {});
+      // Keep immutable older blobs for revisions and recovery snapshots.
       ctx.close();
       ctx.render();
       ctx.toast("Document enregistré");

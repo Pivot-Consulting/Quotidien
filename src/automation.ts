@@ -67,7 +67,12 @@ namespace Q.Automation {
       return s.tasks
         .filter(
           (t) =>
-            Personal.visible(t) && !t.done && t.due && String(t.due) < today,
+            Personal.visible(t) &&
+            !t.automationToken &&
+            !t.automationRuleId &&
+            !t.done &&
+            t.due &&
+            String(t.due) < today,
         )
         .map((t) => ({
           token: `task:${t.id}:${t.due}`,
@@ -101,7 +106,7 @@ namespace Q.Automation {
       return s.finances
         .filter(
           (t) =>
-            !t.deleted &&
+            Personal.visible(t) &&
             (!rule.category ||
               String(t.category).toLocaleLowerCase("fr") ===
                 String(rule.category).toLocaleLowerCase("fr")) &&
@@ -163,10 +168,22 @@ namespace Q.Automation {
   ): number {
     if (!Array.isArray(s.notifications)) s.notifications = [];
     if (!Array.isArray(s.automationLogs)) s.automationLogs = [];
-    const used = new Set(logs(s).map((x) => x.token));
+    // Durable receipts are independent from the bounded display log.
+    const used = new Set<string>([
+      ...((s.automationReceipts as string[]) || []),
+      ...logs(s).map((x) => x.token),
+      ...s.tasks
+        .filter((t) => typeof t.automationToken === "string")
+        .map((t) =>
+          String(t.automationToken).replace(
+            /:(Créer une tâche|Créer une checklist)$/,
+            "",
+          ),
+        ),
+    ]);
     let count = 0;
     for (const rule of s.automations.filter(
-      (r) => !r.deleted && r.engineVersion === 1 && r.active === true,
+      (r) => Personal.visible(r) && r.engineVersion === 1 && r.active === true,
     ))
       for (const event of events(s, rule, today)) {
         const token = `${rule.id}:${event.token}`;
@@ -238,6 +255,7 @@ namespace Q.Automation {
         });
         count++;
       }
+    s.automationReceipts = [...used];
     if (logs(s).length > 500) s.automationLogs = logs(s).slice(0, 500);
     return count;
   }
@@ -266,6 +284,12 @@ namespace Q.Automation {
     if (n) n.read = true;
   }
   export function validate(s: State): void {
+    if (
+      s.automationReceipts !== undefined &&
+      (!Array.isArray(s.automationReceipts) ||
+        s.automationReceipts.some((x) => typeof x !== "string" || !x))
+    )
+      throw new Error("Reçus d’automatisation invalides.");
     for (const r of s.automations.filter(
       (x) => x.engineVersion !== undefined,
     )) {

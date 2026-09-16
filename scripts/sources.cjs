@@ -12,6 +12,7 @@ module.exports = {
     ".build/routines.js",
     ".build/vault.js",
     ".build/automation.js",
+    ".build/backup.js",
   ],
   ui: [
     "modules/drafts-ui.js",

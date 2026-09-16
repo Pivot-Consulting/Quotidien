@@ -151,7 +151,11 @@ namespace Q.Durable {
       });
     }
     async load(): Promise<State> {
-      if (!this.db) return this.legacy.load();
+      if (!this.db) {
+        const next = this.legacy.load();
+        this.expected = this.storage.getItem(KEY);
+        return next;
+      }
       const legacy = await this.read("legacy");
       if (legacy !== this.storage.getItem(KEY))
         throw new Error(
@@ -163,8 +167,22 @@ namespace Q.Durable {
       this.expected = raw;
       return next;
     }
-    async commit(state: State, checkpoint = false): Promise<State> {
-      if (!this.db) return this.legacy.commit(state, checkpoint);
+    async commit(
+      state: State,
+      checkpoint = false,
+      files: { id: string; blob: Blob }[] = [],
+    ): Promise<State> {
+      if (!this.db) {
+        if (files.length)
+          throw new Error("La restauration des fichiers nécessite IndexedDB.");
+        const saved = this.legacy.commit(state, checkpoint);
+        this.expected = this.storage.getItem(KEY);
+        return saved;
+      }
+      for (const file of files) {
+        if (!(file.blob instanceof Blob) || file.blob.size > 25 * 1024 * 1024)
+          throw new Error("Pièce jointe invalide.");
+      }
       const next = normalize(state);
       if (this.expected === undefined)
         throw new Error("Charge les données avant de les modifier.");
@@ -172,7 +190,10 @@ namespace Q.Durable {
         Personal.stamp(normalize(JSON.parse(this.expected!)), next);
       const serialized = JSON.stringify(next);
       await new Promise<void>((resolve, reject) => {
-        const tx = this.db!.transaction("data", "readwrite"),
+        const tx = this.db!.transaction(
+            files.length ? ["data", "files"] : ["data"],
+            "readwrite",
+          ),
           st = tx.objectStore("data"),
           r = st.get("current");
         let failure: Error | undefined;
@@ -193,6 +214,8 @@ namespace Q.Durable {
               tx.abort();
               return;
             }
+            for (const file of files)
+              tx.objectStore("files").add(file.blob, file.id);
             st.put(r.result, BACKUP_KEY);
             if (checkpoint) st.put(r.result, CHECKPOINT_KEY);
             st.put(serialized, "current");
@@ -204,6 +227,19 @@ namespace Q.Durable {
       });
       this.expected = serialized;
       return next;
+    }
+    async assertCurrent(): Promise<void> {
+      if (
+        this.expected === undefined ||
+        (await this.read("current")) !== this.expected
+      )
+        throw new Error(
+          "Les données ont changé dans un autre onglet. Recharge avant de recommencer.",
+        );
+      if (this.db && (await this.read("legacy")) !== this.storage.getItem(KEY))
+        throw new Error(
+          "Une ancienne version a modifié les données. Recharge avant de continuer.",
+        );
     }
     close(): void {
       this.db?.close();

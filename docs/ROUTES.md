@@ -1,8 +1,8 @@
-# Routes et modèles actifs — 2.4
+# Routes et modèles actifs — 3.1
 
 Catalogue dérivé de src/os.ts. Les noms français existants sont conservés : Documents correspond à Admin OS, Impact à Eco OS, Progression à Game OS.
 
-Écrans racine : `#today`, `#plan`, `#notes`, `#tracking`, `#life`, `#wave`, `#explore`, `#intelligence`.
+Écrans racine : `#today`, `#plan`, `#notes`, `#tracking`, `#life`, `#wave`, `#explore`, `#intelligence`, `#vault`, `#automation`.
 
 Le calendrier commun est un onglet de `#plan`. Le centre d’analyse se rejoint aussi depuis Today et Pilotage. Les fiches continuent de s’ouvrir en modale.
 
@@ -31,4 +31,4 @@ Chaque section est accessible via `#life/<domaine>/<type>`. Un type absent ou ap
 | Progression | `#life/progress` | Indicateurs (`indicator`), Mesures (`measurement`) |
 | Équilibre | `#life/balance` | Satisfaction (`lifeRating`), Charge quotidienne (`energyDay`) |
 
-Total : 20 OS, 48 modèles spécialisés. Explorer indexe aussi les 13 collections historiques hors OS. Les fiches s’ouvrent dans le dialogue existant ; les liens profonds vers une fiche individuelle restent à ajouter.
+Total : 20 OS, 48 modèles spécialisés. Explorer indexe aussi les 13 collections historiques hors OS. Les fiches s’ouvrent dans le dialogue existant. Liens directs : `#record/<collection>/<id encodé par encodeURIComponent>`, par exemple `#record/tasks/abc`. Les collections sont celles de `Q.collections`. Un lien inconnu affiche une erreur sans créer ni modifier de fiche. Fermer une fiche ouverte par lien ramène à Explorer. Ces liens ne synchronisent et ne partagent pas les données.

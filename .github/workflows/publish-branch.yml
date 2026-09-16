@@ -1,4 +1,4 @@
-name: Publier Quotidien 2 sur GitHub Pages
+name: Publier Quotidien sur GitHub Pages
 on:
   push:
     branches: [main]
@@ -36,5 +36,6 @@ jobs:
           cp -R dist/. /tmp/quotidien-pages/
           git -C /tmp/quotidien-pages add -A
           if git -C /tmp/quotidien-pages diff --cached --quiet; then exit 0; fi
-          git -C /tmp/quotidien-pages commit -m "deploy: Quotidien 2.1.0 ${GITHUB_SHA}"
+          release=$(node -p "require('./package.json').version")
+          git -C /tmp/quotidien-pages commit -m "deploy: Quotidien ${release} ${GITHUB_SHA}"
           git -C /tmp/quotidien-pages push origin HEAD:gh-pages
