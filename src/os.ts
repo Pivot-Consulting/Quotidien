@@ -723,6 +723,10 @@ namespace Q.OS {
         if (f.required) throw new Error(f.label + " : champ requis.");
         continue;
       }
+      if (f.type === "weights") {
+        Progression.validateWeights(record);
+        continue;
+      }
       if (f.type === "refs") {
         if (
           !Array.isArray(v) ||
@@ -905,13 +909,10 @@ namespace Q.OS {
         ? (r.participants as string[])
         : [];
       if (!people.length) continue;
-      const cents = Math.round(n(r, "cost") * 100),
-        share = Math.floor(cents / people.length),
-        rest = cents - share * people.length;
+      const cents = Math.round(n(r, "cost") * 100);
       map.set(String(r.payerId), (map.get(String(r.payerId)) || 0) + cents);
-      people.forEach((id, i) =>
-        map.set(id, (map.get(id) || 0) - share - (i < rest ? 1 : 0)),
-      );
+      for (const share of Progression.shares(r))
+        map.set(share.id, (map.get(share.id) || 0) - share.cents);
     }
     for (const r of rows(state, "settlement")) {
       const cents = Math.round(n(r, "cost") * 100);

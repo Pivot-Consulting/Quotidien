@@ -847,6 +847,18 @@ function createLifeOS(ctx) {
           )
           .join("") || "<small>Ajoute d’abord les membres du foyer.</small>"
       }</div>`;
+    else if (f.type === "weights")
+      html = `<div class="os-checks"><p class="meta">Laisse tous les poids vides pour des parts égales. Sinon, renseigne un poids positif pour chaque participant coché (exemple : 2 et 1). Les centimes restants vont aux plus grandes fractions, puis à l’ordre des participants.</p>${state()
+        .os.filter(
+          (x) =>
+            x.kind === "member" &&
+            (!x.deleted || r.participants?.includes(x.id)),
+        )
+        .map(
+          (x) =>
+            `<label>${e(x.title)}<input type="number" min="0.000001" max="1000000" step="any" name="share-weight:${e(x.id)}" data-share-weight="${e(x.id)}" value="${e((r.shareWeights || []).find((w) => w.memberId === x.id)?.weight ?? "")}"></label>`,
+        )
+        .join("")}<div id="os-share-preview" role="status"></div></div>`;
     else if (f.type === "vaultref")
       html = `<select ${attr}><option value="">Non lié</option>${state()
         .documents.filter((x) => !x.deleted || x.id === v)
@@ -859,7 +871,7 @@ function createLifeOS(ctx) {
       html = `<textarea ${attr} rows="3">${e(v)}</textarea>`;
     else
       html = `<input ${attr} type="${f.type}" value="${e(v)}" ${f.type === "number" ? `step="any" ${f.min !== undefined ? `min="${f.min}"` : ""} ${f.max !== undefined ? `max="${f.max}"` : ""}` : ""}>`;
-    return f.type === "refs"
+    return ["refs", "weights"].includes(f.type)
       ? `<fieldset class="full"><legend>${e(f.label)}</legend>${html}</fieldset>`
       : `<label class="${f.type === "textarea" ? "full" : ""}">${e(f.label)}${html}</label>`;
   }
@@ -901,6 +913,7 @@ function createLifeOS(ctx) {
       `${record ? "Modifier" : "Ajouter"} · ${m.label}`,
       `<form id="os-form" class="form">${fields.map((f) => input(f, r)).join("")}${ctx.commonFields(r)}<div class="full os-actions"><button class="primary" type="submit">Enregistrer</button>${urls}</div></form>${record ? ctx.commonFooter({ key: "os", id: record.id }) : ""}${related.length ? "<h3>Actions liées</h3>" + related.map((t) => `<p><button class="text-button" data-edit="tasks" data-id="${e(t.id)}">${t.done ? "✓ " : ""}${e(t.title)}</button></p>`).join("") : ""}`,
     );
+    updateShares();
     ctx.markClean();
     const draftForm = document.getElementById("os-form");
     draftForm.dataset.draftKind = "os:" + kind;
@@ -1120,6 +1133,13 @@ function createLifeOS(ctx) {
       if (f.type === "refs") record[f.key] = fd.getAll(f.key);
     for (const key of Object.keys(record))
       if (typeof record[key] === "string") record[key] = record[key].trim();
+    if (editType === "sharedExpense") {
+      const weights = readWeights(f);
+      if (weights.length) record.shareWeights = weights;
+      else delete record.shareWeights;
+      for (const key of Object.keys(record))
+        if (key.startsWith("share-weight:")) delete record[key];
+    }
     ctx.commonRead(f, record);
     try {
       O.validate(record);
@@ -1149,7 +1169,36 @@ function createLifeOS(ctx) {
     }
     return true;
   }
+  function readWeights(form) {
+    return [...form.querySelectorAll("[data-share-weight]")]
+      .filter((x) => x.value !== "")
+      .map((x) => ({
+        memberId: x.dataset.shareWeight,
+        weight: Number(x.value),
+      }));
+  }
+  function updateShares() {
+    const form = document.getElementById("os-form"),
+      preview = document.getElementById("os-share-preview");
+    if (!form || !preview) return;
+    const data = new FormData(form),
+      weights = readWeights(form),
+      record = {
+        participants: data.getAll("participants"),
+        cost: Number(data.get("cost") || 0),
+        ...(weights.length ? { shareWeights: weights } : {}),
+      };
+    try {
+      preview.textContent =
+        Q.Progression.shares(record)
+          .map((p) => `${refTitle(p.id)} : ${euro(p.cents / 100)}`)
+          .join(" · ") || "Coche les participants pour voir les montants.";
+    } catch (error) {
+      preview.textContent = error.message;
+    }
+  }
   function inputEvent(target) {
+    if (target.closest("#os-form")) updateShares();
     if (!target.hasAttribute("data-os-query")) return;
     query = target.value;
     document.getElementById("os-records").innerHTML = recordList();

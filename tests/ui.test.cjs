@@ -404,7 +404,11 @@ test("all 20 workspaces create, reopen, edit and restore their specialized recor
         else if (f.type === "month") input.value = "2026-09";
         else if (f.type === "time") input.value = "14:30";
         else if (f.type === "url") input.value = "https://example.com/";
-        else if (f.type !== "select" && f.type !== "vaultref")
+        else if (
+          f.type !== "select" &&
+          f.type !== "vaultref" &&
+          f.type !== "weights"
+        )
           input.value = "Essai";
       }
       await a.submit("#os-form");
@@ -1120,5 +1124,40 @@ test("workbench financial installments settle without double counting", async ()
   await a.click("[data-evo=settle]");
   assert.equal(a.saved().finances.length, 1);
   assert.equal(a.doc.querySelectorAll("[data-evo=settle]").length, 2);
+  a.dom.window.close();
+});
+test("weighted expense editor previews cents and restores weights after reopening", async () => {
+  const a = await app({
+    version: 2,
+    os: [
+      { id: "a", kind: "member", title: "Alice", status: "En cours" },
+      { id: "b", kind: "member", title: "Bob", status: "En cours" },
+    ],
+  });
+  await a.click("[data-screen=life]");
+  await a.click("[data-os=open][data-domain=household]");
+  await a.click("[data-os=type][data-type=sharedExpense]");
+  await a.click("[data-os=new]");
+  a.fill("#os-form [name=title]", "Courses");
+  a.fill("#os-form [name=payerId]", "a");
+  a.fill("#os-form [name=cost]", "10.01");
+  for (const input of a.doc.querySelectorAll("#os-form [name=participants]"))
+    input.checked = true;
+  a.fill("[data-share-weight=a]", "2");
+  a.fill("[data-share-weight=b]", "1");
+  a.doc
+    .querySelector("[data-share-weight=b]")
+    .dispatchEvent(new a.w.Event("input", { bubbles: true }));
+  assert.match(a.doc.querySelector("#os-share-preview").textContent, /6,67/);
+  await a.submit("#os-form");
+  assert.equal(a.doc.querySelector("[role=alert]"), null);
+  const expense = a.saved().os.find((r) => r.kind === "sharedExpense");
+  assert.deepEqual(expense.shareWeights, [
+    { memberId: "a", weight: 2 },
+    { memberId: "b", weight: 1 },
+  ]);
+  await a.click(`[data-os=edit][data-id="${expense.id}"]`);
+  assert.equal(a.doc.querySelector("[data-share-weight=a]").value, "2");
+  assert.match(a.doc.querySelector("#os-share-preview").textContent, /3,34/);
   a.dom.window.close();
 });
