@@ -15,6 +15,7 @@ module.exports = {
     ".build/backup.js",
     ".build/evolution.js",
     ".build/commands.js",
+    ".build/progression.js",
   ],
   ui: [
     "modules/drafts-ui.js",

@@ -172,7 +172,7 @@ function createEvolutionUI(ctx) {
           .join("")}`;
       })
       .join("")}</section>
-    <section class="card"><h2>Convertir les anciens registres</h2><p>La conversion conserve l’identifiant, archive la fiche source et crée sa fiche spécialisée. Le retour au registre réactive la source et archive la fiche spécialisée ; les relations restent disponibles.</p>${[
+    ${exerciseDetails()}<section class="card"><h2>Convertir les anciens registres</h2><p>La conversion conserve l’identifiant, archive la fiche source et crée sa fiche spécialisée. Le retour au registre réactive la source et archive la fiche spécialisée ; les relations restent disponibles.</p>${[
       "assets",
       "goals",
     ]
@@ -188,6 +188,52 @@ function createEvolutionUI(ctx) {
             )
             .join("")}`,
       )
+      .join("")}</section>`;
+  }
+  function compositeScores() {
+    return `<section class="card"><h2>Dix scores composites</h2><p>Indicateurs de pilotage personnels, sans diagnostic ni classement. Chaque score est la moyenne à poids égaux de ses composantes renseignées, arrondie sur 100. Une composante absente reste inconnue ; elle ne vaut pas zéro. Les scores partiels ne sont pas directement comparables.</p>${Q.Progression.scores(
+      ctx.state(),
+    )
+      .map(
+        (score) =>
+          `<article class="score-row"><h3>${e(score.name)} · ${score.score === null ? "Données insuffisantes" : score.score + " / 100"}</h3>${score.score === null ? "" : `<progress max="100" value="${score.score}" aria-label="${e(score.name)}"></progress>`}<p class="meta">${e(score.coverage)}</p><details><summary>Calcul et sources</summary>${score.components
+            .map(
+              (c) =>
+                `<p><strong>${e(c.label)} : ${c.score === null ? "inconnu" : c.score + " / 100"}</strong><br>${e(c.explanation)}</p>${c.refs
+                  .slice(0, 10)
+                  .map((ref) => {
+                    const r = P.resolve(ctx.state(), ref);
+                    return r ? link(ref.key, r) : "";
+                  })
+                  .join(
+                    " · ",
+                  )}${c.refs.length > 10 ? `<p class="meta">${c.refs.length} sources au total ; 10 affichées.</p>` : ""}`,
+            )
+            .join("")}</details></article>`,
+      )
+      .join("")}</section>`;
+  }
+  function exerciseDetails() {
+    const s = ctx.state();
+    return `<section class="card"><h2>Exercices et séries réalisées</h2><p>Ajoute les exercices au programme, puis consigne chaque série dans une séance du même programme. Les objectifs sont tes propres saisies.</p><div class="os-actions">${create("trainingExercise", "Exercice")}${create("exerciseSet", "Série réalisée")}</div>${rows(
+      "trainingExercise",
+    )
+      .map((ex) => {
+        const history = Q.Progression.performance(s, ex.id);
+        return `<h3>${link("os", ex)}</h3><p>Objectif : ${e(ex.targetSets)} × ${e(ex.targetReps)} répétitions · ${e(ex.targetLoad)} kg · repos ${e(ex.restSeconds)} s</p>${
+          history.length
+            ? `<div class="table-scroll"><table><thead><tr><th>Date</th><th>Série</th><th>Répétitions</th><th>Charge</th><th>Durée</th></tr></thead><tbody>${history
+                .slice(0, 12)
+                .map(
+                  (r) =>
+                    `<tr><td>${e(r.date)}</td><td>${link("os", r)} (${e(r.setIndex)})</td><td>${e(r.repetitions)}</td><td>${e(r.load)} kg</td><td>${e(r.seconds)} s</td></tr>`,
+                )
+                .join(
+                  "",
+                )}</tbody></table></div><p class="meta">${history.length} série(s) enregistrée(s) ; les 12 dernières sont affichées.</p>`
+            : empty
+        }`;
+      })
       .join("")}</section>`;
   }
   function review() {
@@ -206,7 +252,7 @@ function createEvolutionUI(ctx) {
     const journal = rows("journal")
       .filter((r) => r.date >= since && r.date <= Q.day())
       .sort((a, b) => String(a.date).localeCompare(String(b.date)));
-    return `<section class="card"><h2>Seuils d’analyse</h2><form id="evo-settings" class="form"><label>Horizon des alertes (jours)<input type="number" min="1" max="90" name="horizon" required value="${config.horizon}"></label><label>Stagnation d’un projet (jours)<input type="number" min="1" max="365" name="stagnation" required value="${config.stagnation}"></label><label><input type="checkbox" name="game" ${s.settings.game ? "checked" : ""}>Afficher la progression ludique</label><button class="primary">Enregistrer</button></form>${button("monthly", "Installer la revue mensuelle")}</section><section class="card"><h2>Équilibre de vie · 30 jours</h2><p class="meta">Scores d’auto-évaluation, sans diagnostic ni valeur calculée pour les données manquantes.</p>${create("lifeRating", "Auto-évaluation")}${scores.map((x) => `<div class="score-row"><strong>${e(x.area)} : ${x.score === null ? "insuffisant" : x.score + " / 100"}</strong>${x.score !== null ? `<progress max="100" value="${x.score}" aria-label="${e(x.area)}"></progress>` : ""}<p class="meta">${e(x.explanation)}</p></div>`).join("")}</section><section class="card"><h2>Humeur dans le journal</h2>${journal.length ? `<svg viewBox="0 0 500 120" role="img" aria-label="Évolution de l’humeur du journal, de zéro à dix"><polyline fill="none" stroke="currentColor" stroke-width="3" points="${journal.map((r, i) => `${10 + (i * 480) / Math.max(1, journal.length - 1)},${110 - Number(r.mood) * 10}`).join(" ")}" /></svg><p class="meta">${journal.map((r) => `${e(r.date)} : ${e(r.mood)}/10`).join(" · ")}</p>` : empty}</section>${s.settings.game ? `<section class="card"><h2>Progression ludique</h2><p>${s.tasks.filter((t) => !t.deleted && t.done).length * 10} points · 10 points par tâche actuellement terminée. Désactivable, sans pénalité.</p></section>` : ""}<section class="card"><h2>Périodes de vie</h2>${create("lifePeriod", "Période")}${rows(
+    return `<section class="card"><h2>Seuils d’analyse</h2><form id="evo-settings" class="form"><label>Horizon des alertes (jours)<input type="number" min="1" max="90" name="horizon" required value="${config.horizon}"></label><label>Stagnation d’un projet (jours)<input type="number" min="1" max="365" name="stagnation" required value="${config.stagnation}"></label><label><input type="checkbox" name="game" ${s.settings.game ? "checked" : ""}>Afficher la progression ludique</label><button class="primary">Enregistrer</button></form>${button("monthly", "Installer la revue mensuelle")}</section>${compositeScores()}<section class="card"><h2>Auto-évaluations · 30 jours</h2><p class="meta">Scores d’auto-évaluation, sans diagnostic ni valeur calculée pour les données manquantes.</p>${create("lifeRating", "Auto-évaluation")}${scores.map((x) => `<div class="score-row"><strong>${e(x.area)} : ${x.score === null ? "insuffisant" : x.score + " / 100"}</strong>${x.score !== null ? `<progress max="100" value="${x.score}" aria-label="${e(x.area)}"></progress>` : ""}<p class="meta">${e(x.explanation)}</p></div>`).join("")}</section><section class="card"><h2>Humeur dans le journal</h2>${journal.length ? `<svg viewBox="0 0 500 120" role="img" aria-label="Évolution de l’humeur du journal, de zéro à dix"><polyline fill="none" stroke="currentColor" stroke-width="3" points="${journal.map((r, i) => `${10 + (i * 480) / Math.max(1, journal.length - 1)},${110 - Number(r.mood) * 10}`).join(" ")}" /></svg><p class="meta">${journal.map((r) => `${e(r.date)} : ${e(r.mood)}/10`).join(" · ")}</p>` : empty}</section>${s.settings.game ? `<section class="card"><h2>Progression ludique</h2><p>${s.tasks.filter((t) => !t.deleted && t.done).length * 10} points · 10 points par tâche actuellement terminée. Désactivable, sans pénalité.</p></section>` : ""}<section class="card"><h2>Périodes de vie</h2>${create("lifePeriod", "Période")}${rows(
       "lifePeriod",
     )
       .map(

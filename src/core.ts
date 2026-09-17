@@ -3,7 +3,7 @@ namespace Q {
   export const KEY = "quotidien-rebuild-2";
   export const BACKUP_KEY = KEY + "-previous";
   export const CHECKPOINT_KEY = KEY + "-before-restore";
-  export const RELEASE = "3.2.0";
+  export const RELEASE = "3.3.0";
   export const collections = [
     "os",
     "tasks",
@@ -196,6 +196,7 @@ namespace Q {
     Vault.validate(next);
     Automation.validate(next);
     Evolution.validate(next);
+    Progression.validate(next);
     Commands.validate(next);
     return next;
   }

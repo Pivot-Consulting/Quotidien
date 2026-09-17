@@ -1,6 +1,14 @@
-# Quotidien 3.2
+# Quotidien 3.3
 
-Application personnelle locale : organisation quotidienne et **20 Life OS spécialisés, 60 types de fiches**.
+Application personnelle locale : organisation quotidienne et **20 Life OS spécialisés, 62 types de fiches**.
+
+## Nouveautés 3.3 — approfondissements G2/H
+
+- **Foyer** : poids facultatifs par participant, aperçu des montants au centime et intégration aux remboursements existants. Sans poids, les parts égales sont conservées.
+- **Sport** : exercices par programme et séries réalisées par séance, avec répétitions, charge et durée ; historique par exercice. Aucune prescription automatique.
+- **Dix scores composites** : finances, projets, apprentissage, activité physique, relations, administration, foyer, vie numérique, impact et équilibre. Calculs et sources visibles ; les données absentes restent inconnues. Les auto-évaluations précédentes sont conservées séparément.
+
+Validation : **143 tests**. [Méthodes, limites et éléments restant ouverts](docs/REPRISE_3_3.md).
 
 ## Nouveautés 3.2 — parcours E–K
 
