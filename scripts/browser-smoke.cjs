@@ -77,6 +77,7 @@ let socket;
     return r.result.value;
   }
   fs.mkdirSync("browser-artifacts", { recursive: true });
+  await send("Page.enable");
   await send("Page.addScriptToEvaluateOnNewDocument", {
     source: `if (location.origin === 'http://localhost:4173' && !localStorage.getItem('quotidien-rebuild-2')) {
       const date = new Date().toISOString().slice(0,10);
@@ -105,6 +106,12 @@ let socket;
       await pause(100);
     }
     await evaluate("Q.ready");
+    assert.ok(
+      await evaluate(
+        'document.body.textContent.includes("Préparer la prochaine formation")',
+      ),
+      "Seeded task must render before measuring layouts",
+    );
     const routes = await evaluate(
       'Q.screens.concat(Q.OS.domains.map(d => "life/" + d.id))',
     );
