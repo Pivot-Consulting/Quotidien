@@ -1,6 +1,10 @@
-# Quotidien 3.3
+# Quotidien 3.4 · Atelier
 
 Application personnelle locale : organisation quotidienne et **20 Life OS spécialisés, 62 types de fiches**.
+
+## Nouveautés 3.4 — Atelier
+
+Refonte visuelle ivoire et sauge, titres éditoriaux, accueil aéré et navigation adaptée au mobile et à l’ordinateur. Mode clair activé au premier passage ; le mode sombre reste disponible dans les réglages. Fonctionnalités, fiches et configuration des widgets conservées. [Détails et validation](docs/ATELIER.md).
 
 ## Nouveautés 3.3 — approfondissements G2/H
 

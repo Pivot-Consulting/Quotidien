@@ -68,6 +68,29 @@ async function app(seed, factory, editor, route = "") {
   };
 }
 // Baseline reproduction is a one-time audit command, not a repository dependency.
+test("Atelier activates once, preserves records and remembers a later dark preference", async () => {
+  const a = await app({
+    version: 2,
+    settings: { theme: "dark", focus: 35 },
+    tasks: [{ id: "kept", title: "À conserver" }],
+  });
+  assert.equal(a.doc.documentElement.dataset.theme, "light");
+  assert.ok(a.doc.querySelector("main .today-layout"));
+  assert.equal(a.doc.querySelectorAll("nav .nav").length, 6);
+  await a.click('[data-action="settings"]');
+  await a.click('[data-action="theme"]');
+  assert.equal(a.saved().settings.theme, "dark");
+  assert.equal(a.saved().settings.design, "atelier");
+  assert.equal(a.saved().settings.focus, 35);
+  assert.equal(a.saved().tasks[0].title, "À conserver");
+  const b = await app(a.saved());
+  assert.equal(b.doc.documentElement.dataset.theme, "dark");
+  await b.click('[data-action="settings"]');
+  await b.click('[data-action="theme"]');
+  assert.equal(b.saved().settings.theme, "light");
+  a.dom.window.close();
+  b.dom.window.close();
+});
 test("Focus session, notes and checklist persist and finish without completing the task", async () => {
   const a = await app({
     version: 2,

@@ -16,6 +16,13 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm run verify
+      - name: Vérifier les écrans dans Chrome
+        run: node scripts/browser-smoke.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: atelier-browser
+          path: browser-artifacts/
       - uses: actions/upload-artifact@v4
         with:
           name: quotidien-static

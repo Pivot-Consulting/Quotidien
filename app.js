@@ -329,9 +329,9 @@ Q.ready = (async function () {
   }
   function shell(content) {
     return (
-      '<div class="shell"><header class="topbar"><div><div class="brand">QUOTIDIEN <span>' +
+      '<div class="shell"><header class="topbar"><div><div class="brand"><span class="brand-mark" aria-hidden="true">q</span> QUOTIDIEN <small>' +
       esc(Q.RELEASE) +
-      '</span></div><div class="date">' +
+      '</small></div><div class="date">' +
       esc(
         new Intl.DateTimeFormat("fr-FR", {
           weekday: "long",
@@ -342,9 +342,10 @@ Q.ready = (async function () {
       '</div></div><div class="top-actions">' +
       automationUI.badge() +
       '<button class="icon" aria-label="Rechercher" data-action="search">⌕</button><button class="icon" aria-label="Ajouter" data-action="quick">＋</button><button class="icon" aria-label="Réglages" data-action="settings">⚙</button></div></header>' +
-      content +
-      "</div>" +
       nav() +
+      '<main id="main-content">' +
+      content +
+      "</main></div>" +
       '<div id="modal"></div>'
     );
   }
@@ -358,7 +359,7 @@ Q.ready = (async function () {
       ["wave", "◆", "Pilotage"],
     ];
     return (
-      '<nav class="bottom"><div class="inner">' +
+      '<nav class="bottom" aria-label="Navigation principale"><div class="inner">' +
       items
         .map(function (i) {
           return (
@@ -379,6 +380,12 @@ Q.ready = (async function () {
   }
   function render() {
     document.documentElement.dataset.theme = state.settings.theme;
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute(
+        "content",
+        state.settings.theme === "dark" ? "#202720" : "#f5f3e9",
+      );
     var c =
       state.screen === "workbench"
         ? evolutionUI.view()
@@ -442,23 +449,28 @@ Q.ready = (async function () {
     }).length;
     var focus = Q.focusMinutes(state);
     return (
-      '<section class="hero"><span class="eyebrow">AUJOURD’HUI</span><h1>Bonjour Raphaël</h1><p>' +
+      '<section class="hero atelier-welcome"><span class="eyebrow">FAIRE DE LA PLACE À L’ESSENTIEL</span><h1>Bonjour, Raphaël.</h1><p>' +
       (ev[0]
         ? "Aujourd’hui : <strong>" +
           esc(ev[0].time || "Journée") +
           " · " +
           esc(ev[0].title) +
           "</strong>"
-        : "Aucun événement prévu aujourd’hui.") +
-      '</p><div class="os-actions"><button class="primary" data-screen="plan">Planifier</button><button class="mini" data-action="today-settings">Configurer Today</button></div></section>' +
+        : "Un cap pour aujourd’hui. Du temps pour toi.") +
+      '</p><div class="os-actions"><button class="primary" data-action="quick">＋ Capturer une idée</button><button class="mini" data-screen="plan">Planifier ma journée</button><button class="mini" data-action="today-settings">Personnaliser l’accueil</button></div></section><div class="today-layout"><div class="today-main">' +
       (widget("actions") ? personal.today() : "") +
-      (!lastExportRequested ||
-      Date.now() - Date.parse(lastExportRequested) > 30 * 86400000
-        ? '<section class="card"><h2>Une copie hors du navigateur</h2><p class="meta">Aucun export demandé depuis 30 jours. Une sauvegarde externe protège contre la perte du stockage local.</p><button class="mini" data-action="export">Exporter mes données</button></section>'
-        : "") +
       (widget("context") ? focusUI.panel() : "") +
+      '</div><aside class="today-aside" aria-label="Le rythme de ma journée">' +
+      (widget("overview")
+        ? '<section class="card today-agenda"><div class="section-head"><div><span class="eyebrow">LES TEMPS DU JOUR</span><h2>Au programme</h2></div><button class="mini" data-action="add-event" aria-label="Ajouter un événement">＋</button></div>' +
+          listEvents(ev) +
+          '</section><section class="card"><span class="eyebrow">LES PETITS PAS</span><h2>Mes habitudes</h2>' +
+          listHabits(active(state.habits)) +
+          "</section>"
+        : "") +
       (widget("routines") ? routinesUI.today() : "") +
       (widget("notifications") ? automationUI.today() : "") +
+      '</aside></div><div class="today-secondary">' +
       (widget("analysis") ? cockpit.summary() : "") +
       (widget("overview")
         ? '<section class="grid stat-grid"><article class="card stat"><strong>' +
@@ -469,14 +481,15 @@ Q.ready = (async function () {
           active(state.workouts).length +
           '</strong><span>séances sport</span></article><article class="card stat"><strong>' +
           due.length +
-          '</strong><span>échéances aujourd’hui</span></article><article class="card wide"><div class="section-head"><div><span class="eyebrow">CHRONOLOGIE</span><h2>Ma journée</h2></div><button class="mini" data-action="add-event">＋ Événement</button></div>' +
-          listEvents(ev) +
-          '</article><article class="card"><div class="section-head"><div><span class="eyebrow">HABITUDES</span><h2>À cocher</h2></div></div>' +
-          listHabits(active(state.habits)) +
-          '</article><article class="card wide"><div class="section-head"><div><span class="eyebrow">OBJECTIFS</span><h2>Cap</h2></div><button class="mini" data-action="add-goal">＋</button></div>' +
+          '</strong><span>échéances aujourd’hui</span></article><article class="card wide"><div class="section-head"><div><span class="eyebrow">OBJECTIFS</span><h2>Garder le cap</h2></div><button class="mini" data-action="add-goal" aria-label="Ajouter un objectif">＋</button></div>' +
           listGoals(active(state.goals)) +
           "</article></section>"
-        : "")
+        : "") +
+      (!lastExportRequested ||
+      Date.now() - Date.parse(lastExportRequested) > 30 * 86400000
+        ? '<section class="card backup-reminder"><h2>Une copie hors du navigateur</h2><p class="meta">Aucun export demandé depuis 30 jours. Une sauvegarde externe protège contre la perte du stockage local.</p><button class="mini" data-action="export">Exporter mes données</button></section>'
+        : "") +
+      "</div>"
     );
   }
   function widget(name) {
