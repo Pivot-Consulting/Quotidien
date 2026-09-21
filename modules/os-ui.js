@@ -49,7 +49,7 @@ function createLifeOS(ctx) {
   const monthRows = (kind, key = "date") =>
     rs(kind).filter((r) => String(r[key] || "").startsWith(period.slice(0, 7)));
   function overview() {
-    return `<div class="page-title"><div><span class="eyebrow">TON SYSTÈME PERSONNEL</span><h1>Les 20 Life OS</h1><p class="meta">Des espaces reliés pour organiser, mesurer et avancer.</p></div>${button("legacy", "＋ Capture libre")}</div><section class="life-grid">${O.domains
+    return `<div class="page-title"><div><span class="eyebrow">TON SYSTÈME PERSONNEL</span><h1>Les 20 Life OS</h1><p class="meta">Des espaces reliés pour organiser, mesurer et avancer.</p></div>${button("legacy", "+ Capture libre")}</div><section class="life-grid">${O.domains
       .map((d) => {
         const count = state().os.filter(
           (r) => !r.deleted && O.domainFor(r.kind)?.id === d.id,
@@ -90,7 +90,7 @@ function createLifeOS(ctx) {
       : "";
     for (const key of keys) {
       const data = state()[key].filter(Q.Personal.visible);
-      html += `<section class="card os-legacy"><div class="section-head"><h2>${labels[key]}</h2><div class="os-actions"><button class="mini" data-create="${ctx.kinds[key]}">＋ Ajouter</button>${key === "finances" ? button("csv", "Importer CSV") : ""}</div></div>${data.length ? data.map((r) => `<div class="os-insight"><button class="text-button" data-edit="${key}" data-id="${e(r.id)}">${e(r.title || r.label || r.kind || r.type)} · ${e(r.date || "")}</button><span>${key === "finances" ? e(euro(Number(r.amount))) : ""}</span></div>`).join("") : noData("Tes données de cet espace apparaîtront ici.")}</section>`;
+      html += `<section class="card os-legacy"><div class="section-head"><h2>${labels[key]}</h2><div class="os-actions"><button class="mini" data-create="${ctx.kinds[key]}">+ Ajouter</button>${key === "finances" ? button("csv", "Importer CSV") : ""}</div></div>${data.length ? data.map((r) => `<div class="os-insight"><button class="text-button" data-edit="${key}" data-id="${e(r.id)}">${e(r.title || r.label || r.kind || r.type)} · ${e(r.date || "")}</button><span>${key === "finances" ? e(euro(Number(r.amount))) : ""}</span></div>`).join("") : noData("Tes données de cet espace apparaîtront ici.")}</section>`;
     }
     return html;
   }
@@ -810,7 +810,7 @@ function createLifeOS(ctx) {
     if (!d) return overview();
     if (!d.models.some((m) => m.id === selectedType))
       selectedType = d.models[0].id;
-    return `<div class="os-breadcrumb">${button("home", "← Tous les OS")}<span>${e(d.name)}</span></div><div class="page-title"><div><span class="eyebrow">LIFE OS / ${e(d.icon)}</span><h1>${e(d.name)}</h1><p class="meta">${e(d.description)}</p></div><div class="os-header-actions">${button("new", "＋ Ajouter", `data-type="${selectedType}"`, "primary")}<label>Date de référence<input type="date" data-os-period value="${e(period)}"></label></div></div>${dashboard(d)}<section class="os-workspace"><div class="tabs os-tabs" role="tablist" aria-label="Sections ${e(d.name)}">${d.models.map((m) => `<button role="tab" aria-selected="${selectedType === m.id}" class="${selectedType === m.id ? "active" : ""}" data-os="type" data-type="${m.id}">${e(m.label)} <small>${rs(m.id).length}</small></button>`).join("")}</div><div class="os-toolbar"><label>Rechercher<input type="search" data-os-query value="${e(query)}" placeholder="Titre, détails…"></label><label>Statut<select data-os-filter><option value="">Tous</option>${statusOptions.map((x) => `<option ${x === filter ? "selected" : ""}>${e(x)}</option>`).join("")}</select></label><div class="os-actions">${button("export", "Exporter CSV")}</div></div><div class="os-records" id="os-records" role="tabpanel">${recordList()}</div></section>${legacyPanel(d)}`;
+    return `<div class="os-breadcrumb">${button("home", "← Tous les OS")}<span>${e(d.name)}</span></div><div class="page-title"><div><span class="eyebrow">LIFE OS / ${e(d.icon)}</span><h1>${e(d.name)}</h1><p class="meta">${e(d.description)}</p></div><div class="os-header-actions">${button("new", "+ Ajouter", `data-type="${selectedType}"`, "primary")}<label>Date de référence<input type="date" data-os-period value="${e(period)}"></label></div></div>${dashboard(d)}<section class="os-workspace"><div class="tabs os-tabs" role="tablist" aria-label="Sections ${e(d.name)}">${d.models.map((m) => `<button role="tab" aria-selected="${selectedType === m.id}" class="${selectedType === m.id ? "active" : ""}" data-os="type" data-type="${m.id}">${e(m.label)} <small>${rs(m.id).length}</small></button>`).join("")}</div><div class="os-toolbar"><label>Rechercher<input type="search" data-os-query value="${e(query)}" placeholder="Titre, détails…"></label><label>Statut<select data-os-filter><option value="">Tous</option>${statusOptions.map((x) => `<option ${x === filter ? "selected" : ""}>${e(x)}</option>`).join("")}</select></label><div class="os-actions">${button("export", "Exporter CSV")}</div></div><div class="os-records" id="os-records" role="tabpanel">${recordList()}</div></section>${legacyPanel(d)}`;
   }
   function input(f, r) {
     let v = r[f.key] ?? f.default ?? "";

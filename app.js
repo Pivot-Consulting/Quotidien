@@ -329,9 +329,9 @@ Q.ready = (async function () {
   }
   function shell(content) {
     return (
-      '<div class="shell"><header class="topbar"><div><div class="brand">QUOTIDIEN <span>' +
+      '<div class="shell"><header class="topbar"><div><div class="brand"><span class="brand-mark" aria-hidden="true">q</span> QUOTIDIEN <small>' +
       esc(Q.RELEASE) +
-      '</span></div><div class="date">' +
+      '</small></div><div class="date">' +
       esc(
         new Intl.DateTimeFormat("fr-FR", {
           weekday: "long",
@@ -341,10 +341,11 @@ Q.ready = (async function () {
       ) +
       '</div></div><div class="top-actions">' +
       automationUI.badge() +
-      '<button class="icon" aria-label="Rechercher" data-action="search">⌕</button><button class="icon" aria-label="Ajouter" data-action="quick">＋</button><button class="icon" aria-label="Réglages" data-action="settings">⚙</button></div></header>' +
-      content +
-      "</div>" +
+      '<button class="icon" aria-label="Rechercher" data-action="search">⌕</button><button class="icon" aria-label="Ajouter" data-action="quick">+</button><button class="icon" aria-label="Réglages" data-action="settings">⚙</button></div></header>' +
       nav() +
+      '<main id="main-content">' +
+      content +
+      "</main></div>" +
       '<div id="modal"></div>'
     );
   }
@@ -358,7 +359,7 @@ Q.ready = (async function () {
       ["wave", "◆", "Pilotage"],
     ];
     return (
-      '<nav class="bottom"><div class="inner">' +
+      '<nav class="bottom" aria-label="Navigation principale"><div class="inner">' +
       items
         .map(function (i) {
           return (
@@ -379,6 +380,12 @@ Q.ready = (async function () {
   }
   function render() {
     document.documentElement.dataset.theme = state.settings.theme;
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute(
+        "content",
+        state.settings.theme === "dark" ? "#202720" : "#f5f3e9",
+      );
     var c =
       state.screen === "workbench"
         ? evolutionUI.view()
@@ -442,23 +449,28 @@ Q.ready = (async function () {
     }).length;
     var focus = Q.focusMinutes(state);
     return (
-      '<section class="hero"><span class="eyebrow">AUJOURD’HUI</span><h1>Bonjour Raphaël</h1><p>' +
+      '<section class="hero atelier-welcome"><span class="eyebrow">FAIRE DE LA PLACE À L’ESSENTIEL</span><h1>Bonjour, Raphaël.</h1><p>' +
       (ev[0]
         ? "Aujourd’hui : <strong>" +
           esc(ev[0].time || "Journée") +
           " · " +
           esc(ev[0].title) +
           "</strong>"
-        : "Aucun événement prévu aujourd’hui.") +
-      '</p><div class="os-actions"><button class="primary" data-screen="plan">Planifier</button><button class="mini" data-action="today-settings">Configurer Today</button></div></section>' +
+        : "Un cap pour aujourd’hui. Du temps pour toi.") +
+      '</p><div class="os-actions"><button class="primary" data-action="quick">+ Capturer une idée</button><button class="mini" data-screen="plan">Planifier</button><button class="mini" data-action="today-settings" aria-label="Personnaliser l’accueil">Personnaliser</button></div></section><div class="today-layout"><div class="today-main">' +
       (widget("actions") ? personal.today() : "") +
-      (!lastExportRequested ||
-      Date.now() - Date.parse(lastExportRequested) > 30 * 86400000
-        ? '<section class="card"><h2>Une copie hors du navigateur</h2><p class="meta">Aucun export demandé depuis 30 jours. Une sauvegarde externe protège contre la perte du stockage local.</p><button class="mini" data-action="export">Exporter mes données</button></section>'
-        : "") +
       (widget("context") ? focusUI.panel() : "") +
+      '</div><aside class="today-aside" aria-label="Le rythme de ma journée">' +
+      (widget("overview")
+        ? '<section class="card today-agenda"><div class="section-head"><div><span class="eyebrow">LES TEMPS DU JOUR</span><h2>Au programme</h2></div><button class="mini" data-action="add-event" aria-label="Ajouter un événement">+</button></div>' +
+          listEvents(ev) +
+          '</section><section class="card"><span class="eyebrow">LES PETITS PAS</span><h2>Mes habitudes</h2>' +
+          listHabits(active(state.habits)) +
+          "</section>"
+        : "") +
       (widget("routines") ? routinesUI.today() : "") +
       (widget("notifications") ? automationUI.today() : "") +
+      '</aside></div><div class="today-secondary">' +
       (widget("analysis") ? cockpit.summary() : "") +
       (widget("overview")
         ? '<section class="grid stat-grid"><article class="card stat"><strong>' +
@@ -469,14 +481,15 @@ Q.ready = (async function () {
           active(state.workouts).length +
           '</strong><span>séances sport</span></article><article class="card stat"><strong>' +
           due.length +
-          '</strong><span>échéances aujourd’hui</span></article><article class="card wide"><div class="section-head"><div><span class="eyebrow">CHRONOLOGIE</span><h2>Ma journée</h2></div><button class="mini" data-action="add-event">＋ Événement</button></div>' +
-          listEvents(ev) +
-          '</article><article class="card"><div class="section-head"><div><span class="eyebrow">HABITUDES</span><h2>À cocher</h2></div></div>' +
-          listHabits(active(state.habits)) +
-          '</article><article class="card wide"><div class="section-head"><div><span class="eyebrow">OBJECTIFS</span><h2>Cap</h2></div><button class="mini" data-action="add-goal">＋</button></div>' +
+          '</strong><span>échéances aujourd’hui</span></article><article class="card wide"><div class="section-head"><div><span class="eyebrow">OBJECTIFS</span><h2>Garder le cap</h2></div><button class="mini" data-action="add-goal" aria-label="Ajouter un objectif">+</button></div>' +
           listGoals(active(state.goals)) +
           "</article></section>"
-        : "")
+        : "") +
+      (!lastExportRequested ||
+      Date.now() - Date.parse(lastExportRequested) > 30 * 86400000
+        ? '<section class="card backup-reminder"><h2>Une copie hors du navigateur</h2><p class="meta">Aucun export demandé depuis 30 jours. Une sauvegarde externe protège contre la perte du stockage local.</p><button class="mini" data-action="export">Exporter mes données</button></section>'
+        : "") +
+      "</div>"
     );
   }
   function widget(name) {
@@ -506,21 +519,21 @@ Q.ready = (async function () {
   }
   function planView() {
     return (
-      '<div class="page-title"><div><span class="eyebrow">ORGANISER</span><h1>Planifier</h1></div><button class="primary" data-action="quick">＋ Ajouter</button></div><div class="tabs"><button class="active" data-tab="tasks">Tâches</button><button data-tab="agenda">Agenda</button><button data-tab="calendar">Calendrier</button><button data-tab="goals">Objectifs</button><button data-tab="routines">Routines</button></div><section class="card" data-plan-section="tasks"><form class="form" id="inline-task-form"><input name="title" class="full" placeholder="Nouvelle tâche" required><input name="due" type="date"><select name="project"><option>Personnel</option><option>Travail</option><option>Santé</option><option>Finances</option></select><label><input name="important" type="checkbox"> Important</label><label><input name="urgent" type="checkbox"> Urgente</label><button class="primary">Ajouter</button></form></section><section class="card" data-plan-section="tasks"><div class="section-head"><div><span class="eyebrow">MES TÂCHES</span><h2>' +
+      '<div class="page-title"><div><span class="eyebrow">ORGANISER</span><h1>Planifier</h1></div><button class="primary" data-action="quick">+ Ajouter</button></div><div class="tabs"><button class="active" data-tab="tasks">Tâches</button><button data-tab="agenda">Agenda</button><button data-tab="calendar">Calendrier</button><button data-tab="goals">Objectifs</button><button data-tab="routines">Routines</button></div><section class="card" data-plan-section="tasks"><form class="form" id="inline-task-form"><input name="title" class="full" placeholder="Nouvelle tâche" required><input name="due" type="date"><select name="project"><option>Personnel</option><option>Travail</option><option>Santé</option><option>Finances</option></select><label><input name="important" type="checkbox"> Important</label><label><input name="urgent" type="checkbox"> Urgente</label><button class="primary">Ajouter</button></form></section><section class="card" data-plan-section="tasks"><div class="section-head"><div><span class="eyebrow">MES TÂCHES</span><h2>' +
       active(state.tasks).filter(function (t) {
         return !t.done;
       }).length +
       " ouvertes</h2></div></div>" +
       listTasks(active(state.tasks)) +
-      '</section><section class="card" data-plan-section="agenda"><div class="section-head"><div><span class="eyebrow">AGENDA</span><h2>Événements</h2></div><button class="mini" data-action="add-event">＋</button></div>' +
+      '</section><section class="card" data-plan-section="agenda"><div class="section-head"><div><span class="eyebrow">AGENDA</span><h2>Événements</h2></div><button class="mini" data-action="add-event">+</button></div>' +
       listEvents(
         active(state.events).sort(function (a, b) {
           return String(a.date || "").localeCompare(String(b.date || ""));
         }),
       ) +
-      '</section><section class="card" data-plan-section="routines"><div class="section-head"><div><span class="eyebrow">ROUTINES</span><h2>Mes séquences</h2></div><button class="mini" data-action="add-routine">＋</button></div>' +
+      '</section><section class="card" data-plan-section="routines"><div class="section-head"><div><span class="eyebrow">ROUTINES</span><h2>Mes séquences</h2></div><button class="mini" data-action="add-routine">+</button></div>' +
       listRoutines(active(state.routines)) +
-      '</section><section class="card" data-plan-section="goals"><div class="section-head"><h2>Objectifs</h2><button class="mini" data-action="add-goal">＋ Objectif</button></div>' +
+      '</section><section class="card" data-plan-section="goals"><div class="section-head"><h2>Objectifs</h2><button class="mini" data-action="add-goal">+ Objectif</button></div>' +
       listGoals(active(state.goals)) +
       "</section>" +
       cockpit.calendar()
@@ -528,7 +541,7 @@ Q.ready = (async function () {
   }
   function notesView() {
     return (
-      '<div class="page-title"><div><span class="eyebrow">SECOND CERVEAU</span><h1>Notes</h1></div><button class="primary" data-action="add-note">＋ Note</button></div><section class="card"><form class="form" id="inline-note-form"><input name="title" placeholder="Titre" required><input name="tags" placeholder="Tags"><textarea name="body" class="full" placeholder="Écris en Markdown ou en texte libre…"></textarea><button class="primary">Enregistrer</button></form></section><section class="grid">' +
+      '<div class="page-title"><div><span class="eyebrow">SECOND CERVEAU</span><h1>Notes</h1></div><button class="primary" data-action="add-note">+ Note</button></div><section class="card"><form class="form" id="inline-note-form"><input name="title" placeholder="Titre" required><input name="tags" placeholder="Tags"><textarea name="body" class="full" placeholder="Écris en Markdown ou en texte libre…"></textarea><button class="primary">Enregistrer</button></form></section><section class="grid">' +
       (active(state.notes).length
         ? ""
         : '<p class="empty">Conserve ici tes idées et informations. Crée ta première note avec « + Note ».</p>') +
@@ -554,11 +567,11 @@ Q.ready = (async function () {
   }
   function trackingView() {
     return (
-      '<div class="page-title"><div><span class="eyebrow">SUIVI</span><h1>Santé & progression</h1></div><button class="primary" data-action="track">＋ Mesure</button></div><section class="grid"><article class="card"><div class="section-head"><div><span class="eyebrow">HABITUDES</span><h2>Régularité</h2></div><button class="mini" data-action="add-habit">＋</button></div>' +
+      '<div class="page-title"><div><span class="eyebrow">SUIVI</span><h1>Santé & progression</h1></div><button class="primary" data-action="track">+ Mesure</button></div><section class="grid"><article class="card"><div class="section-head"><div><span class="eyebrow">HABITUDES</span><h2>Régularité</h2></div><button class="mini" data-action="add-habit">+</button></div>' +
       listHabits(active(state.habits)) +
-      '</article><article class="card"><div class="section-head"><div><span class="eyebrow">SPORT</span><h2>Séances</h2></div><button class="mini" data-action="add-workout">＋</button></div>' +
+      '</article><article class="card"><div class="section-head"><div><span class="eyebrow">SPORT</span><h2>Séances</h2></div><button class="mini" data-action="add-workout">+</button></div>' +
       listWorkouts(active(state.workouts)) +
-      '</article><article class="card wide"><div class="section-head"><div><span class="eyebrow">SANTÉ</span><h2>Dernières mesures</h2></div><button class="mini" data-action="track">＋</button></div><div class="health-grid">' +
+      '</article><article class="card wide"><div class="section-head"><div><span class="eyebrow">SANTÉ</span><h2>Dernières mesures</h2></div><button class="mini" data-action="track">+</button></div><div class="health-grid">' +
       active(state.health)
         .slice(0, 8)
         .map(function (h) {
@@ -585,15 +598,15 @@ Q.ready = (async function () {
     return (
       '<section class="card"><h2>Centre de pilotage</h2><p>Commandes, parcours métier, bilans, agents et synchronisation.</p><button class="primary" data-screen="workbench">Ouvrir le centre</button></section>' +
       cockpit.summary() +
-      '<div class="page-title"><div><span class="eyebrow">PILOTAGE</span><h1>Pilotage avancé</h1></div></div><section class="grid"><article class="card"><div class="section-head"><div><span class="eyebrow">PROJETS DE VIE</span><h2>Objectifs</h2></div><button class="mini" data-action="add-goal">＋</button></div>' +
+      '<div class="page-title"><div><span class="eyebrow">PILOTAGE</span><h1>Pilotage avancé</h1></div></div><section class="grid"><article class="card"><div class="section-head"><div><span class="eyebrow">PROJETS DE VIE</span><h2>Objectifs</h2></div><button class="mini" data-action="add-goal">+</button></div>' +
       listGoals(active(state.goals)) +
       '</article><article class="card"><div class="section-head"><div><span class="eyebrow">FINANCES</span><h2>' +
       money(balance()) +
-      '</h2></div><button class="mini" data-action="finance">＋</button></div>' +
+      '</h2></div><button class="mini" data-action="finance">+</button></div>' +
       listFinance(active(state.finances)) +
       '</article><article class="card"><div class="section-head"><div><span class="eyebrow">DOCUMENTS</span><h2>Échéances</h2></div><button class="mini" data-screen="vault">Ouvrir le coffre</button></div>' +
       listGeneric(state.documents, "documents") +
-      '</article><article class="card"><div class="section-head"><div><span class="eyebrow">MAISON</span><h2>Équipements</h2></div><button class="mini" data-action="asset">＋</button></div>' +
+      '</article><article class="card"><div class="section-head"><div><span class="eyebrow">MAISON</span><h2>Équipements</h2></div><button class="mini" data-action="asset">+</button></div>' +
       listGeneric(state.assets, "assets") +
       '</article><article class="card wide"><div class="section-head"><div><span class="eyebrow">AUTOMATISATIONS</span><h2>Règles & exécutions</h2></div><button class="mini" data-screen="automation">Ouvrir le builder</button></div>' +
       listGeneric(

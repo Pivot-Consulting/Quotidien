@@ -3,7 +3,7 @@ namespace Q {
   export const KEY = "quotidien-rebuild-2";
   export const BACKUP_KEY = KEY + "-previous";
   export const CHECKPOINT_KEY = KEY + "-before-restore";
-  export const RELEASE = "3.3.0";
+  export const RELEASE = "3.4.0";
   export const collections = [
     "os",
     "tasks",
@@ -46,9 +46,15 @@ namespace Q {
   }
   export function empty(): State {
     return Object.assign(
-      { version: 2, screen: "today", settings: { theme: "dark", focus: 25 } },
-      Object.fromEntries(collections.map((key) => [key, []])),
-    ) as State;
+      {
+        version: 2 as const,
+        screen: "today",
+        settings: { theme: "light", design: "atelier", focus: 25 },
+      },
+      Object.fromEntries<RecordData[]>(
+        collections.map((key) => [key, []]),
+      ) as Record<Collection, RecordData[]>,
+    );
   }
   export function day(date = new Date()): string {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -185,7 +191,12 @@ namespace Q {
       throw new Error("Réglages invalides.");
     next.settings = Object.assign(empty().settings, input.settings || {});
     if (!["light", "dark"].includes(next.settings.theme))
-      next.settings.theme = "dark";
+      next.settings.theme = "light";
+    // Activate the approved redesign once. Later explicit dark choices survive reload/import.
+    if (!object(input.settings) || input.settings.design !== "atelier") {
+      next.settings.theme = "light";
+      next.settings.design = "atelier";
+    }
     next.screen = screens.includes(next.screen) ? next.screen : "today";
     OS.validateLinks(next);
     Personal.validate(next);

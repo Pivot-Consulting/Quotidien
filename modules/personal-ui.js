@@ -83,7 +83,7 @@ function createPersonalOS(ctx) {
           )}</select></label>`
         : ""
     }
-    <div class="full"><p>Champs personnalisés</p><div data-custom-rows>${(r.customFields || []).map(customRow).join("")}</div>${button("add-custom", "＋ Champ")}</div>
+    <div class="full"><p>Champs personnalisés</p><div data-custom-rows>${(r.customFields || []).map(customRow).join("")}</div>${button("add-custom", "+ Champ")}</div>
     <label>Responsable<input name="personal_owner" value="${e(m.owner || "")}"></label>
     <label>Lieu<input name="personal_location" value="${e(m.location || "")}"></label>
     <label class="full">Description commune<textarea name="personal_description">${e(m.description || "")}</textarea></label>
@@ -186,7 +186,7 @@ function createPersonalOS(ctx) {
     return `<article class="shared-result"><button class="search-result" data-edit="${e(h.key)}" data-id="${e(h.id)}"><strong>${m.favorite ? "★ " : ""}${e(P.title(r))}</strong><span>${e(P.describe(h))}${P.date(r) ? " · " + e(P.date(r)) : ""}${m.archived ? " · Archivé" : ""}</span></button><div class="shared-result-bottom"><span class="meta">${e(P.tags(r).join(" · "))}</span>${button("detail", "Relations & détails", attrs(h))}</div>${control}</article>`;
   }
   function searchView() {
-    return `<div class="page-title"><div><span class="eyebrow">TOUT EST CONNECTÉ</span><h1>Explorer</h1><p class="meta">Retrouve tes objets dans les vingt OS et les outils quotidiens.</p></div>${button("quick", "＋ Capturer", "", "primary")}</div>
+    return `<div class="page-title"><div><span class="eyebrow">TOUT EST CONNECTÉ</span><h1>Explorer</h1><p class="meta">Retrouve tes objets dans les vingt OS et les outils quotidiens.</p></div>${button("quick", "+ Capturer", "", "primary")}</div>
     <section class="card"><form id="global-search-form" class="shared-search-form"><label>Rechercher<input type="search" id="global-search" value="${e(filter.query || "")}" placeholder="Titre, contenu, tags, personne…"></label><button class="mini" type="submit">Rechercher</button></form>
     ${
       (state().settings.searchHistory || []).length
@@ -284,7 +284,7 @@ function createPersonalOS(ctx) {
         )
         .join("");
     } else body = shown.map(hitCard).join("");
-    return `<p class="meta">${hits.length} résultat(s)${hits.length > 100 ? " · 100 affichés, affine les filtres" : ""}</p>${body || `<div class="empty"><p>Aucun résultat. Essaie un autre filtre ou capture un nouvel élément.</p>${button("reset-search", "Effacer les filtres")}${button("quick", "＋ Capturer")}</div>`}`;
+    return `<p class="meta">${hits.length} résultat(s)${hits.length > 100 ? " · 100 affichés, affine les filtres" : ""}</p>${body || `<div class="empty"><p>Aucun résultat. Essaie un autre filtre ou capture un nouvel élément.</p>${button("reset-search", "Effacer les filtres")}${button("quick", "+ Capturer")}</div>`}`;
   }
   function refreshResults() {
     const target = document.getElementById("search-results");
@@ -372,7 +372,7 @@ function createPersonalOS(ctx) {
         String(h.record.due) <= Q.OS.addDays(Q.day(), 7),
     );
     const fav = P.search(state(), { favorite: true }).slice(0, 4);
-    return `<section class="card shared-cockpit"><div class="section-head"><div><span class="eyebrow">TON FIL CONDUCTEUR</span><h2>Prochaines actions</h2></div>${button("explore", "Tout explorer")}</div><details class="shared-method"><summary>Comment sont choisies les actions ?</summary><p>Classement local selon les échéances, l’importance, la priorité et les liens. Les actions bloquées sont écartées.</p></details><div class="shared-actions">${actions.map((a) => `<article class="shared-action"><div class="section-head"><h3><button class="text-button" data-edit="tasks" data-id="${e(a.hit.id)}">${e(P.title(a.hit.record))}</button></h3><span class="tag">${a.score} pts</span></div><details><summary>Pourquoi cette action ?</summary><ul>${a.reasons.map((r) => `<li>${e(r)}</li>`).join("")}</ul></details><div class="os-actions"><button class="mini" data-toggle="task" data-id="${e(a.hit.id)}">Terminer</button><button class="mini" data-focus="start" data-id="${e(a.hit.id)}">Focus</button>${button("tomorrow", "Demain", `data-id="${e(a.hit.id)}"`)}${button("detail", "Relations & checklist", attrs(a.hit))}<button class="danger" data-del="tasks" data-id="${e(a.hit.id)}" aria-label="Retirer cette tâche">×</button></div></article>`).join("") || `<p class="empty">Aucune action disponible. Capture une tâche ou consulte les dépendances dans Explorer.</p>`}</div><div class="os-actions">${button("late", `${late.length} échéance(s) en retard`)}${button("upcoming", `${upcoming.length} échéance(s) dans les 7 jours`)}${button("quick", "＋ Capture rapide", "", "primary")}</div>${fav.length ? `<details><summary>Mes favoris · ${fav.length}</summary>${fav.map(hitCard).join("")}</details>` : ""}</section>`;
+    return `<section class="card shared-cockpit"><div class="section-head"><div><span class="eyebrow">TON FIL CONDUCTEUR</span><h2>Prochaines actions</h2></div>${button("explore", "Tout explorer")}</div><details class="shared-method"><summary>Comment sont choisies les actions ?</summary><p>Classement local selon les échéances, l’importance, la priorité et les liens. Les actions bloquées sont écartées.</p></details><div class="shared-actions">${actions.map((a) => `<article class="shared-action"><div class="section-head"><h3><button class="text-button" data-edit="tasks" data-id="${e(a.hit.id)}">${e(P.title(a.hit.record))}</button></h3><span class="tag">${a.score} pts</span></div><details><summary>Pourquoi cette action ?</summary><ul>${a.reasons.map((r) => `<li>${e(r)}</li>`).join("")}</ul></details><div class="os-actions"><button class="mini" data-toggle="task" data-id="${e(a.hit.id)}">Terminer</button><button class="mini" data-focus="start" data-id="${e(a.hit.id)}">Focus</button>${button("tomorrow", "Demain", `data-id="${e(a.hit.id)}"`)}${button("detail", "Relations & checklist", attrs(a.hit))}<button class="danger" data-del="tasks" data-id="${e(a.hit.id)}" aria-label="Retirer cette tâche">×</button></div></article>`).join("") || `<p class="empty">Aucune action disponible. Capture une tâche ou consulte les dépendances dans Explorer.</p>`}</div><div class="os-actions">${button("late", `${late.length} échéance(s) en retard`)}${button("upcoming", `${upcoming.length} échéance(s) dans les 7 jours`)}${button("quick", "+ Capture rapide", "", "primary")}</div>${fav.length ? `<details><summary>Mes favoris · ${fav.length}</summary>${fav.map(hitCard).join("")}</details>` : ""}</section>`;
   }
   const customSnapshot = (form) =>
     JSON.stringify(
