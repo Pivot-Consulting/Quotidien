@@ -30,7 +30,7 @@ function createAutomationUI(ctx) {
     const s = ctx.state(),
       rules = s.automations.filter((x) => !x.deleted && x.engineVersion === 1),
       logs = (s.automationLogs || []).slice(0, 20);
-    return `<div class="page-title"><div><span class="eyebrow">AUTOMATION OS</span><h1>Automatisations</h1></div><button class="primary" data-automation="new">＋ Règle</button></div><section class="card"><h2>Modèles</h2><div class="os-actions">${[
+    return `<div class="page-title"><div><span class="eyebrow">AUTOMATION OS</span><h1>Automatisations</h1></div><button class="primary" data-automation="new">+ Règle</button></div><section class="card"><h2>Modèles</h2><div class="os-actions">${[
       ["Document à renouveler", "Renouveler mes documents"],
       ["Dépense importante", "Contrôler les dépenses importantes"],
       ["Projet stagnant", "Relancer les projets stagnants"],

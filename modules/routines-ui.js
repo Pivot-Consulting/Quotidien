@@ -13,7 +13,7 @@ function createRoutinesUI(ctx) {
   }
   function today() {
     const items = R.today(ctx.state());
-    return `<section class="card"><div class="section-head"><div><span class="eyebrow">RITUELS DU JOUR</span><h2>Routines</h2></div><div class="os-actions"><button class="mini" data-routine="templates">Installer les routines essentielles</button><button class="mini" data-action="add-routine">＋</button></div></div><div class="shared-actions">${items.map(card).join("") || '<p class="empty">Aucune routine prévue aujourd’hui.</p>'}</div></section>`;
+    return `<section class="card"><div class="section-head"><div><span class="eyebrow">RITUELS DU JOUR</span><h2>Routines</h2></div><div class="os-actions"><button class="mini" data-routine="templates">Installer les routines essentielles</button><button class="mini" data-action="add-routine">+</button></div></div><div class="shared-actions">${items.map(card).join("") || '<p class="empty">Aucune routine prévue aujourd’hui.</p>'}</div></section>`;
   }
   function open(id) {
     const s = ctx.state(),

@@ -77,6 +77,16 @@ let socket;
     return r.result.value;
   }
   fs.mkdirSync("browser-artifacts", { recursive: true });
+  await send("Page.addScriptToEvaluateOnNewDocument", {
+    source: `if (location.origin === 'http://localhost:4173' && !localStorage.getItem('quotidien-rebuild-2')) {
+      const date = new Date().toISOString().slice(0,10);
+      localStorage.setItem('quotidien-rebuild-2', JSON.stringify({version:2,
+        tasks:[{id:'qa-task',title:'Préparer la prochaine formation',due:date,priority:'Haute'}],
+        events:[{id:'qa-event',title:'Séance de tennis',date,time:'18:00'}],
+        habits:[{id:'qa-habit',name:'Lire 10 minutes',days:{}}]
+      }));
+    }`,
+  });
   for (const width of [320, 390, 768, 1280]) {
     await send("Emulation.setDeviceMetricsOverride", {
       width,
